@@ -12,9 +12,11 @@ export type RuleItem = {
 };
 
 export type JobItem = {
+  key: "pd" | "ems" | "fire" | "criminal" | "civilian" | "player_owned";
   title: string;
   summary: string;
   highlights: string[];
+  badge?: string;
 };
 
 export const siteConfig = {
@@ -37,29 +39,46 @@ export const siteConfig = {
 
   jobs: [
     {
-      title: "Police (PD)",
-      summary: "Patrol, investigations, traffic stops, and big story arcs with the city.",
-      highlights: ["Cadet to Command progression", "Scene-first policing", "Training and ride-alongs"]
+      key: "pd",
+      title: "Police Department (PD)",
+      badge: "Public Service",
+      summary: "Patrol, investigations, and city-wide storylines that keep everything grounded.",
+      highlights: ["Cadet to Command progression", "Training and ride-alongs", "Scene-first policing"]
     },
     {
+      key: "ems",
       title: "EMS (Medical)",
+      badge: "Public Service",
       summary: "Medical RP that keeps scenes alive, from street calls to major incidents.",
-      highlights: ["Roleplay-focused triage", "Rescue operations", "Hospital and dispatch RP"]
+      highlights: ["Triage and treatment RP", "Rescue operations", "Hospital and dispatch scenes"]
     },
     {
-      title: "Player Businesses",
-      summary: "Own, run, or work for businesses that create daily RP, drama, and alliances.",
-      highlights: ["Custom business opportunities", "Hiring and payroll RP", "Events, promos, and partnerships"]
+      key: "fire",
+      title: "Fire Department",
+      badge: "Public Service",
+      summary: "Fires, rescues, crashes, and big incident response when the city gets spicy.",
+      highlights: ["Rescue and extraction RP", "Incident command", "Major event support"]
     },
     {
-      title: "Legal and Court RP",
-      summary: "Lawyers, trials, contracts, and consequences that make choices matter.",
-      highlights: ["Representation and plea deals", "Court cases and filings", "Business and criminal defense"]
+      key: "criminal",
+      title: "Criminal Jobs",
+      badge: "High Risk",
+      summary: "Heists, trafficking, boosting, and underworld work, built with escalation and consequences.",
+      highlights: ["Build-up required, no random chaos", "Crew coordination and planning", "Heat, investigations, and fallout"]
     },
     {
-      title: "Criminal Life",
-      summary: "If you choose the dark path, keep it grounded, built-up, and story-driven.",
-      highlights: ["RP escalation required", "Territory and relationships", "Consequences that stick"]
+      key: "civilian",
+      title: "Civilian Jobs",
+      badge: "Everyday RP",
+      summary: "Taxi, trucking, delivery, legal work, construction, and the day-to-day that makes the city feel real.",
+      highlights: ["Steady income and progression", "Great for new players", "Easy to weave into stories"]
+    },
+    {
+      key: "player_owned",
+      title: "Player-Owned Businesses",
+      badge: "Community Driven",
+      summary: "Run a shop, club, restaurant, mechanic, or anything else that creates daily RP and relationships.",
+      highlights: ["Hiring and payroll RP", "Events, promos, partnerships", "Build your own reputation"]
     }
   ] as JobItem[],
 

@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import logo from "./assets/logo.png";
 import featured from "./assets/featured.png";
 import { siteConfig } from "./config";
 import { classifyStaff, cn } from "./lib";
+import nightlifeImg from "./assets/gallery/nightlife.png";
+import streetImg from "./assets/gallery/street.png";
+import criminalImg from "./assets/gallery/criminal.png";
+import racingImg from "./assets/gallery/racing.png";
+import damonMark from "./assets/damon-mark.png";
 
 type ServerData = {
   status: "checking" | "online" | "unavailable";
@@ -83,6 +88,66 @@ async function fetchFiveM(serverCodeOrAddress: string): Promise<{ players?: numb
 }
 
 export default function App() {
+
+const [rpFocus, setRpFocus] = useState<string | null>(null);
+const [soundOn, setSoundOn] = useState(() => {
+  try {
+    return localStorage.getItem("vital_sound") === "1";
+  } catch {
+    return false;
+  }
+});
+
+const playTick = useCallback(() => {
+  if (!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 520;
+    g.gain.value = 0.04;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.03);
+    setTimeout(() => ctx.close(), 120);
+  } catch {
+    // ignore
+  }
+}, [soundOn]);
+
+useEffect(() => {
+  // Scroll accents (cards/dividers glow when visible)
+  const els = Array.from(document.querySelectorAll<HTMLElement>(".scroll-accent"));
+  if (!("IntersectionObserver" in window) || els.length === 0) {
+    els.forEach((el) => el.setAttribute("data-visible", "true"));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) (e.target as HTMLElement).setAttribute("data-visible", "true");
+      });
+    },
+    { threshold: 0.15 }
+  );
+  els.forEach((el) => io.observe(el));
+  return () => io.disconnect();
+}, []);
+
+const gallery = [
+  { src: nightlifeImg, label: "Nightlife & social RP" },
+  { src: streetImg, label: "Street RP & daily life" },
+  { src: criminalImg, label: "Criminal & gang RP" },
+  { src: racingImg, label: "Racing & car culture" },
+];
+
+const jumpTo = (hash: string) => {
+  const el = document.querySelector(hash);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
   const prefersReducedMotion = useReducedMotion();
   const progress = useScrollProgress();
   const reveal = useRevealOnScroll();
@@ -183,6 +248,20 @@ export default function App() {
                href={siteConfig.storeUrl} target="_blank" rel="noreferrer">Store</a>
             <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
                href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Discord</a>
+
+<button
+  onClick={() => {
+    const next = !soundOn;
+    setSoundOn(next);
+    try { localStorage.setItem("vital_sound", next ? "1" : "0"); } catch {}
+    // Play a tick only when turning on
+    if (!soundOn) setTimeout(() => { try { (document.activeElement as any)?.blur?.(); } catch {} playTick(); }, 0);
+  }}
+  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+  aria-label="Toggle UI sound"
+>
+  {soundOn ? "Sound: On" : "Sound: Off"}
+</button>
             <a className="rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-4 py-2 text-sm font-extrabold text-black hover:brightness-105"
                href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Connect</a>
           </div>
@@ -323,6 +402,24 @@ export default function App() {
 </div>
 
 {/* Why */}
+
+{/* RP Chooser */}
+<section className="mx-auto max-w-6xl px-5 py-10">
+  <div className="rounded-xl2 border border-white/10 bg-white/5 p-6 text-center shadow-glow">
+    <div className="text-xl font-black">What kind of RP are you looking for?</div>
+    <div className="mt-3 flex flex-wrap justify-center gap-3">
+      {["Structured", "Creative", "High-Risk", "Chill"].map((t) => (
+        <button
+          key={t}
+          onClick={() => { setRpFocus(t); playTick(); if (t === "Structured") jumpTo("#jobs"); if (t === "High-Risk") jumpTo("#jobs"); if (t === "Creative") jumpTo("#jobs"); if (t === "Chill") jumpTo("#features"); }}
+          className="rounded-full border border-white/10 bg-black/30 px-5 py-2 text-sm font-bold hover:bg-white/10"
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  </div>
+</section>
 <section id="why" className="mx-auto max-w-6xl px-5 py-12">
   <div className="grid gap-8 md:grid-cols-12 md:items-start">
     <motion.div data-reveal-id="whyLeft" {...fadeUp("whyLeft")} className="md:col-span-5">
@@ -376,8 +473,109 @@ export default function App() {
     </div>
   </div>
 </section>
+
+{/* Jobs */}
+<section id="jobs" className="mx-auto max-w-6xl px-5 py-12">
+  <div className="grid gap-8 md:grid-cols-12 md:items-start">
+    <motion.div data-reveal-id="jobsIntro" {...fadeUp("jobsIntro")} className="md:col-span-4">
+      <h2 className="text-2xl font-black">Server jobs</h2>
+      <p className="mt-3 text-vital-muted leading-relaxed">
+        Vital has structured departments and plenty of player-driven lanes. Pick a path, meet people,
+        then build a story that sticks.
+      </p>
+
+      <div className="mt-5 rounded-xl2 border border-white/10 bg-white/5 p-4 shadow-glow">
+        <div className="text-sm font-black">Quick tip</div>
+        <div className="mt-2 text-sm text-vital-muted leading-relaxed">
+          Want PD, EMS, Fire, or a business? Ask in Discord and we’ll point you to the right onboarding.
+        </div>
+        <a
+          className="mt-4 inline-flex rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-4 py-2 text-sm font-extrabold text-black hover:brightness-105"
+          href={siteConfig.discordInvite}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Ask in Discord
+        </a>
+      </div>
+    </motion.div>
+
+    {/* Featured big card */}
+    <motion.div
+      data-reveal-id="jobsFeature"
+      {...fadeUp("jobsFeature", 0.05)}
+      className="relative overflow-hidden rounded-xl2 border border-white/10 bg-white/5 p-6 shadow-glow md:col-span-8"
+    >
+      <div
+        className="pointer-events-none absolute -inset-24 opacity-80"
+        style={{
+          background:
+            "radial-gradient(420px 300px at 20% 20%, rgba(255,122,0,0.20), transparent 60%), radial-gradient(420px 300px at 85% 40%, rgba(255,77,0,0.14), transparent 60%)",
+        }}
+      />
+      <div className="relative flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-xl">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-vital-orange/30 bg-vital-orange/15 px-3 py-2 text-xs font-extrabold text-white/90">
+            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-vital-amber to-vital-orange" />
+            Popular lane
+          </div>
+          <div className="mt-4 text-xl font-black">Player-Owned Businesses</div>
+          <div className="mt-2 text-sm leading-relaxed text-vital-muted">
+            Own a spot, hire people, run events, and create daily RP. If you want consistent scenes, this is the move.
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {siteConfig.jobs.find((j) => j.key === "player_owned")?.highlights.map((h) => (
+              <div key={h} className="text-sm font-semibold text-white/80">
+                • {h}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 rounded-xl2 border border-white/10 bg-black/25 p-4 md:min-w-[260px]">
+          <div>
+            <div className="text-sm font-black">Start here</div>
+            <div className="mt-1 text-sm text-vital-muted">Join Discord, ask for onboarding.</div>
+          </div>
+          <div className="rounded-full border border-white/10 bg-white/5 p-3">
+            <JobIcon k="player_owned" className="h-7 w-7 text-white/90" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  </div>
+
+  {/* Icon cards */}
+  <div className="mt-7 grid gap-4 md:grid-cols-3">
+    {siteConfig.jobs
+      .filter((j) => j.key !== "player_owned")
+      .map((j, idx) => (
+        <JobCard key={j.key} job={j} revealId={`jobCard${idx}`} />
+      ))}
+  </div>
+</section>
+
+<div className="mx-auto max-w-6xl px-5">
+  <div className="vital-divider" />
+</div>
+
       {/* Rules */}
-      <section id="rules" className="mx-auto max-w-6xl px-5 py-12">
+      
+{/* Values */}
+<section className="mx-auto max-w-6xl px-5 py-12">
+  <div className="mb-6 text-center text-sm font-semibold uppercase tracking-wide text-white/40">
+    What we value
+  </div>
+  <div className="grid gap-4 md:grid-cols-3">
+    <ValueCard title="Story over winning" desc="The best RP comes from letting scenes breathe, even when you take the L." />
+    <ValueCard title="Consequences matter" desc="Actions carry weight. That’s what makes stories memorable." />
+    <ValueCard title="Common sense first" desc="If it feels right for the scene, it’s probably the right call." />
+  </div>
+</section>
+
+<NarrativeLine text="Every city needs rules. Every rule needs context." />
+<section id="rules" className="mx-auto max-w-6xl px-5 py-12">
         <motion.h2 data-reveal-id="rulesH" {...fadeUp("rulesH")} className="text-2xl font-black">Rules (quick, friendly version)</motion.h2>
         <motion.p data-reveal-id="rulesP" {...fadeUp("rulesP", 0.05)} className="mt-2 max-w-3xl text-vital-muted">
           This is the short version to help you start strong. If you’re unsure, choose the option that keeps the scene fun,
@@ -421,7 +619,33 @@ export default function App() {
   </motion.div>
 </section>
       {/* Staff near bottom */}
-      <section id="staff" className="mx-auto max-w-6xl px-5 py-12">
+      
+{/* City Snapshot */}
+<section className="mx-auto max-w-6xl px-5 py-12">
+  <div className="mb-5 text-lg font-black">Life in the city</div>
+  <div className="grid gap-4 md:grid-cols-4">
+  {gallery.map((g) => (
+    <div
+      key={g.label}
+      className="group relative aspect-[4/5] overflow-hidden rounded-xl2 border border-white/10 bg-black/40 shadow-glow scroll-accent"
+    >
+      <img
+        src={g.src}
+        alt={g.label}
+        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+        loading="lazy"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+      <div className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-black/50 px-3 py-2 text-xs font-extrabold text-white/90 backdrop-blur">
+        {g.label}
+      </div>
+    </div>
+  ))}
+</div>
+</section>
+
+<NarrativeLine text="Every scene adds to the city’s story." />
+<section id="staff" className="mx-auto max-w-6xl px-5 py-12">
         <motion.h2 data-reveal-id="staffH" {...fadeUp("staffH")} className="text-2xl font-black">Staff</motion.h2>
         <motion.p data-reveal-id="staffP" {...fadeUp("staffP", 0.05)} className="mt-2 max-w-3xl text-vital-muted">
           The crew keeping the city running smoothly (and occasionally yelling at tickets).
@@ -466,17 +690,24 @@ export default function App() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-vital-line py-10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 text-sm text-vital-muted">
-          <div>© {new Date().getFullYear()} {siteConfig.serverName}</div>
-          <div className="flex flex-wrap gap-3">
-            <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-extrabold text-white hover:bg-white/10"
-               href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Discord</a>
-            <a className="rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-4 py-2 font-extrabold text-black hover:brightness-105"
-               href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Connect</a>
-          </div>
-        </div>
-      </footer>
+      
+<footer className="relative mt-20 overflow-hidden border-t border-white/10 bg-black/60">
+  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+  <div className="relative mx-auto max-w-6xl px-5 py-14 text-center">
+    <div className="text-2xl font-black">Vital RP</div>
+    <div className="mt-3 text-sm text-white/60">
+      Built by its players. Shaped by its stories.
+    </div>
+    <div className="mt-6 text-xs uppercase tracking-widest text-white/40">
+      Serious roleplay, done right.
+    </div>
+    <div className="mt-8 flex items-center justify-center gap-2 text-xs text-white/50">
+      <img src={damonMark} alt="Damon mark" className="h-6 w-6 rounded-full opacity-80" />
+      <span>Created by Damon</span>
+    </div>
+  </div>
+</footer>
+
 
       {/* Floating CTA */}
       <motion.div
@@ -608,6 +839,106 @@ function JobDeckCard({
   );
 }
 
+
+function JobCard({ job, revealId }: { job: { key: string; title: string; summary: string; highlights: string[]; badge?: string }; revealId: string }) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.div
+      data-reveal-id={revealId}
+      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="group relative overflow-hidden rounded-xl2 border border-white/10 bg-white/5 p-5 shadow-glow"
+    >
+      <div
+        className="pointer-events-none absolute -inset-24 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(280px 220px at 20% 20%, rgba(255,179,0,0.12), transparent 60%), radial-gradient(280px 220px at 85% 40%, rgba(255,77,0,0.10), transparent 60%)",
+        }}
+      />
+      <div className="relative flex items-start justify-between gap-4">
+        <div>
+          {job.badge ? (
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-extrabold text-white/80">
+              {job.badge}
+            </div>
+          ) : null}
+          <div className="mt-3 text-base font-black">{job.title}</div>
+          <div className="mt-2 text-sm leading-relaxed text-vital-muted">{job.summary}</div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/25 p-3 transition-transform duration-200 group-hover:-translate-y-0.5">
+          <JobIcon k={job.key as any} className="h-6 w-6 text-white/90" />
+        </div>
+      </div>
+
+      <div className="relative mt-4 grid gap-2">
+        {job.highlights.slice(0, 3).map((h) => (
+          <div key={h} className="text-sm font-semibold text-white/80">
+            • {h}
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function JobIcon({ k, className }: { k: "pd" | "ems" | "fire" | "criminal" | "civilian" | "player_owned"; className?: string }) {
+  // Simple inline icons (no extra deps)
+  switch (k) {
+    case "pd":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2l3 5 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1 3-5z" />
+          <path d="M12 7v10" />
+          <path d="M7.5 12H16.5" />
+        </svg>
+      );
+    case "ems":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 8h-3l-2-3H9L7 8H4" />
+          <path d="M4 8v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+          <path d="M12 10v8" />
+          <path d="M8 14h8" />
+        </svg>
+      );
+    case "fire":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22c4 0 7-3 7-7 0-3-2-5-4-7 0 3-2 4-3 5 0-3-1-5-4-7-1 4-4 6-4 10 0 4 3 6 8 6z" />
+          <path d="M10 17c0 2 1 3 2 3s2-1 2-3-1-3-2-4c-1 1-2 2-2 4z" />
+        </svg>
+      );
+    case "criminal":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 13l3 3 4-6 3 4 2-3 4 5" />
+          <path d="M3 20h18" />
+          <path d="M7 7c0 1.5 1 3 2.5 3S12 8.5 12 7s-1-3-2.5-3S7 5.5 7 7z" />
+          <path d="M14 7c0 1.5 1 3 2.5 3S19 8.5 19 7s-1-3-2.5-3S14 5.5 14 7z" />
+        </svg>
+      );
+    case "civilian":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 20h16" />
+          <path d="M6 20V9l6-4 6 4v11" />
+          <path d="M10 20v-6h4v6" />
+        </svg>
+      );
+    case "player_owned":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 9h16l-1 11H5L4 9z" />
+          <path d="M7 9V7a5 5 0 0 1 10 0v2" />
+          <path d="M9 13h6" />
+        </svg>
+      );
+  }
+}
+
 function SpotlightCard({ title, desc, revealId }: { title: string; desc: string; revealId: string }) {
   const prefersReducedMotion = useReducedMotion();
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -690,5 +1021,22 @@ function RuleCard({ title, summary, example, revealId }: { title: string; summar
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function NarrativeLine({ text }: { text: string }) {
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-6 text-center text-sm font-semibold text-white/40 scroll-accent">
+      {text}
+    </div>
+  );
+}
+
+function ValueCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="scroll-accent rounded-xl2 border border-white/10 bg-white/5 p-5">
+      <div className="text-base font-black">{title}</div>
+      <div className="mt-2 text-sm leading-relaxed text-vital-muted">{desc}</div>
+    </div>
   );
 }
