@@ -23,7 +23,14 @@ export const siteConfig = {
   serverName: "Vital RP",
   tagline: "Story-first roleplay, with a community that actually feels alive.",
   discordInvite: "https://discord.gg/vitalrp",
-  connectUrl: "https://cfx.re/join/ogpvmv",
+  
+  socials: [
+    { key: "x", label: "Twitter/X", url: "https://x.com/vital_roleplay/" },
+    { key: "instagram", label: "Instagram", url: "https://www.instagram.com/vital_roleplay/" },
+    { key: "tiktok", label: "TikTok", url: "https://www.tiktok.com/@vitalroleplay_" },
+    { key: "youtube", label: "YouTube", url: "https://www.youtube.com/@VitalRP" },
+  ],
+connectUrl: "https://cfx.re/join/ogpvmv",
   storeUrl: "https://vitalrp.tebex.io/",
   /**
    * Optional. Used for best-effort status lookup.
@@ -85,16 +92,27 @@ export const siteConfig = {
   rulesFullUrl: "https://docs.google.com/document/d/YOUR_DOC_ID/view",
 
   staff: [
-    { name: "Grumpy", badge: "Server Owner", title: "Owner and Developer", discord: "@grumpyfinster" },
-    { name: "Nez", badge: "Server Owner", title: "Owner and Lead Developer", discord: "@nnezzie" },
-    { name: "Soup", badge: "Server Owner", title: "Owner", discord: "@soup.lua" },
-    { name: "Daniel", badge: "Head Administrator", title: "Head of Staff", discord: "@dan1els0n" },
-    { name: "Strix", badge: "Head Administrator", title: "Head of Staff", discord: "@iistrix" },
-    { name: "Damon", badge: "Administrator", title: "Head of Support, Whitelisting, & Marketing", discord: "@mcspace" },
-    { name: "Rue", badge: "Administrator", title: "Head of Rules", discord: "@ruekatu" },
-    { name: "Parzival", badge: "Administrator", title: "Administrator", discord: "@gtsdeathclutch" },
-    { name: "Peaches", badge: "Administrator", title: "Head of Property Management", discord: "@authenticbeth" },
-  ] as StaffMember[],
+        { name: "Grumpy", badge: "Server Owner", title: "Owner and Developer", discord: "@grumpyfinster" },
+        { name: "Nez", badge: "Server Owner", title: "Owner and Lead Developer", discord: "@nnezzie" },
+        { name: "Soup", badge: "Server Owner", title: "Owner", discord: "@soup.lua" },
+
+        { name: "Bug", badge: "Community Manager", title: "Community Manager", discord: "@sweetbug03" },
+
+        { name: "Strix", badge: "Head Administrator", title: "Head of Staff", discord: "@iistrix" },
+        { name: "Artemis", badge: "Administrator", title: "Administrator", discord: "@gtschaos" },
+        { name: "Damon", badge: "Administrator", title: "Head of Whitelisting, Marketing, & Support Staff", discord: "@mcspace" },
+        { name: "Rue", badge: "Administrator", title: "Head of Rules", discord: "@ruekatu" },
+        { name: "Parzival", badge: "Administrator", title: "Administrator", discord: "@gtsdeathclutch" },
+        { name: "Beth", badge: "Administrator", title: "Head of Property Management", discord: "@authenticbeth" },
+
+        { name: "Damon", badge: "Head of Subgroups", title: "Whitelisting, Marketing, & Support Staff", discord: "@mcspace" },
+        { name: "Chach", badge: "Head of Subgroups", title: "Content Creation", discord: "@cptchach" },
+        { name: "Boo Berry", badge: "Head of Subgroups", title: "Business Management", discord: "@craysteens" },
+        { name: "Beth", badge: "Head of Subgroups", title: "Property Management", discord: "@authenticbeth" },
+
+        { name: "Jonsey", badge: "Developer", title: "Clothing Developer", discord: "@sail_jpg" },
+      ] as StaffMember[],
+
 
   rules: [
     {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import logo from "./assets/logo.png";
 import featured from "./assets/featured.png";
 import { siteConfig } from "./config";
@@ -204,22 +204,59 @@ const jumpTo = (hash: string) => {
   const staffTabs = useMemo(() => {
     return [
       { key: "all", label: "All" },
-      { key: "owner", label: "Ownership" },
-      { key: "lead", label: "Leadership" },
-      { key: "admin", label: "Administration" },
+      { key: "owners", label: "Owners" },
+      { key: "admins", label: "Admins" },
+      { key: "subgroups", label: "Subgroup Leaders" },
+      { key: "developers", label: "Developers" },
     ] as const;
   }, []);
 
   const [staffFilter, setStaffFilter] = useState<(typeof staffTabs)[number]["key"]>("all");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const normalizedStaff = useMemo(() => {
+    const map = new Map<string, { name: string; discord?: string; roles: Array<{ badge: string; title: string }> }>();
+    for (const s of siteConfig.staff) {
+      const key = (s.discord || s.name).toLowerCase();
+      const existing = map.get(key);
+      const role = { badge: s.badge, title: s.title };
+      if (!existing) {
+        map.set(key, { name: s.name, discord: s.discord, roles: [role] });
+      } else {
+        // keep the first seen name/discord, append roles if unique
+        if (!existing.discord && s.discord) existing.discord = s.discord;
+        if (!existing.roles.some((r) => r.badge === role.badge && r.title === role.title)) existing.roles.push(role);
+      }
+    }
+    return Array.from(map.values());
+  }, []);
+
   const staffFiltered = useMemo(() => {
-    return siteConfig.staff.filter((s) => (staffFilter === "all" ? true : classifyStaff(s.badge) === staffFilter));
-  }, [staffFilter]);
+    const hasRole = (p: any, test: (badge: string) => boolean) => p.roles.some((r: any) => test(r.badge));
+    if (staffFilter === "owners") return normalizedStaff.filter((p) => hasRole(p, (b) => /owner/i.test(b)));
+    if (staffFilter === "admins") return normalizedStaff.filter((p) => hasRole(p, (b) => /administrator/i.test(b)));
+    if (staffFilter === "subgroups") return normalizedStaff.filter((p) => hasRole(p, (b) => /head of subgroups/i.test(b)));
+    if (staffFilter === "developers") return normalizedStaff.filter((p) => hasRole(p, (b) => /developer/i.test(b)));
+    return normalizedStaff;
+  }, [staffFilter, normalizedStaff]);
 
   const fadeUp = (id: string, delay = 0) => ({
     initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
     animate: reveal.has(id) ? { opacity: 1, y: 0 } : undefined,
     transition: { duration: 0.7, ease: "easeOut", delay },
   });
+
+
+// Staggered reveal helpers (Option 2)
+const staggerContainer = (id: string, delayChildren = 0.05, staggerChildren = 0.08) => ({
+  initial: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+  animate: reveal.has(id) ? { opacity: 1, transition: { delayChildren, staggerChildren } } : undefined,
+});
+
+const staggerItem = (id: string, delay = 0) => ({
+  initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
+  animate: reveal.has(id) ? { opacity: 1, y: 0, transition: { delay, duration: 0.55, ease: [0.2, 0.9, 0.2, 1] } } : undefined,
+});
 
   return (
     <div className="min-h-screen vital-ambient">
@@ -239,14 +276,36 @@ const jumpTo = (hash: string) => {
             <img src={logo} alt="Vital RP logo" className="h-9 w-9" />
             <span>VITAL RP</span>
           </a>
-          <div className="hidden items-center gap-4 md:flex">
-            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#features">Features</a>
-            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#jobs">Jobs</a>
-            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#rules">Rules</a>
-            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#staff">Staff</a>
-            <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
-               href={siteConfig.storeUrl} target="_blank" rel="noreferrer">Store</a>
-            <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+          <div className="hidden items-center gap-4 md:flex hidden sm:flex">
+            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#features"><span className="inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-8h8V3h-8v10z"/></svg>
+      Features
+    </span></a>
+            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#jobs"><span className="inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M4 7h16v10H4V7zm2-3h12v2H6V4zm0 14h12v2H6v-2z"/></svg>
+      Jobs
+    </span></a>
+            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#rules"><span className="inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"/></svg>
+      Rules
+    </span></a>
+            <a className="text-sm font-semibold text-white/80 hover:text-white" href="#staff"><span className="inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
+      Staff
+    </span></a>
+            
+            <button
+              aria-label="Open menu"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white/85 hover:bg-white/10 sm:hidden"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+                <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/>
+              </svg>
+            </button>
+<a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+               href={siteConfig.storeUrl} target="_blank" rel="noreferrer">Tebex</a>
+            <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-[#41c4c3]/20 hover:border-[#41c4c3]/40 hover:text-white"
                href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Discord</a>
 
 <button
@@ -257,7 +316,7 @@ const jumpTo = (hash: string) => {
     // Play a tick only when turning on
     if (!soundOn) setTimeout(() => { try { (document.activeElement as any)?.blur?.(); } catch {} playTick(); }, 0);
   }}
-  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+  className="rounded-xl border border-[#5865F2]/40 bg-[#5865F2]/20 px-4 py-2 text-sm font-extrabold text-white hover:bg-[#5865F2]/30 hover:border-[#5865F2]/60"
   aria-label="Toggle UI sound"
 >
   {soundOn ? "Sound: On" : "Sound: Off"}
@@ -269,157 +328,185 @@ const jumpTo = (hash: string) => {
       </div>
 
       {/* Hero */}
-      <header id="top" className="mx-auto max-w-6xl px-5 pb-8 pt-14">
-        <div className="grid items-center gap-8 lg:grid-cols-2">
-          <motion.div data-reveal-id="heroLeft" {...fadeUp("heroLeft")}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-vital-line bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80">
-              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-vital-amber to-vital-orange" />
-              Welcome to Vital
-            </div>
-            <h1 className="mt-4 text-4xl font-black leading-tight md:text-5xl">{siteConfig.tagline}</h1>
-            <p className="mt-3 max-w-xl text-base leading-relaxed text-vital-muted">
-              Vital RP is built for immersive scenes, fair conflict, and the kind of RP you remember later. Win or lose,
-              the goal is always the story.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a className="rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-5 py-3 text-sm font-extrabold text-black hover:brightness-105"
-                 href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Join the City</a>
-              <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                 href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Join Discord</a>
-              <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                 href="#rules">Quick Rules</a>
-            </div>
-          </motion.div>
+<header id="top" className="mx-auto max-w-6xl px-5 pb-6 pt-14">
+  <div className="grid items-start gap-6 lg:grid-cols-12">
+    <motion.div data-reveal-id="heroLeft" {...fadeUp("heroLeft")} className="lg:col-span-7">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80">
+        <span className="h-2 w-2 rounded-full bg-gradient-to-r from-vital-amber to-vital-orange" />
+        Welcome to Vital
+      </div>
+      <h1 className="mt-4 text-4xl font-black leading-tight md:text-5xl">{siteConfig.tagline}</h1>
+      <p className="mt-3 max-w-xl text-base leading-relaxed text-vital-muted">
+        Vital RP is built for immersive scenes, fair conflict, and the kind of RP you remember later. Win or lose,
+        the goal is always the story.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <a className="rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-5 py-3 text-sm font-extrabold text-black hover:brightness-105"
+           href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Join the City</a>
+        <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
+           href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Join Discord</a>
+        <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
+           href="#rules">Quick Rules</a>
+      </div>
 
-          <motion.div data-reveal-id="heroRight" {...fadeUp("heroRight", 0.05)} className="rounded-xl2 border border-vital-line bg-white/5 p-5 shadow-glow">
-            <div className="inline-flex items-center gap-2 rounded-full border border-vital-line bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80">
-              Live Status
-            </div>
+<motion.div
+  initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 } }
+  whileInView={ { opacity: 1, y: 0 } }
+  viewport={ { once: true, amount: 0.25 } }
+  transition={ { duration: 0.6, ease: [0.2, 0.9, 0.2, 1] } }
+  className="mt-8 overflow-hidden rounded-xl2 border border-white/10 bg-black/25 shadow-glow"
+>
+  <div className="relative w-full" style={ { paddingTop: "56.25%" } }>
+    <iframe
+      className="absolute inset-0 h-full w-full"
+      src="https://www.youtube.com/embed/M60NXyAGulo?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=M60NXyAGulo"
+      title="Vital RP Trailer"
+      frameBorder="0"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowFullScreen
+    />
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+  </div>
+</motion.div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                <div className="text-xs font-extrabold text-vital-muted">Status</div>
-                <div className="mt-2 text-xl font-black">
-                  {server.status === "checking" ? "Checking..." : server.status === "online" ? "Online" : "Unavailable"}
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                <div className="text-xs font-extrabold text-vital-muted">Players</div>
-                <div className="mt-2 text-xl font-black">{server.playersText}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                <div className="text-xs font-extrabold text-vital-muted">Ping</div>
-                <div className="mt-2 text-xl font-black">{server.pingText}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                <div className="text-xs font-extrabold text-vital-muted">Discord</div>
-                <div className="mt-2 text-xl font-black">Open</div>
-              </div>
-            </div>
+  <div className="mt-4">
+    <SocialsCard />
+  </div>
 
-            <p className="mt-4 text-sm leading-relaxed text-vital-muted">
-              If the live widget shows “Unavailable”, your server may be private or blocking the public endpoint. That’s normal.
-            </p>
-          </motion.div>
+    </motion.div>
+
+    <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* Featured + Live Status (merged) */}
+<motion.div data-reveal-id="heroRightMerged" {...fadeUp("heroRightMerged", 0.1)} className="overflow-hidden rounded-xl2 border border-white/10 bg-black/25 shadow-glow">
+  {/* Featured image */}
+  <div className="relative w-full overflow-hidden h-[420px] sm:h-[520px] lg:h-[560px]" style={{ aspectRatio: "9 / 16" }}>
+    <motion.img
+      src={featured}
+      alt="Vital RP featured"
+      className="absolute inset-0 h-full w-full object-cover"
+      style={{ objectPosition: "center 35%" }}
+      whileHover={prefersReducedMotion ? undefined : { scale: 1.03 }}
+      transition={{ duration: 0.9, ease: [0.2, 0.9, 0.2, 1] }}
+    />
+    {/* Gradient edge between text and image (desktop) */}
+    <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-24 bg-gradient-to-r from-black/70 to-transparent lg:block" />
+    {/* General image overlay for readability */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
+    <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
+      <div>
+        <div className="text-sm font-black">{siteConfig.featuredCaptionTitle}</div>
+        <div className="mt-1 text-sm font-semibold text-white/75">{siteConfig.featuredCaptionSub}</div>
+      </div>
+      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-white/85">
+        City Spotlight
+      </div>
+    </div>
+  </div>
+
+  {/* Divider */}
+  <div className="h-px w-full bg-white/10" />
+
+  {/* Live Status */}
+  <div className="p-5 bg-white/[0.03]">
+    <div className="inline-flex items-center gap-2 rounded-full border border-vital-line bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80">
+      Live Status
+    </div>
+
+    <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="text-xs font-extrabold text-vital-muted">Status</div>
+        <div className="mt-2 text-xl font-black">
+          {server.status === "checking" ? "Checking..." : server.status === "online" ? "Online" : "Unavailable"}
         </div>
+      </div>
+      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="text-xs font-extrabold text-vital-muted">Players</div>
+        <div className="mt-2 text-xl font-black">{server.playersText}</div>
+      </div>
+      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="text-xs font-extrabold text-vital-muted">Whitelist</div>
+        <div className="mt-2 text-xl font-black">
+          <span className={prefersReducedMotion ? "text-emerald-400 font-extrabold" : "text-emerald-400 font-extrabold animate-pulse"}>
+            Open
+          </span>
+        </div>
+      </div>
+      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="text-xs font-extrabold text-vital-muted">Discord</div>
+        <div className="mt-2 text-xl font-black">Open</div>
+      </div>
+    </div>
 
-        {/* Featured image */}
-        <motion.div data-reveal-id="featured" {...fadeUp("featured")} className="mt-8 overflow-hidden rounded-xl2 border border-white/10 bg-black/25 shadow-glow">
-          <div className="relative">
-            <motion.img
-              src={featured}
-              alt="Vital RP featured"
-              className="h-[360px] w-full object-cover md:h-[420px]"
-              style={{ objectPosition: "center 35%" }}
-              whileHover={prefersReducedMotion ? undefined : { scale: 1.04 }}
-              transition={{ duration: 0.9, ease: [0.2, 0.9, 0.2, 1] }}
+    <p className="mt-4 text-sm leading-relaxed text-vital-muted">
+      
+    </p>
+  </div>
+</motion.div>
+</div>
+  </div>
+</header>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen ? (
+          <motion.div
+            className="fixed inset-0 z-[60] sm:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              aria-label="Close menu"
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute inset-0 bg-black/70"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
-            <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
-              <div>
-                <div className="text-sm font-black">{siteConfig.featuredCaptionTitle}</div>
-                <div className="mt-1 text-sm font-semibold text-white/75">{siteConfig.featuredCaptionSub}</div>
+            <motion.div
+              initial={{ x: 24, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 24, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 520, damping: 38 }}
+              className="absolute right-3 top-3 w-[92vw] max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-black/80 backdrop-blur-xl"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 p-4">
+                <div className="text-sm font-black text-white/90">Jump to</div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/85 hover:bg-white/10"
+                >
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+                    <path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3 1.4 1.4z"/>
+                  </svg>
+                </button>
               </div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-white/85">
-                City Spotlight
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </header>
 
+              <div className="p-4 space-y-2">
+                {[
+                  { href: "#top", label: "Top" },
+                  { href: "#features", label: "Features" },
+                  { href: "#jobs", label: "Jobs" },
+                  { href: "#rules", label: "Rules" },
+                  { href: "#staff", label: "Staff" },
+                ].map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-extrabold text-white/85 hover:bg-white/10"
+                  >
+                    {item.label}
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/60" fill="currentColor" aria-hidden="true">
+                      <path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4 9 6z"/>
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
 {/* Features */}
-<section id="features" className="mx-auto max-w-6xl px-5 py-12">
-  <motion.div data-reveal-id="featuresHead" {...fadeUp("featuresHead")} className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-    <div>
-      <h2 className="text-2xl font-black">Server features</h2>
-      <p className="mt-2 max-w-2xl text-vital-muted">
-        Modern systems, balanced progression, and RP-first design choices.
-      </p>
-    </div>
-    <a
-      href={siteConfig.discordInvite}
-      target="_blank"
-      rel="noreferrer"
-      className="mt-3 inline-flex w-fit rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10 md:mt-0"
-    >
-      See updates in Discord
-    </a>
-  </motion.div>
 
-  {/* Bento layout */}
-  <div className="mt-7 grid gap-4 md:grid-cols-12">
-    <BentoCard
-      revealId="bento0"
-      className="md:col-span-7 md:row-span-2"
-      eyebrow="Conflict"
-      title="Serious RP, not sweaty RP"
-      desc="Conflict is allowed, but it has to make sense and it has to lead somewhere. The story comes first."
-      bullets={["Escalation and consequences", "Readable scenes", "No win-at-all-costs energy"]}
-    />
-    <BentoCard
-      revealId="bento1"
-      className="md:col-span-5"
-      eyebrow="Progression"
-      title="Jobs and growth"
-      desc="Build a path, grow connections, and create your own lane in the city."
-      bullets={["Structured roles", "Player-driven economy", "Organic story hooks"]}
-    />
-    <BentoCard
-      revealId="bento2"
-      className="md:col-span-5"
-      eyebrow="Support"
-      title="Staff that actually answers"
-      desc="Clear expectations, fair decisions, and less chaos in tickets."
-      bullets={["Consistent outcomes", "Common sense focus", "Faster resolution"]}
-    />
-  </div>
-</section>
-
-<div className="mx-auto max-w-6xl px-5">
-  <div className="vital-divider" />
-</div>
-
-{/* Why */}
-
-{/* RP Chooser */}
-<section className="mx-auto max-w-6xl px-5 py-10">
-  <div className="rounded-xl2 border border-white/10 bg-white/5 p-6 text-center shadow-glow">
-    <div className="text-xl font-black">What kind of RP are you looking for?</div>
-    <div className="mt-3 flex flex-wrap justify-center gap-3">
-      {["Structured", "Creative", "High-Risk", "Chill"].map((t) => (
-        <button
-          key={t}
-          onClick={() => { setRpFocus(t); playTick(); if (t === "Structured") jumpTo("#jobs"); if (t === "High-Risk") jumpTo("#jobs"); if (t === "Creative") jumpTo("#jobs"); if (t === "Chill") jumpTo("#features"); }}
-          className="rounded-full border border-white/10 bg-black/30 px-5 py-2 text-sm font-bold hover:bg-white/10"
-        >
-          {t}
-        </button>
-      ))}
-    </div>
-  </div>
-</section>
 <section id="why" className="mx-auto max-w-6xl px-5 py-12">
   <div className="grid gap-8 md:grid-cols-12 md:items-start">
     <motion.div data-reveal-id="whyLeft" {...fadeUp("whyLeft")} className="md:col-span-5">
@@ -646,7 +733,10 @@ const jumpTo = (hash: string) => {
 
 <NarrativeLine text="Every scene adds to the city’s story." />
 <section id="staff" className="mx-auto max-w-6xl px-5 py-12">
-        <motion.h2 data-reveal-id="staffH" {...fadeUp("staffH")} className="text-2xl font-black">Staff</motion.h2>
+        <motion.h2 data-reveal-id="staffH" {...fadeUp("staffH")} className="text-2xl font-black"><span className="inline-flex items-center gap-2">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
+      Staff
+    </span></motion.h2>
         <motion.p data-reveal-id="staffP" {...fadeUp("staffP", 0.05)} className="mt-2 max-w-3xl text-vital-muted">
           The crew keeping the city running smoothly (and occasionally yelling at tickets).
         </motion.p>
@@ -663,31 +753,204 @@ const jumpTo = (hash: string) => {
                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
               )}
             >
-              {t.label}
+              <span className="relative inline-flex items-center gap-2">
+                <span>{t.label}</span>
+                {staffFilter === t.key ? (
+                  <motion.span
+                    layoutId="staffTabActive"
+                    className="absolute -bottom-2 left-0 right-0 h-[2px] rounded-full bg-vital-orange"
+                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                  />
+                ) : null}
+              </span>
             </button>
           ))}
         </motion.div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {staffFiltered.map((s, idx) => (
+  <div className="mt-7 space-y-8">
+    {/* Owners */}
+    {staffFiltered.filter((s) => s.roles.some((r) => /owner/i.test(r.badge))).length > 0 ? (
+      <div>
+        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M3 7l4.5 4L12 5l4.5 6L21 7v12H3V7zm2 10h14v-6.3l-2.3 2.1L12 7l-4.7 6.8L5 10.7V17z"/>
+            </svg>
+          </span>
+          Owners
+        </div>
+
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {staffFiltered
+            .filter((s) => s.roles.some((r) => /owner/i.test(r.badge)))
+            .map((s, idx) => (
+              <motion.div
+                key={`${s.name}-${idx}`}
+                className="min-w-[260px] snap-start rounded-xl2 border border-white/10 bg-gradient-to-b from-vital-orange/15 to-white/5 p-5 shadow-glow"
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-lg font-black">{s.name}</div>
+                    <div className="mt-1 text-sm font-semibold text-white/70">{s.roles.map((r) => r.title).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(" · ")}</div>
+                  </div>
+                  <div className="rounded-full border border-vital-orange/40 bg-vital-orange/15 px-3 py-1 text-xs font-extrabold text-white/90">
+                    {s.roles[0]?.badge}
+                  </div>
+                </div>
+                {s.discord ? <div className="mt-4 text-sm font-extrabold text-white/80">{s.discord}</div> : null}
+                <RolePills roles={s.roles} />
+              </motion.div>
+            ))}
+        </div>
+      </div>
+    ) : null}
+
+    {/* Community Manager */}
+    {staffFiltered.filter((s) => s.roles.some((r) => /community manager/i.test(r.badge))).length > 0 ? (
+      <div>
+        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M3 10v4c0 1.1.9 2 2 2h1l2 4h2l-2-4h3l8 3V5l-8 3H5c-1.1 0-2 .9-2 2zm14-2.2V16l-6-2.25V10.05L17 7.8z"/>
+            </svg>
+          </span>
+          Community Manager
+        </div>
+
+        {staffFiltered
+          .filter((s) => s.roles.some((r) => /community manager/i.test(r.badge)))
+          .slice(0, 1)
+          .map((s) => (
             <motion.div
               key={s.name}
-              data-reveal-id={`staff${idx}`}
-              {...fadeUp(`staff${idx}`, 0.02)}
-              className="rounded-xl2 border border-white/10 bg-white/5 p-5 shadow-glow"
+              className="rounded-xl2 border border-white/10 bg-white/5 p-6 shadow-glow"
+              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-base font-black">{s.name}</div>
-                <div className="rounded-full border border-vital-orange/30 bg-vital-orange/15 px-3 py-2 text-xs font-extrabold text-white/90">
-                  {s.badge}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="text-lg font-black">{s.name}</div>
+                  <div className="mt-1 text-sm font-semibold text-vital-muted">{s.title}</div>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-extrabold text-emerald-200">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  {s.roles[0]?.badge}
                 </div>
               </div>
-              <div className="mt-3 text-sm font-semibold text-vital-muted">{s.title}</div>
-              {s.discord ? <div className="mt-3 text-sm font-extrabold text-white/85">{s.discord}</div> : null}
+              {s.discord ? <div className="mt-4 text-sm font-extrabold text-white/85">{s.discord}</div> : null}
+              <RolePills roles={s.roles} />
             </motion.div>
           ))}
+      </div>
+    ) : null}
+
+
+    {/* Head of Subgroups */}
+    {staffFiltered.filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge))).length > 0 ? (
+      <div className="mt-8">
+        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M12 2l3 5.5 6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 8.4l6-.9L12 2z"/>
+            </svg>
+          </span>
+          Head of Subgroups
         </div>
-      </section>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {staffFiltered
+            .filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge)))
+            .map((s, idx) => (
+              <motion.div
+                key={`${s.name}-${idx}`}
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
+              >
+                <StaffPersonCard person={s} />
+              </motion.div>
+            ))}
+        </div>
+      </div>
+    ) : null}
+
+    {/* Developers */}
+    {staffFiltered.filter((s) => s.roles.some((r) => /developer/i.test(r.badge))).length > 0 ? (
+      <div className="mt-8">
+        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M8 17l-5-5 5-5 1.4 1.4L5.8 12l3.6 3.6L8 17zm8 0l-1.4-1.4L18.2 12l-3.6-3.6L16 7l5 5-5 5z"/>
+            </svg>
+          </span>
+          Developers
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {staffFiltered
+            .filter((s) => s.roles.some((r) => /developer/i.test(r.badge)))
+            .map((s, idx) => (
+              <motion.div
+                key={`${s.name}-${idx}`}
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
+              >
+                <StaffPersonCard person={s} />
+              </motion.div>
+            ))}
+        </div>
+      </div>
+    ) : null}
+
+    {/* Administrators */}
+    <div>
+      <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+            <path d="M12 2l8 4v6c0 5-3.4 9.7-8 10-4.6-.3-8-5-8-10V6l8-4zm0 3.2L6 8v4c0 3.9 2.5 7.7 6 8 3.5-.3 6-4.1 6-8V8l-6-2.8z"/>
+          </svg>
+        </span>
+        Administrators
+      </div>
+
+      <div className="space-y-3">
+        {staffFiltered
+          .filter((s) => s.roles.some((r) => /administrator/i.test(r.badge)))
+          .map((s, idx) => (
+            <motion.div
+              key={`${s.name}-${idx}`}
+              className="group rounded-xl2 border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
+              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-base font-black">{s.name}</div>
+                  <div className="mt-1 text-sm font-semibold text-vital-muted">{s.title}</div>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-2 text-xs font-extrabold text-white/85">
+                  <span className="h-2 w-2 rounded-full bg-vital-orange/90" />
+                  {s.roles[0]?.badge}
+                </div>
+              </div>
+              {s.discord ? <div className="mt-3 text-sm font-extrabold text-white/80">{s.discord}</div> : null}
+            </motion.div>
+          ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Footer */}
       
@@ -746,12 +1009,16 @@ function BentoCard({
   revealId: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  
+  const idx = Number(String(revealId).replace(/\D+/g, "")) || 0;
+  const delay = Math.min(idx, 12) * 0.06;
   return (
     <motion.div
       data-reveal-id={revealId}
       initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.6, ease: [0.2, 0.9, 0.2, 1], delay }}
       className={cn(
         "relative overflow-hidden rounded-xl2 border border-white/10 bg-white/5 p-6 shadow-glow",
         "transition-transform hover:-translate-y-0.5",
@@ -842,12 +1109,16 @@ function JobDeckCard({
 
 function JobCard({ job, revealId }: { job: { key: string; title: string; summary: string; highlights: string[]; badge?: string }; revealId: string }) {
   const prefersReducedMotion = useReducedMotion();
+  
+  const idx = Number(String(revealId).replace(/\D+/g, "")) || 0;
+  const delay = Math.min(idx, 12) * 0.06;
   return (
     <motion.div
       data-reveal-id={revealId}
       initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.6, ease: [0.2, 0.9, 0.2, 1], delay }}
       className="group relative overflow-hidden rounded-xl2 border border-white/10 bg-white/5 p-5 shadow-glow"
     >
       <div
@@ -1031,6 +1302,229 @@ function NarrativeLine({ text }: { text: string }) {
     </div>
   );
 }
+
+
+
+function BackgroundFX({ reduced }: { reduced: boolean }) {
+  useEffect(() => {
+    if (reduced) return;
+
+    const root = document.documentElement;
+    let raf = 0;
+    let tx = 0;
+    let ty = 0;
+
+    const onMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1..1
+      const y = (e.clientY / window.innerHeight - 0.5) * 2; // -1..1
+      tx = x;
+      ty = y;
+      if (!raf) {
+        raf = window.requestAnimationFrame(() => {
+          root.style.setProperty("--px", String(tx));
+          root.style.setProperty("--py", String(ty));
+          raf = 0;
+        });
+      }
+    };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove as any);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [reduced]);
+
+  return (
+    <div aria-hidden="true" className={cn("bgfx", reduced && "bgfx-reduced")}>
+      {/* Base animated gradient */}
+      <div className="bgfx-base" />
+
+      {/* Parallax layers */}
+      <div className="bgfx-layer bgfx-layer-1" />
+      <div className="bgfx-layer bgfx-layer-2" />
+
+      {/* Glow blobs */}
+      <div className="bgfx-blob bgfx-blob-a" />
+      <div className="bgfx-blob bgfx-blob-b" />
+      <div className="bgfx-blob bgfx-blob-c" />
+
+      {/* Subtle texture */}
+      <div className="bgfx-noise" />
+      <div className="bgfx-vignette" />
+    </div>
+  );
+}
+
+
+function RolePills({ roles }: { roles: Array<{ badge: string; title: string }> }) {
+  const uniq = Array.from(new Map(roles.map((r) => [r.badge, r])).values());
+  const iconFor = (badge: string) => {
+    const b = (badge || "").toLowerCase();
+    if (b.includes("server owner")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M12 2l4 7 8 1-6 5 2 8-8-4-8 4 2-8-6-5 8-1 4-7z"/>
+      </svg>
+    );
+    if (b.includes("community manager")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M4 4h16v11H7l-3 3V4zm4 5h8v2H8V9zm0-3h8v2H8V6z"/>
+      </svg>
+    );
+    if (b.includes("head administrator")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M5 8l2-3 5 4 5-4 2 3-7 6-7-6zm0 8h14v2H5v-2z"/>
+      </svg>
+    );
+    if (b.includes("administrator")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M12 2l8 4v6c0 5-3.5 9.7-8 10-4.5-.3-8-5-8-10V6l8-4z"/>
+      </svg>
+    );
+    if (b.includes("head of subgroups")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M12 2l3 5.5 6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 8.4l6-.9L12 2z"/>
+      </svg>
+    );
+    if (b.includes("developer")) return (
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+        <path d="M8 17l-5-5 5-5 1.4 1.4L5.8 12l3.6 3.6L8 17zm8 0l-1.4-1.4L18.2 12l-3.6-3.6L16 7l5 5-5 5zM10 19l3-14h2l-3 14h-2z"/>
+      </svg>
+    );
+    return null;
+  };
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {uniq.map((r) => (
+        <span
+          key={r.badge}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-extrabold text-white/80"
+          title={r.title}
+        >
+          {iconFor(r.badge)}
+          {r.badge}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+
+function StaffPersonCard({
+  person,
+  primaryTitle,
+}: {
+  person: { name: string; discord?: string; roles: Array<{ badge: string; title: string }> };
+  primaryTitle?: string;
+}) {
+  const title =
+    primaryTitle ||
+    person.roles
+      .map((r) => r.title)
+      .filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .join(" · ");
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10">
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100">
+        <div className="absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-vital-orange/10 blur-3xl" />
+      </div>
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="truncate text-lg font-black">{person.name}</div>
+          <div className="mt-1 leading-snug text-sm font-semibold text-white/70">{title}</div>
+          {person.discord ? <div className="mt-3 text-sm font-extrabold text-white/80">{person.discord}</div> : null}
+          <RolePills roles={person.roles} />
+        </div>
+
+        <div className="hidden shrink-0 sm:block">
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-white/80">
+            {person.roles[0]?.badge}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function SocialsCard() {
+  const socials = (siteConfig as any).socials as Array<{ key: string; label: string; url: string }> | undefined;
+  if (!socials || socials.length === 0) return null;
+
+  const Icon = ({ k }: { k: string }) => {
+    const key = (k || "").toLowerCase();
+    if (key === "x" || key === "twitter") {
+      // Simple X mark
+      return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M18.9 2H22l-6.8 7.8L23 22h-6.8l-5.3-6.9L4.9 22H2l7.4-8.5L1 2h6.9l4.8 6.3L18.9 2zm-1.2 18h1.9L7.2 3.9H5.2L17.7 20z"/>
+        </svg>
+      );
+    }
+    if (key === "instagram") {
+      return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 4.2A3.8 3.8 0 1 1 8.2 12 3.8 3.8 0 0 1 12 8.2zm0 2A1.8 1.8 0 1 0 13.8 12 1.8 1.8 0 0 0 12 10.2zM17.6 6.6a1 1 0 1 1-1-1 1 1 0 0 1 1 1z"/>
+        </svg>
+      );
+    }
+    if (key === "tiktok") {
+      return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M16.5 3c.6 2.2 2.2 3.9 4.5 4.5v3.1c-1.8-.1-3.4-.7-4.8-1.7v7.1c0 3.3-2.7 6-6 6s-6-2.7-6-6 2.7-6 6-6c.4 0 .9.1 1.3.2v3.4c-.4-.2-.8-.3-1.3-.3-1.5 0-2.8 1.2-2.8 2.8S8.5 19 10 19s2.8-1.2 2.8-2.8V3h3.7z"/>
+        </svg>
+      );
+    }
+    if (key === "youtube") {
+      return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.7 4.6 12 4.6 12 4.6s-5.7 0-7.5.5A3 3 0 0 0 2.4 7.2 31.8 31.8 0 0 0 2 12a31.8 31.8 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.8.5 7.5.5 7.5.5s5.7 0 7.5-.5a3 3 0 0 0 2.1-2.1A31.8 31.8 0 0 0 22 12a31.8 31.8 0 0 0-.4-4.8zM10 15.5v-7l6 3.5-6 3.5z"/>
+        </svg>
+      );
+    }
+    return (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2V11h2v5.5zM12 9.5a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 9.5z"/>
+      </svg>
+    );
+  };
+
+  return (
+    <div className="scroll-accent rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-base font-black text-white/90">Follow us</div>
+          <div className="mt-1 text-sm font-semibold text-white/60">Clips, updates, and community chaos.</div>
+        </div>
+        <div className="hidden sm:block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-extrabold text-white/70">
+          Socials
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {socials.map((s) => (
+          <a
+            key={s.key}
+            href={s.url}
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-extrabold text-white/80 transition hover:bg-white/10"
+          >
+            <span className="text-white/85 group-hover:text-white">
+              <Icon k={s.key} />
+            </span>
+            <span className="truncate">{s.label}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 function ValueCard({ title, desc }: { title: string; desc: string }) {
   return (
