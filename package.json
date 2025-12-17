@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:docs": "vite build && node scripts/copy-to-docs.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
