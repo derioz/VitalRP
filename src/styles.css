@@ -381,17 +381,15 @@ html { scroll-behavior: smooth; }
   border-radius: 999px;
 }
 
-@media (max-width: 900px) {
-  .staff-grid {
-    grid-template-columns: 1fr !important;
-  }
 
-  .staff-card {
-    padding: 1rem;
-  }
-
-  .staff-spotlight {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+/* Staff accent strip (explicit element, ensures shows on all cards) */
+.staff-accent{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background: var(--accent);
+  opacity: .85;
+  pointer-events:none;
 }

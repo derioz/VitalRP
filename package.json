@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "build:docs": "vite build && node scripts/copy-to-docs.mjs"
+    "build:docs": "vite build --outDir docs && echo vitalrp.net > docs/CNAME"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",

@@ -292,9 +292,7 @@ const jumpTo = (hash: string) => {
       return "";
     }
 
-    const safe = areaParts.filter((x) => !/^rgba?\(/i.test(x) && !/^#/i.test(x));
-
-    return safe.join(", ");
+    return areaParts.join(", ");
   };
 
   const secondaryBadges = (p: { roles: Array<{ badge: string; title: string }> }) => {
@@ -899,6 +897,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.25 }}
                       transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
                     >
+                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -945,7 +944,8 @@ const staggerItem = (id: string, delay = 0) => ({
                     viewport={{ once: true, amount: 0.25 }}
                     transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
                   >
-                    <div className="staff-card__top">
+                    <div className="staff-accent" aria-hidden="true" />
+                      <div className="staff-card__top">
                       <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                       <div className="min-w-0">
                         <div className="staff-name">{s.name}</div>
@@ -990,6 +990,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1038,6 +1039,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1086,6 +1088,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
