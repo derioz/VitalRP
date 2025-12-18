@@ -382,7 +382,8 @@ html { scroll-behavior: smooth; }
 }
 
 
-/* Staff accent strip (explicit element, ensures shows on all cards) */
+/* Vital RP Staff accents: ensure Admin red strip always shows */
+.staff-card { position: relative; }
 .staff-accent{
   position:absolute;
   left:0;
@@ -390,6 +391,6 @@ html { scroll-behavior: smooth; }
   bottom:0;
   width:4px;
   background: var(--accent);
-  opacity: .85;
-  pointer-events:none;
+  opacity: 0.95;
+  border-radius: 16px 0 0 16px;
 }

@@ -283,10 +283,10 @@ const jumpTo = (hash: string) => {
     // If nothing meaningful, use a gentle fallback based on primary badge
     if (areaParts.length === 0) {
       const b = (primary?.badge || "").toLowerCase();
-      if (b.includes("server owner")) return "Ownership";
+      if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
       if (b.includes("community manager")) return "Community";
       if (b.includes("head administrator")) return "Staff Leadership";
-      if (b.includes("administrator")) return "Administration";
+      if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
       if (b.includes("head of subgroups")) return "Subgroup Leadership";
       if (b.includes("developer")) return "Development";
       return "";
@@ -304,10 +304,10 @@ const jumpTo = (hash: string) => {
   
   const accentFor = (badge: string) => {
     const b = (badge || "").toLowerCase();
-    if (b.includes("server owner")) return "Ownership";
+    if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
     if (b.includes("community manager")) return "rgba(255,200,0,0.9)";
     if (b.includes("head administrator")) return "rgba(255,90,0,0.9)";
-    if (b.includes("administrator")) return "Administration";
+    if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
     if (b.includes("head of subgroups")) return "rgba(180,120,255,0.9)";
     if (b.includes("developer")) return "rgba(120,255,180,0.9)";
     return "rgba(255,255,255,0.5)";
@@ -897,7 +897,6 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.25 }}
                       transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
                     >
-                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -944,8 +943,7 @@ const staggerItem = (id: string, delay = 0) => ({
                     viewport={{ once: true, amount: 0.25 }}
                     transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
                   >
-                    <div className="staff-accent" aria-hidden="true" />
-                      <div className="staff-card__top">
+                    <div className="staff-card__top">
                       <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                       <div className="min-w-0">
                         <div className="staff-name">{s.name}</div>
@@ -990,7 +988,6 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
-                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1039,7 +1036,6 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
-                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1088,7 +1084,6 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
-                      <div className="staff-accent" aria-hidden="true" />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1579,6 +1574,24 @@ function RolePills({ roles }: { roles: Array<{ badge: string; title: string }> }
 }
 
 
+
+function staffAccentFor(roles: Array<{ badge: string; title: string }>) {
+  const badges = roles.map((r) => (r.badge || "").toLowerCase());
+  // Only match Owner + Admin to Discord colors (per your request)
+  if (badges.some((b) => b.includes("server owner") || b === "owner")) return "rgba(229,231,235,0.95)";
+  if (badges.some((b) => b.includes("administrator"))) return "rgba(255,45,45,0.95)";
+  return "rgba(255,255,255,0.25)";
+}
+
+function safeStaffText(s: string) {
+  const v = (s || "").trim();
+  // Never allow color strings to render as visible text
+  if (!v) return "";
+  if (v.startsWith("rgb(") || v.startsWith("rgba(") || v.startsWith("#")) return "";
+  return v;
+}
+
+
 function StaffPersonCard({
   person,
   primaryTitle,
@@ -1586,16 +1599,19 @@ function StaffPersonCard({
   person: { name: string; discord?: string; roles: Array<{ badge: string; title: string }> };
   primaryTitle?: string;
 }) {
-  const title =
-    primaryTitle ||
-    person.roles
-      .map((r) => r.title)
-      .filter(Boolean)
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .join(" · ");
+  const cleanedTitles = person.roles
+    .map((r) => safeStaffText(r.title))
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
+
+  const title = safeStaffText(primaryTitle || cleanedTitles.join(" · ")) ||
+    (person.roles.some((r) => (r.badge || "").toLowerCase().includes("administrator")) ? "Administration" : "Ownership");
+
+  const accent = staffAccentFor(person.roles);
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10">
+    <div className="staff-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10" style={{ ["--accent" as any]: accent }}>
+      <div className="staff-accent" />
       <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100">
         <div className="absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-vital-orange/10 blur-3xl" />
       </div>
