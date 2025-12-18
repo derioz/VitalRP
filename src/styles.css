@@ -380,3 +380,18 @@ html { scroll-behavior: smooth; }
   padding: .35rem .65rem;
   border-radius: 999px;
 }
+
+@media (max-width: 900px) {
+  .staff-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .staff-card {
+    padding: 1rem;
+  }
+
+  .staff-spotlight {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
