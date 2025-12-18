@@ -283,10 +283,10 @@ const jumpTo = (hash: string) => {
     // If nothing meaningful, use a gentle fallback based on primary badge
     if (areaParts.length === 0) {
       const b = (primary?.badge || "").toLowerCase();
-      if (b.includes("server owner")) return "Ownership";
+      if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
       if (b.includes("community manager")) return "Community";
       if (b.includes("head administrator")) return "Staff Leadership";
-      if (b.includes("administrator")) return "Administration";
+      if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
       if (b.includes("head of subgroups")) return "Subgroup Leadership";
       if (b.includes("developer")) return "Development";
       return "";
@@ -304,10 +304,10 @@ const jumpTo = (hash: string) => {
   
   const accentFor = (badge: string) => {
     const b = (badge || "").toLowerCase();
-    if (b.includes("server owner")) return "Ownership";
+    if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
     if (b.includes("community manager")) return "rgba(255,200,0,0.9)";
     if (b.includes("head administrator")) return "rgba(255,90,0,0.9)";
-    if (b.includes("administrator")) return "Administration";
+    if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
     if (b.includes("head of subgroups")) return "rgba(180,120,255,0.9)";
     if (b.includes("developer")) return "rgba(120,255,180,0.9)";
     return "rgba(255,255,255,0.5)";
@@ -890,13 +890,14 @@ const staggerItem = (id: string, delay = 0) => ({
                   return (
                     <motion.div
                       key={`${s.name}-${idx}`}
-                      className="staff-card staff-card--featured min-w-[280px] snap-start"
+                      className="staff-card staff-card--featured min-w-[280px] snap-start relative"
                       style={{ ["--accent" as any]: accent }}
                       initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.25 }}
                       transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
                     >
+                    <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-full w-[5px] rounded-l-[24px]" style={{ background: accent }} />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -936,13 +937,14 @@ const staggerItem = (id: string, delay = 0) => ({
                 return (
                   <motion.div
                     key={s.name}
-                    className="staff-card staff-card--spotlight"
+                    className="staff-card staff-card--spotlight relative"
                     style={{ ["--accent" as any]: accent }}
                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.25 }}
                     transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
                   >
+                    <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-full w-[5px] rounded-l-[24px]" style={{ background: accent }} />
                     <div className="staff-card__top">
                       <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                       <div className="min-w-0">
@@ -988,6 +990,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                    <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-full w-[5px] rounded-l-[24px]" style={{ background: accent }} />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1036,6 +1039,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                    <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-full w-[5px] rounded-l-[24px]" style={{ background: accent }} />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
@@ -1084,6 +1088,7 @@ const staggerItem = (id: string, delay = 0) => ({
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
                     >
+                    <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-full w-[5px] rounded-l-[24px]" style={{ background: accent }} />
                       <div className="staff-card__top">
                         <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
                         <div className="min-w-0">
