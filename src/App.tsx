@@ -240,6 +240,80 @@ const jumpTo = (hash: string) => {
     return normalizedStaff;
   }, [staffFilter, normalizedStaff]);
 
+  
+  const staffRank = (badge: string) => {
+    const b = (badge || "").toLowerCase();
+    if (b.includes("server owner")) return 100;
+    if (b.includes("community manager")) return 90;
+    if (b.includes("head administrator")) return 80;
+    if (b.includes("administrator")) return 70;
+    if (b.includes("head of subgroups")) return 60;
+    if (b.includes("developer")) return 50;
+    return 10;
+  };
+
+  const pickPrimaryRole = (roles: Array<{ badge: string; title: string }>) => {
+    return [...roles].sort((a, b) => staffRank(b.badge) - staffRank(a.badge))[0] || roles[0];
+  };
+
+  const uniq = <T,>(arr: T[]) => Array.from(new Set(arr));
+
+  const normalizeAreaBits = (raw: string) => {
+    let t = (raw || "").trim();
+    if (!t) return [] as string[];
+
+    // remove obvious role words so subtitle doesn't repeat badges
+    t = t.replace(/\bowner\b/ig, "").replace(/\badministrator\b/ig, "").replace(/\bcommunity manager\b/ig, "");
+    t = t.replace(/\bhead\s+administrator\b/ig, "").replace(/\bhead\s+of\b/ig, "");
+    t = t.replace(/\bstaff\b/ig, "");
+
+    t = t.replace(/\s*&\s*/g, ", ").replace(/\s+and\s+/ig, ", ");
+    t = t.replace(/\s{2,}/g, " ").trim();
+    if (!t) return [] as string[];
+
+    // split on commas
+    const parts = t.split(",").map((p) => p.trim()).filter(Boolean);
+    return parts;
+  };
+
+  const personAreasText = (p: { roles: Array<{ badge: string; title: string }> }) => {
+    const primary = pickPrimaryRole(p.roles);
+    const areaParts = uniq(p.roles.flatMap((r) => normalizeAreaBits(r.title)));
+
+    // If nothing meaningful, use a gentle fallback based on primary badge
+    if (areaParts.length === 0) {
+      const b = (primary?.badge || "").toLowerCase();
+      if (b.includes("server owner")) return "Server Ownership";
+      if (b.includes("community manager")) return "Community";
+      if (b.includes("head administrator")) return "Staff Leadership";
+      if (b.includes("administrator")) return "Administration";
+      if (b.includes("head of subgroups")) return "Subgroup Leadership";
+      if (b.includes("developer")) return "Development";
+      return "";
+    }
+
+    return areaParts.join(", ");
+  };
+
+  const secondaryBadges = (p: { roles: Array<{ badge: string; title: string }> }) => {
+    const primary = pickPrimaryRole(p.roles)?.badge;
+    return uniq(p.roles.map((r) => r.badge).filter((b) => b && b !== primary));
+  };
+
+
+  
+  const accentFor = (badge: string) => {
+    const b = (badge || "").toLowerCase();
+    if (b.includes("server owner")) return "rgba(255,122,0,0.95)";
+    if (b.includes("community manager")) return "rgba(255,200,0,0.9)";
+    if (b.includes("head administrator")) return "rgba(255,90,0,0.9)";
+    if (b.includes("administrator")) return "rgba(120,170,255,0.9)";
+    if (b.includes("head of subgroups")) return "rgba(180,120,255,0.9)";
+    if (b.includes("developer")) return "rgba(120,255,180,0.9)";
+    return "rgba(255,255,255,0.5)";
+  };
+
+
   const fadeUp = (id: string, delay = 0) => ({
     initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
     animate: reveal.has(id) ? { opacity: 1, y: 0 } : undefined,
@@ -732,225 +806,314 @@ const staggerItem = (id: string, delay = 0) => ({
 </section>
 
 <NarrativeLine text="Every scene adds to the city’s story." />
+
 <section id="staff" className="mx-auto max-w-6xl px-5 py-12">
-        <motion.h2 data-reveal-id="staffH" {...fadeUp("staffH")} className="text-2xl font-black"><span className="inline-flex items-center gap-2">
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
-      Staff
-    </span></motion.h2>
-        <motion.p data-reveal-id="staffP" {...fadeUp("staffP", 0.05)} className="mt-2 max-w-3xl text-vital-muted">
-          The crew keeping the city running smoothly (and occasionally yelling at tickets).
-        </motion.p>
+  <div className="staff-spotlight relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 md:p-8">
+    <div className="pointer-events-none staff-spotlight__bg absolute inset-0" />
 
-        <motion.div data-reveal-id="staffTabs" {...fadeUp("staffTabs", 0.05)} className="mt-4 flex flex-wrap gap-2">
-          {staffTabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setStaffFilter(t.key)}
-              className={cn(
-                "rounded-full border px-4 py-2 text-sm font-extrabold",
-                staffFilter === t.key
-                  ? "border-vital-orange/40 bg-vital-orange/15 text-white"
-                  : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
-              )}
-            >
-              <span className="relative inline-flex items-center gap-2">
-                <span>{t.label}</span>
-                {staffFilter === t.key ? (
-                  <motion.span
-                    layoutId="staffTabActive"
-                    className="absolute -bottom-2 left-0 right-0 h-[2px] rounded-full bg-vital-orange"
-                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
-                  />
-                ) : null}
-              </span>
-            </button>
-          ))}
-        </motion.div>
-
-  <div className="mt-7 space-y-8">
-    {/* Owners */}
-    {staffFiltered.filter((s) => s.roles.some((r) => /owner/i.test(r.badge))).length > 0 ? (
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-              <path d="M3 7l4.5 4L12 5l4.5 6L21 7v12H3V7zm2 10h14v-6.3l-2.3 2.1L12 7l-4.7 6.8L5 10.7V17z"/>
-            </svg>
-          </span>
-          Owners
-        </div>
-
-        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {staffFiltered
-            .filter((s) => s.roles.some((r) => /owner/i.test(r.badge)))
-            .map((s, idx) => (
-              <motion.div
-                key={`${s.name}-${idx}`}
-                className="min-w-[260px] snap-start rounded-xl2 border border-white/10 bg-gradient-to-b from-vital-orange/15 to-white/5 p-5 shadow-glow"
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-lg font-black">{s.name}</div>
-                    <div className="mt-1 text-sm font-semibold text-white/70">{s.roles.map((r) => r.title).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(" · ")}</div>
-                  </div>
-                  <div className="rounded-full border border-vital-orange/40 bg-vital-orange/15 px-3 py-1 text-xs font-extrabold text-white/90">
-                    {s.roles[0]?.badge}
-                  </div>
-                </div>
-                {s.discord ? <div className="mt-4 text-sm font-extrabold text-white/80">{s.discord}</div> : null}
-                <RolePills roles={s.roles} />
-              </motion.div>
-            ))}
-        </div>
-      </div>
-    ) : null}
-
-    {/* Community Manager */}
-    {staffFiltered.filter((s) => s.roles.some((r) => /community manager/i.test(r.badge))).length > 0 ? (
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-              <path d="M3 10v4c0 1.1.9 2 2 2h1l2 4h2l-2-4h3l8 3V5l-8 3H5c-1.1 0-2 .9-2 2zm14-2.2V16l-6-2.25V10.05L17 7.8z"/>
-            </svg>
-          </span>
-          Community Manager
-        </div>
-
-        {staffFiltered
-          .filter((s) => s.roles.some((r) => /community manager/i.test(r.badge)))
-          .slice(0, 1)
-          .map((s) => (
-            <motion.div
-              key={s.name}
-              className="rounded-xl2 border border-white/10 bg-white/5 p-6 shadow-glow"
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <div className="text-lg font-black">{s.name}</div>
-                  <div className="mt-1 text-sm font-semibold text-vital-muted">{s.title}</div>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-extrabold text-emerald-200">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  {s.roles[0]?.badge}
-                </div>
-              </div>
-              {s.discord ? <div className="mt-4 text-sm font-extrabold text-white/85">{s.discord}</div> : null}
-              <RolePills roles={s.roles} />
-            </motion.div>
-          ))}
-      </div>
-    ) : null}
-
-
-    {/* Head of Subgroups */}
-    {staffFiltered.filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge))).length > 0 ? (
-      <div className="mt-8">
-        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-              <path d="M12 2l3 5.5 6 .9-4.3 4.2 1 6-5.7-3-5.7 3 1-6L3 8.4l6-.9L12 2z"/>
-            </svg>
-          </span>
-          Head of Subgroups
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {staffFiltered
-            .filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge)))
-            .map((s, idx) => (
-              <motion.div
-                key={`${s.name}-${idx}`}
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
-              >
-                <StaffPersonCard person={s} />
-              </motion.div>
-            ))}
-        </div>
-      </div>
-    ) : null}
-
-    {/* Developers */}
-    {staffFiltered.filter((s) => s.roles.some((r) => /developer/i.test(r.badge))).length > 0 ? (
-      <div className="mt-8">
-        <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-              <path d="M8 17l-5-5 5-5 1.4 1.4L5.8 12l3.6 3.6L8 17zm8 0l-1.4-1.4L18.2 12l-3.6-3.6L16 7l5 5-5 5z"/>
-            </svg>
-          </span>
-          Developers
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {staffFiltered
-            .filter((s) => s.roles.some((r) => /developer/i.test(r.badge)))
-            .map((s, idx) => (
-              <motion.div
-                key={`${s.name}-${idx}`}
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
-              >
-                <StaffPersonCard person={s} />
-              </motion.div>
-            ))}
-        </div>
-      </div>
-    ) : null}
-
-    {/* Administrators */}
-    <div>
-      <div className="mb-3 flex items-center gap-2 text-sm font-black text-white/85">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/5">
+    <div className="relative">
+      <motion.h2 data-reveal-id="staffH" {...fadeUp("staffH")} className="text-2xl font-black md:text-4xl">
+        <span className="inline-flex items-center gap-2">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-            <path d="M12 2l8 4v6c0 5-3.4 9.7-8 10-4.6-.3-8-5-8-10V6l8-4zm0 3.2L6 8v4c0 3.9 2.5 7.7 6 8 3.5-.3 6-4.1 6-8V8l-6-2.8z"/>
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
           </svg>
+          Staff
         </span>
-        Administrators
-      </div>
+      </motion.h2>
 
-      <div className="space-y-3">
-        {staffFiltered
-          .filter((s) => s.roles.some((r) => /administrator/i.test(r.badge)))
-          .map((s, idx) => (
-            <motion.div
-              key={`${s.name}-${idx}`}
-              className="group rounded-xl2 border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.04 }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="truncate text-base font-black">{s.name}</div>
-                  <div className="mt-1 text-sm font-semibold text-vital-muted">{s.title}</div>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-2 text-xs font-extrabold text-white/85">
-                  <span className="h-2 w-2 rounded-full bg-vital-orange/90" />
-                  {s.roles[0]?.badge}
-                </div>
-              </div>
-              {s.discord ? <div className="mt-3 text-sm font-extrabold text-white/80">{s.discord}</div> : null}
-            </motion.div>
-          ))}
+      <motion.p data-reveal-id="staffP" {...fadeUp("staffP", 0.05)} className="mt-2 max-w-3xl text-vital-muted">
+        The people behind the scenes who keep Vital moving forward.
+      </motion.p>
+
+      {/* Overview chips */}
+      <motion.div data-reveal-id="staffOverview" {...fadeUp("staffOverview", 0.08)} className="mt-5 flex flex-wrap gap-2">
+        {(() => {
+          const total = normalizedStaff.length;
+          const owners = normalizedStaff.filter((s) => s.roles.some((r) => /owner/i.test(r.badge))).length;
+          const admins = normalizedStaff.filter((s) => s.roles.some((r) => /administrator/i.test(r.badge) || /head administrator/i.test(r.badge))).length;
+          const leads = normalizedStaff.filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge))).length;
+          const devs = normalizedStaff.filter((s) => s.roles.some((r) => /developer/i.test(r.badge))).length;
+
+          const items = [
+            { label: "Total", value: total },
+            { label: "Owners", value: owners },
+            { label: "Admins", value: admins },
+            { label: "Subgroup Leads", value: leads },
+            { label: "Developers", value: devs },
+          ];
+
+          return items.map((it) => (
+            <div key={it.label} className="staff-chip">
+              <span className="staff-chip__label">{it.label}</span>
+              <span className="staff-chip__value">{it.value}</span>
+            </div>
+          ));
+        })()}
+      </motion.div>
+
+      {/* Tabs */}
+      <motion.div data-reveal-id="staffTabs" {...fadeUp("staffTabs", 0.1)} className="mt-6 flex flex-wrap gap-2">
+        {staffTabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setStaffFilter(t.key)}
+            className={cn("staff-tab", staffFilter === t.key && "is-active")}
+          >
+            <span className="relative inline-flex items-center gap-2">
+              <span>{t.label}</span>
+              {staffFilter === t.key ? (
+                <motion.span
+                  layoutId="staffTabActive"
+                  className="staff-tab__underline"
+                  transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                />
+              ) : null}
+            </span>
+          </button>
+        ))}
+      </motion.div>
+
+      {/* Groups */}
+      <div className="mt-8 space-y-10">
+        {/* Owners */}
+        {staffFiltered.some((s) => s.roles.some((r) => /owner/i.test(r.badge))) ? (
+          <div>
+            <div className="staff-group-title">Ownership</div>
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {staffFiltered
+                .filter((s) => s.roles.some((r) => /owner/i.test(r.badge)))
+                .map((s, idx) => {
+                  const primary = pickPrimaryRole(s.roles);
+                  const accent = accentFor(primary?.badge);
+                  const extras = secondaryBadges(s);
+
+                  return (
+                    <motion.div
+                      key={`${s.name}-${idx}`}
+                      className="staff-card staff-card--featured min-w-[280px] snap-start"
+                      style={{ ["--accent" as any]: accent }}
+                      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.25 }}
+                      transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 10) * 0.06 }}
+                    >
+                      <div className="staff-card__top">
+                        <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
+                        <div className="min-w-0">
+                          <div className="staff-name">{s.name}</div>
+                          <div className="staff-sub">{personAreasText(s)}</div>
+                          {s.discord ? <div className="staff-handle">{s.discord}</div> : null}
+                        </div>
+                        <div className="staff-primary">{primary?.badge}</div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {extras.map((b) => (
+                          <span key={b} className="staff-pill">
+                            {b}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Community Manager */}
+        {staffFiltered.some((s) => s.roles.some((r) => /community manager/i.test(r.badge))) ? (
+          <div>
+            <div className="staff-group-title">Community</div>
+            {staffFiltered
+              .filter((s) => s.roles.some((r) => /community manager/i.test(r.badge)))
+              .slice(0, 1)
+              .map((s) => {
+                const primary = pickPrimaryRole(s.roles);
+                const accent = accentFor(primary?.badge);
+                const extras = secondaryBadges(s);
+
+                return (
+                  <motion.div
+                    key={s.name}
+                    className="staff-card staff-card--spotlight"
+                    style={{ ["--accent" as any]: accent }}
+                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.25 }}
+                    transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
+                  >
+                    <div className="staff-card__top">
+                      <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
+                      <div className="min-w-0">
+                        <div className="staff-name">{s.name}</div>
+                        <div className="staff-sub">{personAreasText(s)}</div>
+                        {s.discord ? <div className="staff-handle">{s.discord}</div> : null}
+                      </div>
+                      <div className="staff-primary">{primary?.badge}</div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {extras.map((b) => (
+                        <span key={b} className="staff-pill">
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+          </div>
+        ) : null}
+
+        {/* Administration */}
+        {staffFiltered.some((s) => s.roles.some((r) => /administrator/i.test(r.badge) || /head administrator/i.test(r.badge))) ? (
+          <div>
+            <div className="staff-group-title">Administration</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {staffFiltered
+                .filter((s) => s.roles.some((r) => /administrator/i.test(r.badge) || /head administrator/i.test(r.badge)))
+                .map((s, idx) => {
+                  const primary = pickPrimaryRole(s.roles);
+                  const accent = accentFor(primary?.badge);
+                  const extras = secondaryBadges(s);
+
+                  return (
+                    <motion.div
+                      key={`${s.name}-${idx}`}
+                      className="staff-card"
+                      style={{ ["--accent" as any]: accent }}
+                      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
+                    >
+                      <div className="staff-card__top">
+                        <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
+                        <div className="min-w-0">
+                          <div className="staff-name">{s.name}</div>
+                          <div className="staff-sub">{personAreasText(s)}</div>
+                          {s.discord ? <div className="staff-handle">{s.discord}</div> : null}
+                        </div>
+                        <div className="staff-primary">{primary?.badge}</div>
+                      </div>
+
+                      {extras.length ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {extras.map((b) => (
+                            <span key={b} className="staff-pill">
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Subgroup Leads */}
+        {staffFiltered.some((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge))) ? (
+          <div>
+            <div className="staff-group-title">Subgroup Leads</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {staffFiltered
+                .filter((s) => s.roles.some((r) => /head of subgroups/i.test(r.badge)))
+                .map((s, idx) => {
+                  const primary = pickPrimaryRole(s.roles);
+                  const accent = accentFor(primary?.badge);
+                  const extras = secondaryBadges(s);
+
+                  return (
+                    <motion.div
+                      key={`${s.name}-${idx}`}
+                      className="staff-card"
+                      style={{ ["--accent" as any]: accent }}
+                      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
+                    >
+                      <div className="staff-card__top">
+                        <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
+                        <div className="min-w-0">
+                          <div className="staff-name">{s.name}</div>
+                          <div className="staff-sub">{personAreasText(s)}</div>
+                          {s.discord ? <div className="staff-handle">{s.discord}</div> : null}
+                        </div>
+                        <div className="staff-primary">{primary?.badge}</div>
+                      </div>
+
+                      {extras.length ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {extras.map((b) => (
+                            <span key={b} className="staff-pill">
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Developers */}
+        {staffFiltered.some((s) => s.roles.some((r) => /developer/i.test(r.badge))) ? (
+          <div>
+            <div className="staff-group-title">Development</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {staffFiltered
+                .filter((s) => s.roles.some((r) => /developer/i.test(r.badge)))
+                .map((s, idx) => {
+                  const primary = pickPrimaryRole(s.roles);
+                  const accent = accentFor(primary?.badge);
+                  const extras = secondaryBadges(s);
+
+                  return (
+                    <motion.div
+                      key={`${s.name}-${idx}`}
+                      className="staff-card"
+                      style={{ ["--accent" as any]: accent }}
+                      initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1], delay: Math.min(idx, 12) * 0.03 }}
+                    >
+                      <div className="staff-card__top">
+                        <div className="staff-avatar">{s.name.slice(0, 1).toUpperCase()}</div>
+                        <div className="min-w-0">
+                          <div className="staff-name">{s.name}</div>
+                          <div className="staff-sub">{personAreasText(s)}</div>
+                          {s.discord ? <div className="staff-handle">{s.discord}</div> : null}
+                        </div>
+                        <div className="staff-primary">{primary?.badge}</div>
+                      </div>
+
+                      {extras.length ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {extras.map((b) => (
+                            <span key={b} className="staff-pill">
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   </div>
 </section>
+
 
       {/* Footer */}
       
