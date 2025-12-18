@@ -283,10 +283,10 @@ const jumpTo = (hash: string) => {
     // If nothing meaningful, use a gentle fallback based on primary badge
     if (areaParts.length === 0) {
       const b = (primary?.badge || "").toLowerCase();
-      if (b.includes("server owner")) return "Server Ownership";
+      if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
       if (b.includes("community manager")) return "Community";
       if (b.includes("head administrator")) return "Staff Leadership";
-      if (b.includes("administrator")) return "Administration";
+      if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
       if (b.includes("head of subgroups")) return "Subgroup Leadership";
       if (b.includes("developer")) return "Development";
       return "";
@@ -304,10 +304,10 @@ const jumpTo = (hash: string) => {
   
   const accentFor = (badge: string) => {
     const b = (badge || "").toLowerCase();
-    if (b.includes("server owner")) return "rgba(255,122,0,0.95)";
+    if (b.includes("server owner")) return "rgba(229,231,235,0.95)";
     if (b.includes("community manager")) return "rgba(255,200,0,0.9)";
     if (b.includes("head administrator")) return "rgba(255,90,0,0.9)";
-    if (b.includes("administrator")) return "rgba(120,170,255,0.9)";
+    if (b.includes("administrator")) return "rgba(255,45,45,0.95)";
     if (b.includes("head of subgroups")) return "rgba(180,120,255,0.9)";
     if (b.includes("developer")) return "rgba(120,255,180,0.9)";
     return "rgba(255,255,255,0.5)";

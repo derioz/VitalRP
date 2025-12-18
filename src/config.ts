@@ -103,12 +103,13 @@ connectUrl: "https://cfx.re/join/ogpvmv",
         { name: "Damon", badge: "Administrator", title: "Head of Whitelisting, Marketing, & Support Staff", discord: "@mcspace" },
         { name: "Rue", badge: "Administrator", title: "Head of Rules", discord: "@ruekatu" },
         { name: "Parzival", badge: "Administrator", title: "Administrator", discord: "@gtsdeathclutch" },
-        { name: "Beth", badge: "Administrator", title: "Head of Property Management", discord: "@authenticbeth" },
+        { name: "Peaches", badge: "Administrator", title: "Head of Property Management", discord: "@authenticbeth" },
 
         { name: "Damon", badge: "Head of Subgroups", title: "Whitelisting, Marketing, & Support Staff", discord: "@mcspace" },
+                { name: "Boo Berry", badge: "Head of Subgroups", title: "Business Management", discord: "@craysteens" },
         { name: "Chach", badge: "Head of Subgroups", title: "Content Creation", discord: "@cptchach" },
-        { name: "Boo Berry", badge: "Head of Subgroups", title: "Business Management", discord: "@craysteens" },
-        { name: "Beth", badge: "Head of Subgroups", title: "Property Management", discord: "@authenticbeth" },
+
+        { name: "Peaches", badge: "Head of Subgroups", title: "Property Management", discord: "@authenticbeth" },
 
         { name: "Jonsey", badge: "Developer", title: "Clothing Developer", discord: "@sail_jpg" },
       ] as StaffMember[],
