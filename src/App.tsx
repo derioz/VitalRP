@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import logo from "./assets/logo.png";
 import featured from "./assets/featured.png";
@@ -16,20 +16,39 @@ type ServerData = {
   pingText: string;
 };
 
-function useScrollProgress() {
-  const [p, setP] = useState(0);
+function useScrollProgressBar() {
+  const barRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
       const h = document.documentElement;
       const sc = h.scrollTop || document.body.scrollTop;
       const max = (h.scrollHeight - h.clientHeight) || 1;
-      setP(Math.min(1, Math.max(0, sc / max)));
+      const p = Math.min(1, Math.max(0, sc / max));
+
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${p})`;
+      }
     };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    update();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
-  return p;
+
+  return barRef;
 }
 
 function useRevealOnScroll() {
@@ -90,32 +109,6 @@ async function fetchFiveM(serverCodeOrAddress: string): Promise<{ players?: numb
 export default function App() {
 
 const [rpFocus, setRpFocus] = useState<string | null>(null);
-const [soundOn, setSoundOn] = useState(() => {
-  try {
-    return localStorage.getItem("vital_sound") === "1";
-  } catch {
-    return false;
-  }
-});
-
-const playTick = useCallback(() => {
-  if (!soundOn) return;
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.value = 520;
-    g.gain.value = 0.04;
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.03);
-    setTimeout(() => ctx.close(), 120);
-  } catch {
-    // ignore
-  }
-}, [soundOn]);
 
 useEffect(() => {
   // Scroll accents (cards/dividers glow when visible)
@@ -149,8 +142,8 @@ const jumpTo = (hash: string) => {
 };
 
   const prefersReducedMotion = useReducedMotion();
-  const progress = useScrollProgress();
-  const reveal = useRevealOnScroll();
+  const progressBarRef = useScrollProgressBar();
+const reveal = useRevealOnScroll();
 
   const rulesRef = useRef<HTMLElement | null>(null);
   const [showCta, setShowCta] = useState(false);
@@ -213,6 +206,31 @@ const jumpTo = (hash: string) => {
 
   const [staffFilter, setStaffFilter] = useState<(typeof staffTabs)[number]["key"]>("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const [showScrollTop, setShowScrollTop] = useState(false);
+  // Mobile: show "scroll to top" button after scrolling down a bit
+  useEffect(() => {
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      setShowScrollTop(y > 320);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    update();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
 
   const normalizedStaff = useMemo(() => {
     const map = new Map<string, { name: string; discord?: string; roles: Array<{ badge: string; title: string }> }>();
@@ -335,13 +353,16 @@ const staggerItem = (id: string, delay = 0) => ({
   return (
     <div className="min-h-screen vital-ambient">
       {/* Scroll progress */}
-      <div
-        className="fixed left-0 top-0 z-50 h-[3px]"
-        style={{
-          width: `${(progress * 100).toFixed(2)}%`,
-          background: "linear-gradient(90deg, #ffb300, #ff7a00, #ff4d00)",
-        }}
-      />
+      <div className="fixed left-0 top-0 z-50 h-[3px] w-full">
+        <div
+          ref={progressBarRef}
+          className="h-full w-full origin-left"
+          style={{
+            transform: "scaleX(0)",
+            background: "linear-gradient(90deg, #ffb300, #ff7a00, #ff4d00)",
+          }}
+        />
+      </div>
 
       {/* Nav */}
       <div className="sticky top-0 z-40 border-b border-vital-line bg-vital-bg/60 backdrop-blur">
@@ -350,7 +371,8 @@ const staggerItem = (id: string, delay = 0) => ({
             <img src={logo} alt="Vital RP logo" className="h-9 w-9" />
             <span>VITAL RP</span>
           </a>
-          <div className="hidden items-center gap-4 md:flex hidden sm:flex">
+          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-4 md:flex">
             <a className="text-sm font-semibold text-white/80 hover:text-white" href="#features"><span className="inline-flex items-center gap-2">
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-8h8V3h-8v10z"/></svg>
       Features
@@ -367,41 +389,57 @@ const staggerItem = (id: string, delay = 0) => ({
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
       Staff
     </span></a>
-            
-            <button
-              aria-label="Open menu"
-              onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white/85 hover:bg-white/10 sm:hidden"
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-                <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/>
-              </svg>
-            </button>
-<a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
-               href={siteConfig.storeUrl} target="_blank" rel="noreferrer">Tebex</a>
-            <a className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-[#41c4c3]/20 hover:border-[#41c4c3]/40 hover:text-white"
-               href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Discord</a>
-
-<button
-  onClick={() => {
-    const next = !soundOn;
-    setSoundOn(next);
-    try { localStorage.setItem("vital_sound", next ? "1" : "0"); } catch {}
-    // Play a tick only when turning on
-    if (!soundOn) setTimeout(() => { try { (document.activeElement as any)?.blur?.(); } catch {} playTick(); }, 0);
-  }}
-  className="rounded-xl border border-[#5865F2]/40 bg-[#5865F2]/20 px-4 py-2 text-sm font-extrabold text-white hover:bg-[#5865F2]/30 hover:border-[#5865F2]/60"
-  aria-label="Toggle UI sound"
+<a
+  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+  href={siteConfig.discordInvite}
+  target="_blank"
+  rel="noreferrer"
 >
-  {soundOn ? "Sound: On" : "Sound: Off"}
-</button>
+  Discord
+</a>
+
+<div className="relative group">
+  <button
+    type="button"
+    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white/90 hover:bg-white/10 hover:border-white/20 hover:text-white"
+    aria-label="Forums"
+  >
+    Forums
+  </button>
+  <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-black/80 px-3 py-1 text-xs font-extrabold tracking-wide text-white opacity-0 shadow-lg backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
+    COMING SOON!
+  </div>
+</div>
+
+<a
+  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+  href={siteConfig.storeUrl}
+  target="_blank"
+  rel="noreferrer"
+>
+  Tebex
+</a>
+
             <a className="rounded-xl border border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange px-4 py-2 text-sm font-extrabold text-black hover:brightness-105"
                href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Connect</a>
           </div>
+
+<div className="md:hidden">
+  <button
+    type="button"
+    onClick={() => setMobileMenuOpen(v => !v)}
+    className="rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10"
+    aria-label="Open menu"
+  >
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  </button>
+</div>
+        </div>
         </div>
       </div>
-
-      {/* Hero */}
+{/* Hero */}
 <header id="top" className="mx-auto max-w-6xl px-5 pb-6 pt-14">
   <div className="grid items-start gap-6 lg:grid-cols-12">
     <motion.div data-reveal-id="heroLeft" {...fadeUp("heroLeft")} className="lg:col-span-7">
@@ -419,7 +457,7 @@ const staggerItem = (id: string, delay = 0) => ({
            href={siteConfig.connectUrl} target="_blank" rel="noreferrer">Join the City</a>
         <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
            href={siteConfig.discordInvite} target="_blank" rel="noreferrer">Join Discord</a>
-        <a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
+<a className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
            href="#rules">Quick Rules</a>
       </div>
 
@@ -555,21 +593,34 @@ const staggerItem = (id: string, delay = 0) => ({
 
               <div className="p-4 space-y-2">
                 {[
-                  { href: "#top", label: "Top" },
-                  { href: "#features", label: "Features" },
-                  { href: "#jobs", label: "Jobs" },
-                  { href: "#rules", label: "Rules" },
-                  { href: "#staff", label: "Staff" },
+                  { href: "#forums", label: "Forums", kind: "primary" as const },
+                  { href: "#features", label: "Features", kind: "default" as const },
+                  { href: "#jobs", label: "Jobstest", kind: "default" as const },
+                  { href: "#rules", label: "Rules", kind: "default" as const },
+                  { href: "#staff", label: "Staff", kind: "default" as const },
                 ].map((item) => (
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-extrabold text-white/85 hover:bg-white/10"
+                    onClick={(e) => {
+                      if (item.href === "#forums") e.preventDefault(); // no destination yet
+                      setMobileMenuOpen(false);
+                    }}
+                    className={
+                      "flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-extrabold transition " +
+                      (item.kind === "primary"
+                        ? "border-white/10 bg-gradient-to-r from-vital-amber to-vital-orange text-black hover:brightness-105"
+                        : "border-white/10 bg-white/5 text-white/85 hover:bg-white/10")
+                    }
                   >
                     {item.label}
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/60" fill="currentColor" aria-hidden="true">
-                      <path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4 9 6z"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className={"h-4 w-4 " + (item.kind === "primary" ? "text-black/70" : "text-white/60")}
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 6l6 6-6 6-1.4-1.4L12.2 12 7.6 7.4 9 6z" />
                     </svg>
                   </a>
                 ))}
@@ -1151,6 +1202,21 @@ const staggerItem = (id: string, delay = 0) => ({
           Join Discord
         </a>
       </motion.div>
+
+{/* Mobile scroll-to-top button */}
+<button
+  type="button"
+  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+  aria-label="Back to top"
+  className={
+    "fixed bottom-5 right-5 z-50 md:hidden rounded-full border border-white/10 bg-black/40 p-3 text-white shadow-lg backdrop-blur transition-all duration-200 " +
+    (showScrollTop ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-2")
+  }
+>
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5l-6 6m6-6 6 6M12 5v14" />
+  </svg>
+</button>
     </div>
   );
 }
@@ -1685,7 +1751,7 @@ function SocialsCard() {
         ))}
       </div>
     </div>
-  );
+);
 }
 
 
