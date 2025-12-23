@@ -1,25 +1,52 @@
-# Vital RP Website (Vite + React + Tailwind) - GitHub Pages Ready
+# Vital RP Landing Page
 
-## 1) Edit your settings
-Open `src/config.ts` and set:
-- `discordInvite`
-- `connectUrl` (your `https://cfx.re/join/XXXXXX`)
-- `serverAddress` (optional, for the status widget)
-- `rulesFullUrl` (your public rules doc link)
+A premium, high-performance landing page for the Vital RP FiveM community, focused on storytelling and immersion.
 
-## 2) Run locally
+## Created By
+**Damon**
+
+## Project Overview
+This project is built using:
+- React 19
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Lucide React
+
+## Development
+
+To start the development server:
+
 ```bash
 npm install
 npm run dev
 ```
 
-## 3) Deploy to GitHub Pages
-1. Push this repo to GitHub (branch: `main`).
-2. In GitHub repo settings:
-   - Settings → Pages
-   - Build and deployment → Source: **GitHub Actions**
-3. Push to `main` again if needed. The workflow will build and deploy.
+## Deployment
 
-### Notes
-- The FiveM status lookup is “best effort”. If your server is private or blocks the public endpoint, it will show Unavailable.
-- `vite.config.ts` uses `base: "./"` so it works on GitHub Pages without needing your repo name.
+This project is configured for **GitHub Pages** deployment using the `docs/` folder on the `main` branch.
+
+### How to Deploy
+
+1. **Build the Project**
+   Run the build command to generate the production files in the `docs` folder. This also ensures the `CNAME` file is correctly placed for the custom domain.
+   ```bash
+   npm run build
+   ```
+
+2. **Push to GitHub**
+   Commit the changes, specifically ensuring the `docs` folder is included, and push to the `main` branch.
+   ```bash
+   git add .
+   git commit -m "Deploy update"
+   git push origin main
+   ```
+
+3. **GitHub Settings**
+   - Go to your repository on GitHub.
+   - Navigate to **Settings** > **Pages**.
+   - Under **Build and deployment**, select **Source** as "Deploy from a branch".
+   - Under **Branch**, select `main` and the `/docs` folder.
+   - Click **Save**.
+
+The site will be live at `https://vitalrp.net` (once DNS propagates).

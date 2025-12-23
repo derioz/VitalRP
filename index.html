@@ -1,35 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Vital RP | Story-first roleplay</title>
+    <meta name="title" content="Vital RP | Story-first roleplay" />
+    <meta name="description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta name="theme-color" content="#f97316" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <title>Vital RP</title>
-
-    <meta name="description" content="Serious roleplay, active staff, and a community-built experience." />
-    <meta name="robots" content="index, follow" />
-
-    <!-- Open Graph / Discord Embed -->
-    <meta property="og:title" content="Vital RP" />
-    <meta property="og:description" content="Serious roleplay, active staff, and a community-built experience." />
-    <meta property="og:url" content="https://vitalrp.net/" />
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vitalrp.net" />
+    <meta property="og:title" content="Vital RP | Story-first roleplay" />
+    <meta property="og:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta property="og:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
     <meta property="og:site_name" content="Vital RP" />
-    <meta property="og:image" content="https://vitalrp.net/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Vital RP" />
-    <meta name="twitter:description" content="Serious roleplay, active staff, and a community-built experience." />
-    <meta name="twitter:image" content="https://vitalrp.net/og-image.png" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://vitalrp.net" />
+    <meta property="twitter:title" content="Vital RP | Story-first roleplay" />
+    <meta property="twitter:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta property="twitter:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
 
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" />
-  </head>
-  <body>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Outfit', 'sans-serif'],
+              tech: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              vital: {
+                50: '#fff7ed',
+                100: '#ffedd5',
+                200: '#fed7aa',
+                300: '#fdba74',
+                400: '#fb923c',
+                500: '#f97316',
+                600: '#ea580c',
+                700: '#c2410c',
+                800: '#9a3412',
+                900: '#7c2d12',
+                950: '#431407',
+              },
+              dark: {
+                900: '#0a0a0a',
+                800: '#121212',
+                700: '#1e1e1e',
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-dark-900 text-white antialiased overflow-x-hidden">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
