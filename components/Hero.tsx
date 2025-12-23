@@ -190,7 +190,7 @@ export const Hero: React.FC = () => {
             >
                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
                  <span className="text-xs font-tech text-gray-400 uppercase">Live Stats</span>
-                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                 <div className={`w-2 h-2 rounded-full animate-pulse ${serverStats.online ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`}></div>
                </div>
                
                <div className="space-y-4">

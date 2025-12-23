@@ -6,7 +6,7 @@ const staffGroups = [
   {
     title: "Management",
     items: [
-      { name: "Purm", role: "Owner", color: "amber" },
+      { name: "Grumpy", role: "Owner", color: "amber" },
       { name: "Nez", role: "Owner", color: "amber" },
       { name: "Soup", role: "Owner", color: "amber" },
       { name: "Bug", role: "Senior Admin", color: "red" },
