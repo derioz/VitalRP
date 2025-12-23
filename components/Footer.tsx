@@ -1,5 +1,6 @@
-import React from 'react';
-import { Youtube, Instagram } from 'lucide-react';
+import React, { useState } from 'react';
+import { Youtube, Instagram, Ghost } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // Centered vertically in 100x100 box (Y: 15-95)
 // Matches Navbar logo geometry
@@ -63,6 +64,8 @@ const TikTokLogo = ({ className }: { className?: string }) => (
 );
 
 export const Footer: React.FC = () => {
+  const [foundEasterEgg, setFoundEasterEgg] = useState(false);
+
   const links = [
     { label: 'Home', href: '#home' },
     { label: 'Rules', href: 'https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0', isExternal: true },
@@ -142,10 +145,26 @@ export const Footer: React.FC = () => {
             © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
           </p>
           
-          <div className="flex items-center gap-2 order-1 md:order-2 bg-dark-900/50 px-3 py-1.5 rounded-full border border-white/5 hover:border-vital-500/20 transition-colors cursor-default">
-             <span className="text-gray-500 text-[10px] font-tech uppercase tracking-widest">Created by Damon</span>
-             <img src="https://r2.fivemanage.com/image/hVrQuL5nJWbT.png" alt="Crown" className="w-5 h-5 object-contain" />
-          </div>
+          <motion.div 
+            className="flex items-center gap-2 order-1 md:order-2 bg-dark-900/50 px-3 py-1.5 rounded-full border border-white/5 hover:border-vital-500/50 transition-colors cursor-pointer select-none group/dev"
+            onClick={() => setFoundEasterEgg(!foundEasterEgg)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+             <span className={`text-[10px] font-tech uppercase tracking-widest transition-colors ${foundEasterEgg ? 'text-vital-500 font-bold' : 'text-gray-500'}`}>
+               {foundEasterEgg ? 'Damon was here' : 'Created by Damon'}
+             </span>
+             <motion.div
+               animate={{ rotate: foundEasterEgg ? 180 : 0 }}
+               transition={{ type: "spring", stiffness: 200, damping: 10 }}
+             >
+               {foundEasterEgg ? (
+                 <Ghost className="w-5 h-5 text-vital-500" />
+               ) : (
+                 <img src="https://r2.fivemanage.com/image/hVrQuL5nJWbT.png" alt="Crown" className="w-5 h-5 object-contain opacity-70 group-hover/dev:opacity-100 transition-opacity" />
+               )}
+             </motion.div>
+          </motion.div>
         </div>
       </div>
     </footer>
