@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Copy, Check, Users, Wifi, ArrowRight, Zap, Globe } from 'lucide-react';
 import { Button } from './Button';
 
@@ -13,6 +13,12 @@ const CFX_SERVER_ID = 'ogpvmv';
 export const Hero: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [serverStats, setServerStats] = useState({ online: false, players: 0, max: 2048 });
+  const { scrollY } = useScroll();
+
+  // Parallax effects for Hero specifically
+  const yText = useTransform(scrollY, [0, 300], [0, 100]);
+  const yImage = useTransform(scrollY, [0, 300], [0, -50]);
+  const opacityHero = useTransform(scrollY, [0, 400], [1, 0]);
 
   const copyIp = () => {
     navigator.clipboard.writeText(SERVER_IP);
@@ -30,6 +36,7 @@ export const Hero: React.FC = () => {
           setServerStats({ online: true, players: data.Data.clients, max: data.Data.sv_maxclients });
         }
       } catch (e) {
+        // Fallback for demo/dev purposes or if API is unreachable
         setServerStats({ online: true, players: 412, max: 2048 });
       }
     };
@@ -37,30 +44,26 @@ export const Hero: React.FC = () => {
   }, []);
 
   return (
-    <section id="home" className="relative w-full bg-dark-900 pt-32 pb-16 lg:pt-48 lg:pb-32 overflow-hidden">
+    <section id="home" className="relative w-full pt-32 pb-16 lg:pt-48 lg:pb-32 overflow-hidden">
       
-      {/* 1. BACKGROUND ELEMENTS */}
-      {/* Radiant Glow Top Right */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-vital-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
-      {/* Radiant Glow Bottom Left */}
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none translate-y-1/3 -translate-x-1/3"></div>
-      
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
+      {/* Hero-specific localized glow (adds to the global parallax) */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-vital-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2 mix-blend-screen"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           
           {/* 2. LEFT COLUMN: Content */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+          <motion.div 
+            style={{ y: yText, opacity: opacityHero }}
+            className="flex flex-col items-center lg:items-start text-center lg:text-left"
+          >
             
             {/* Badge */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase tracking-widest mb-6"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase tracking-widest mb-6 backdrop-blur-sm"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -75,7 +78,7 @@ export const Hero: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-4">
+              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-4 drop-shadow-2xl">
                 VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">RP</span>
               </h1>
               <p className="text-xl sm:text-2xl text-gray-400 font-light tracking-wide mb-8">
@@ -111,7 +114,7 @@ export const Hero: React.FC = () => {
               {/* IP Copy Component */}
               <div className="relative group flex items-center">
                 <div className="absolute inset-0 bg-white/5 rounded-lg blur-sm group-hover:bg-white/10 transition-all"></div>
-                <div className="relative flex items-center bg-dark-800 border border-white/10 rounded-lg p-1 pr-4 pl-4 h-[54px]">
+                <div className="relative flex items-center bg-dark-800/80 backdrop-blur-md border border-white/10 rounded-lg p-1 pr-4 pl-4 h-[54px]">
                   <div className="flex flex-col items-start mr-8">
                     <span className="text-[10px] text-gray-500 font-tech uppercase tracking-wider">Server IP</span>
                     <span className="text-white font-tech font-bold">{SERVER_IP}</span>
@@ -147,12 +150,13 @@ export const Hero: React.FC = () => {
                </div>
             </div>
 
-          </div>
+          </motion.div>
 
           {/* 3. RIGHT COLUMN: Visual Composition */}
           <motion.div 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
+            style={{ y: yImage }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative hidden lg:block"
           >
@@ -186,7 +190,7 @@ export const Hero: React.FC = () => {
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="absolute -top-12 -left-8 z-20 bg-dark-800 border border-white/10 p-5 rounded-xl shadow-2xl w-64"
+              className="absolute -top-12 -left-8 z-20 bg-dark-800/90 backdrop-blur-md border border-white/10 p-5 rounded-xl shadow-2xl w-64"
             >
                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
                  <span className="text-xs font-tech text-gray-400 uppercase">Live Stats</span>

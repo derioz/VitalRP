@@ -25,6 +25,27 @@ const faqs = [
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -42,14 +63,17 @@ export const FAQ: React.FC = () => {
           <p className="text-gray-400">Everything you need to know before flying in.</p>
         </div>
 
-        <div className="space-y-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="space-y-4"
+        >
           {faqs.map((faq, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              variants={itemVariants}
               className="border border-white/10 rounded-lg bg-dark-900 overflow-hidden"
             >
               <button
@@ -78,7 +102,7 @@ export const FAQ: React.FC = () => {
               </AnimatePresence>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
       </div>
     </section>

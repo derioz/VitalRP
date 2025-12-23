@@ -9,8 +9,7 @@ const values = [
     description: "We believe the best stories come from conflict, flaws, and failure. We prioritize character development and scene integrity over 'winning' a shootout or chase.",
     icon: BookOpen,
     className: "md:col-span-2 md:row-span-1",
-    gradient: "from-vital-600/20 to-transparent",
-    delay: 0
+    gradient: "from-vital-600/20 to-transparent"
   },
   {
     id: "02",
@@ -18,8 +17,7 @@ const values = [
     description: "Your voice shapes the city. We actively listen to feedback and hold regular town halls.",
     icon: Users,
     className: "md:col-span-1 md:row-span-1",
-    gradient: "from-blue-500/20 to-transparent",
-    delay: 0.1
+    gradient: "from-blue-500/20 to-transparent"
   },
   {
     id: "03",
@@ -27,8 +25,7 @@ const values = [
     description: "A strict zero-tolerance policy for harassment. We protect our safe, inclusive environment aggressively.",
     icon: ShieldCheck,
     className: "md:col-span-1 md:row-span-1",
-    gradient: "from-red-500/20 to-transparent",
-    delay: 0.2
+    gradient: "from-red-500/20 to-transparent"
   },
   {
     id: "04",
@@ -36,8 +33,7 @@ const values = [
     description: "Custom asset management ensuring high FPS even in dense areas.",
     icon: Zap,
     className: "md:col-span-1 md:row-span-1",
-    gradient: "from-yellow-500/20 to-transparent",
-    delay: 0.3
+    gradient: "from-yellow-500/20 to-transparent"
   },
   {
     id: "05",
@@ -45,17 +41,37 @@ const values = [
     description: "No spawned money. Every dollar in circulation is earned, spent, and circulated by players owning businesses and providing services.",
     icon: Scale,
     className: "md:col-span-1 md:row-span-1",
-    gradient: "from-emerald-500/20 to-transparent",
-    delay: 0.4
+    gradient: "from-emerald-500/20 to-transparent"
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Values: React.FC = () => {
   return (
-    <section id="values" className="py-24 bg-dark-900 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-vital-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+    <section id="values" className="py-24 relative overflow-hidden">
+       {/* Transparent BG to let parallax show through gaps */}
+       <div className="absolute inset-0 bg-dark-900/70 backdrop-blur-md"></div>
+       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
@@ -65,6 +81,7 @@ export const Values: React.FC = () => {
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="max-w-xl text-center md:text-left"
           >
             <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
@@ -80,6 +97,7 @@ export const Values: React.FC = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-gray-400 max-w-sm text-sm text-center md:text-right font-sans leading-relaxed"
           >
             Vital RP isn't just a server; it's a standard. We are dedicated to providing the highest quality roleplay environment on FiveM.
@@ -87,15 +105,18 @@ export const Values: React.FC = () => {
         </div>
 
         {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[minmax(180px,auto)]">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[minmax(180px,auto)]"
+        >
           {values.map((item) => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: item.delay, duration: 0.5 }}
-              className={`relative group p-8 rounded-2xl border border-white/5 bg-dark-800 hover:border-vital-500/30 transition-all duration-500 overflow-hidden ${item.className}`}
+              variants={itemVariants}
+              className={`relative group p-8 rounded-2xl border border-white/5 bg-dark-800/80 backdrop-blur hover:border-vital-500/30 transition-all duration-500 overflow-hidden ${item.className}`}
             >
               {/* Hover Gradient Background */}
               <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
@@ -124,7 +145,7 @@ export const Values: React.FC = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
       </div>
     </section>

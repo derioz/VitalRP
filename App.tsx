@@ -11,6 +11,7 @@ import { FAQ } from './components/FAQ';
 import { JoinCTA } from './components/JoinCTA';
 import { Footer } from './components/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
+import { ParallaxBackground } from './components/ParallaxBackground';
 
 function App() {
   const { scrollYProgress } = useScroll();
@@ -21,15 +22,20 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white">
+    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative">
       {/* Horizontal Scroll Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-vital-500 to-vital-400 origin-left z-[100]"
         style={{ scaleX }}
       />
 
+      {/* Global Background */}
+      <ParallaxBackground />
+
       <Navbar />
-      <main>
+      
+      {/* Main Content - Relative to sit on top of background */}
+      <main className="relative z-10">
         <Hero />
         <Features />
         <Values />
@@ -39,7 +45,12 @@ function App() {
         <FAQ />
         <JoinCTA />
       </main>
-      <Footer />
+      
+      {/* Footer needs specific z-index handling */}
+      <div className="relative z-10">
+        <Footer />
+      </div>
+      
       <ScrollToTop />
     </div>
   );

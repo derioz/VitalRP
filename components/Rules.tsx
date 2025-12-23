@@ -45,6 +45,27 @@ const rules = [
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Rules: React.FC = () => {
   return (
     <section id="rules" className="py-24 bg-dark-800 relative overflow-hidden">
@@ -57,6 +78,7 @@ export const Rules: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
               SERVER <span className="text-vital-500">RULES</span>
@@ -67,14 +89,17 @@ export const Rules: React.FC = () => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
           {rules.map((rule, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              variants={itemVariants}
               className="bg-dark-900/50 backdrop-blur-sm border border-white/5 p-6 rounded-xl hover:border-vital-500/30 transition-colors group"
             >
               <div className="w-12 h-12 rounded-lg bg-vital-500/10 flex items-center justify-center mb-4 group-hover:bg-vital-500/20 transition-colors">
@@ -88,7 +113,7 @@ export const Rules: React.FC = () => {
               </p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <div className="mt-12 text-center">
           <a 

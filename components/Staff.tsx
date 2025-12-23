@@ -101,11 +101,31 @@ const getColorClasses = (color: string) => {
 const RoleIcon = ({ role, subRole, className, size }: { role: string, subRole?: string, className?: string, size?: number }) => {
   if (role === 'Owner') return <Crown className={className} size={size} />;
   if (role === 'Senior Admin') return <ShieldAlert className={className} size={size} />;
-  // Check both role and subRole for Clothing Dev to correctly show the Shirt icon for Jonesy
   if (role === 'Clothing Dev' || subRole === 'Clothing Dev') return <Shirt className={className} size={size} />;
   if (role === 'Senior Mod') return <ShieldCheck className={className} size={size} />;
   if (role === 'Mod' || role === 'Moderator') return <Gavel className={className} size={size} />;
   return <Shield className={className} size={size} />;
+};
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
 };
 
 interface StaffCardProps {
@@ -113,7 +133,7 @@ interface StaffCardProps {
   index: number;
 }
 
-const StaffCard: React.FC<StaffCardProps> = ({ member, index }) => {
+const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
   const [isRatMode, setIsRatMode] = useState(false);
   const colors = getColorClasses(member.color);
   const isSoup = member.name === 'Soup';
@@ -126,12 +146,9 @@ const StaffCard: React.FC<StaffCardProps> = ({ member, index }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
+      variants={itemVariants}
       onClick={handleClick}
-      className={`group relative h-40 bg-dark-800 rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup ? 'cursor-pointer' : ''}`}
+      className={`group relative h-40 bg-dark-800/80 backdrop-blur rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup ? 'cursor-pointer' : ''}`}
     >
       {/* Large Background Initial */}
       <div className="absolute -right-2 -bottom-4 font-display font-black text-[120px] leading-none text-white/[0.03] group-hover:text-white/[0.07] transition-colors select-none pointer-events-none">
@@ -199,14 +216,17 @@ const StaffCard: React.FC<StaffCardProps> = ({ member, index }) => {
 
 export const Staff: React.FC = () => {
   return (
-    <section id="staff" className="py-16 bg-dark-900 relative overflow-hidden">
+    <section id="staff" className="py-16 relative overflow-hidden">
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-dark-900/80 backdrop-blur-sm z-0"></div>
+
       {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-10">
          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-vital-900/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         
         {/* Header */}
         <div className="text-center mb-12">
@@ -243,11 +263,17 @@ export const Staff: React.FC = () => {
             </motion.div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+            >
               {group.items.map((member, index) => (
                 <StaffCard key={index} member={member} index={index} />
               ))}
-            </div>
+            </motion.div>
           </div>
         ))}
 

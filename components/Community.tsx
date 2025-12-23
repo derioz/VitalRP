@@ -26,6 +26,27 @@ const testimonials = [
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.7,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Community: React.FC = () => {
   return (
     <section id="community" className="py-24 bg-dark-900 relative border-t border-white/5">
@@ -38,6 +59,7 @@ export const Community: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
               PLAYER <span className="text-vital-500">STORIES</span>
@@ -48,14 +70,17 @@ export const Community: React.FC = () => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
           {testimonials.map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              variants={itemVariants}
               className="bg-dark-800 p-8 rounded-2xl border border-white/5 relative group hover:border-vital-500/30 transition-colors"
             >
               <Quote className="absolute top-8 right-8 text-vital-500/20 w-12 h-12" />
@@ -91,7 +116,7 @@ export const Community: React.FC = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

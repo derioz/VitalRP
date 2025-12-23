@@ -35,13 +35,37 @@ const features = [
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Features: React.FC = () => {
   return (
-    <section id="features" className="py-24 bg-dark-900 relative">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-vital-900 to-transparent opacity-50"></div>
+    <section id="features" className="py-24 relative">
+      {/* Semi-transparent background to show parallax behind */}
+      <div className="absolute inset-0 bg-dark-900/80 backdrop-blur-sm"></div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Decorative separator */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-vital-900 to-transparent opacity-50 z-20"></div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
             IMMERSIVE <span className="text-vital-500">FEATURES</span>
@@ -51,15 +75,18 @@ export const Features: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative p-8 rounded-xl bg-dark-800 border border-white/5 hover:border-vital-500/30 transition-all duration-300 hover:bg-dark-700/50"
+              variants={itemVariants}
+              className="group relative p-8 rounded-xl bg-dark-800/80 backdrop-blur border border-white/5 hover:border-vital-500/30 transition-all duration-300 hover:bg-dark-700/50"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-vital-500/10 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
               
@@ -78,7 +105,7 @@ export const Features: React.FC = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

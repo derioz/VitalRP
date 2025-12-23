@@ -63,12 +63,35 @@ const getSizeClasses = (size: string) => {
   }
 };
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Gallery: React.FC = () => {
   return (
-    <section id="gallery" className="py-32 bg-dark-900 relative overflow-hidden">
-      {/* Ambient Background */}
+    <section id="gallery" className="py-32 relative overflow-hidden">
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-dark-900/80 backdrop-blur-sm z-0"></div>
+
+      {/* Ambient Background Localized */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-vital-500/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/4"></div>
       
       {/* Noise Texture */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
@@ -78,9 +101,10 @@ export const Gallery: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-8">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="max-w-2xl text-center md:text-left"
           >
             <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight">
@@ -95,6 +119,7 @@ export const Gallery: React.FC = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
              <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" className="hidden md:flex items-center gap-3 group text-white font-display font-bold uppercase tracking-wider text-sm hover:text-vital-400 transition-colors">
                 <span>Join The Community</span>
@@ -106,14 +131,17 @@ export const Gallery: React.FC = () => {
         </div>
 
         {/* Cinematic Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-6 grid-flow-dense">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-6 grid-flow-dense"
+        >
           {galleryItems.map((item, index) => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
+              variants={itemVariants}
               className={`group relative rounded-xl overflow-hidden bg-dark-800 ${getSizeClasses(item.size)} shadow-2xl shadow-black/50`}
             >
               {/* Image */}
@@ -158,9 +186,7 @@ export const Gallery: React.FC = () => {
 
           {/* Social CTA Card */}
           <motion.div
-             initial={{ opacity: 0, scale: 0.95 }}
-             whileInView={{ opacity: 1, scale: 1 }}
-             viewport={{ once: true }}
+             variants={itemVariants}
              className="md:col-span-1 md:row-span-1 rounded-xl bg-gradient-to-br from-dark-800 to-dark-900 border border-white/5 p-8 flex flex-col justify-center items-center text-center group hover:border-vital-500/30 transition-colors relative overflow-hidden"
           >
              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-vital-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -179,7 +205,7 @@ export const Gallery: React.FC = () => {
              </div>
           </motion.div>
 
-        </div>
+        </motion.div>
       </div>
     </section>
   );

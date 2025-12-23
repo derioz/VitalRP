@@ -50,6 +50,27 @@ const factions = [
   }
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
 export const Factions: React.FC = () => {
   return (
     <section className="py-24 bg-dark-900 relative">
@@ -60,6 +81,7 @@ export const Factions: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
               CHOOSE YOUR <span className="text-vital-500">PATH</span>
@@ -70,14 +92,17 @@ export const Factions: React.FC = () => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
           {factions.map((faction, index) => (
             <motion.div
               key={faction.id}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              variants={itemVariants}
               className={`group relative overflow-hidden rounded-2xl border border-white/5 bg-dark-800 h-80 md:h-96 transition-all duration-500 ${faction.borderColor}`}
             >
               {/* Background Image with Overlay */}
@@ -119,7 +144,7 @@ export const Factions: React.FC = () => {
 
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
