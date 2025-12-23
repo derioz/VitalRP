@@ -21,17 +21,17 @@ const staffGroups: StaffGroup[] = [
       { name: "Grumpy", role: "Owner", subRole: "IFM", color: "amber" },
       { name: "Nez", role: "Owner", subRole: "LFM", color: "amber" },
       { name: "Soup", role: "Owner", color: "amber" },
-      { name: "Bug", role: "Senior Admin", color: "red" },
+      { name: "Bug", role: "Senior Admin", subRole: "Community Manager", color: "purple" },
     ]
   },
   {
     title: "Administration",
     items: [
-      { name: "Rue", role: "Admin", subRole: "Rules", color: "orange" },
-      { name: "Damon", role: "Admin", subRole: "Whitelist Team", color: "orange" },
-      { name: "Peaches", role: "Admin", subRole: "Property Mgmt", color: "orange" },
-      { name: "Parzival", role: "Admin", color: "orange" },
-      { name: "Artemis", role: "Admin", subRole: "LFM", color: "orange" },
+      { name: "Rue", role: "Admin", subRole: "Rules", color: "red" },
+      { name: "Damon", role: "Admin", subRole: "Whitelist Team", color: "red" },
+      { name: "Peaches", role: "Admin", subRole: "Property Mgmt", color: "red" },
+      { name: "Parzival", role: "Admin", color: "red" },
+      { name: "Artemis", role: "Admin", subRole: "LFM", color: "red" },
     ]
   },
   {
@@ -79,6 +79,14 @@ const getColorClasses = (color: string) => {
         glow: 'group-hover:shadow-[0_0_30px_rgba(250,204,21,0.2)]',
         gradient: 'from-yellow-500/20 to-transparent'
       };
+    case 'purple':
+      return {
+        text: 'text-purple-400',
+        bg: 'bg-purple-500',
+        border: 'group-hover:border-purple-500/50',
+        glow: 'group-hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]',
+        gradient: 'from-purple-500/20 to-transparent'
+      };
     default:
       return {
         text: 'text-vital-400',
@@ -100,7 +108,12 @@ const RoleIcon = ({ role, subRole, className, size }: { role: string, subRole?: 
   return <Shield className={className} size={size} />;
 };
 
-const StaffCard = React.memo(({ member, index }: { member: StaffMember, index: number }) => {
+interface StaffCardProps {
+  member: StaffMember;
+  index: number;
+}
+
+const StaffCard: React.FC<StaffCardProps> = ({ member, index }) => {
   const [isRatMode, setIsRatMode] = useState(false);
   const colors = getColorClasses(member.color);
   const isSoup = member.name === 'Soup';
@@ -182,9 +195,7 @@ const StaffCard = React.memo(({ member, index }: { member: StaffMember, index: n
       </div>
     </motion.div>
   );
-});
-
-StaffCard.displayName = 'StaffCard';
+};
 
 export const Staff: React.FC = () => {
   return (
@@ -234,7 +245,7 @@ export const Staff: React.FC = () => {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {group.items.map((member, index) => (
-                <StaffCard key={`${group.title}-${index}`} member={member} index={index} />
+                <StaffCard key={index} member={member} index={index} />
               ))}
             </div>
           </div>
