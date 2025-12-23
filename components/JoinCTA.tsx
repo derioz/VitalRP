@@ -46,16 +46,13 @@ export const JoinCTA: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <a href="https://cfx.re/join/ogpvmv" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full" icon={<Gamepad2 />}>
-                Connect to Server
-              </Button>
-            </a>
-            <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" className="w-full sm:w-auto">
-              <Button variant="secondary" size="lg" className="w-full" icon={<DiscordLogo className="w-6 h-6" />}>
-                Join Our Discord
-              </Button>
-            </a>
+            <Button href="https://cfx.re/join/ogpvmv" variant="primary" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
+              Connect to Server
+            </Button>
+            
+            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" variant="secondary" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
+              Join Our Discord
+            </Button>
           </div>
         </motion.div>
       </div>

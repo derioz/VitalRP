@@ -146,18 +146,28 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* Tebex Store */}
-            <a href="https://vitalrp.tebex.io/" target="_blank" rel="noreferrer">
-              <Button variant="ghost" size="sm" icon={<ShoppingCart size={18} />}>
-                Store
-              </Button>
-            </a>
+            <Button 
+              href="https://vitalrp.tebex.io/" 
+              target="_blank" 
+              rel="noreferrer" 
+              variant="ghost" 
+              size="sm" 
+              icon={<ShoppingCart size={18} />}
+            >
+              Store
+            </Button>
 
             {/* Discord */}
-            <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer">
-              <Button variant="ghost" size="sm" icon={<DiscordLogo className="w-[18px] h-[18px]" />}>
-                Discord
-              </Button>
-            </a>
+            <Button 
+              href="https://discord.gg/vitalrp" 
+              target="_blank" 
+              rel="noreferrer" 
+              variant="ghost" 
+              size="sm" 
+              icon={<DiscordLogo className="w-[18px] h-[18px]" />}
+            >
+              Discord
+            </Button>
 
             {/* Connect */}
             <Button variant="primary" size="sm" icon={<Gamepad2 size={18} />}>
@@ -200,17 +210,27 @@ export const Navbar: React.FC = () => {
                   Forums (Soon)
                 </Button>
 
-                 <a href="https://vitalrp.tebex.io/" target="_blank" rel="noreferrer" className="w-full">
-                   <Button variant="outline" fullWidth icon={<ShoppingCart size={18} />}>
+                 <Button 
+                    href="https://vitalrp.tebex.io/" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    variant="outline" 
+                    fullWidth 
+                    icon={<ShoppingCart size={18} />}
+                 >
                     Store
-                   </Button>
-                 </a>
+                 </Button>
 
-                 <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" className="w-full">
-                   <Button variant="outline" fullWidth icon={<DiscordLogo className="w-[18px] h-[18px]" />}>
+                 <Button 
+                    href="https://discord.gg/vitalrp" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    variant="outline" 
+                    fullWidth 
+                    icon={<DiscordLogo className="w-[18px] h-[18px]" />}
+                 >
                     Join Discord
-                  </Button>
-                 </a>
+                 </Button>
 
                 <Button variant="primary" fullWidth icon={<Gamepad2 size={18} />}>
                   Play Now

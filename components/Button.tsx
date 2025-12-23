@@ -1,12 +1,15 @@
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
   icon?: React.ReactNode;
   fullWidth?: boolean;
+  href?: string;
+  target?: string;
+  rel?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -16,6 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   icon,
   fullWidth = false,
+  href,
   ...props 
 }) => {
   // Removed transition-all to prevent conflict with Framer Motion transforms
@@ -76,6 +80,37 @@ export const Button: React.FC<ButtonProps> = ({
       tap: { scale: 0.95, y: 1 }
     }
   };
+
+  if (href) {
+    return (
+      <motion.a
+        href={href}
+        whileHover="hover"
+        whileTap="tap"
+        variants={animationVariants[variant]}
+        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+        className={`${baseStyles} ${variantsStyles[variant]} ${sizes[size]} ${widthClass} ${className}`}
+        {...(props as any)}
+      >
+        {/* Gloss/Shine Effect for Primary Button */}
+        {variant === 'primary' && (
+          <motion.div
+            className="absolute top-0 bottom-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
+            initial={{ left: "-100%" }}
+            variants={{
+              hover: { 
+                left: "200%", 
+                transition: { duration: 0.6, ease: "easeInOut" } 
+              }
+            }}
+          />
+        )}
+
+        {icon && <span className="mr-1 relative z-10">{icon}</span>}
+        <span className="relative z-10">{children}</span>
+      </motion.a>
+    );
+  }
 
   return (
     <motion.button

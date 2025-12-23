@@ -2,11 +2,23 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, ShieldAlert, Shield, Star, Rat, ShieldCheck, Gavel, Shirt } from 'lucide-react';
 
-const staffGroups = [
+interface StaffMember {
+  name: string;
+  role: string;
+  subRole?: string;
+  color: string;
+}
+
+interface StaffGroup {
+  title: string;
+  items: StaffMember[];
+}
+
+const staffGroups: StaffGroup[] = [
   {
     title: "Management",
     items: [
-      { name: "Purm", role: "Owner", subRole: "IFM", color: "amber" },
+      { name: "Grumpy", role: "Owner", subRole: "IFM", color: "amber" },
       { name: "Nez", role: "Owner", subRole: "LFM", color: "amber" },
       { name: "Soup", role: "Owner", color: "amber" },
       { name: "Bug", role: "Senior Admin", color: "red" },
@@ -25,7 +37,7 @@ const staffGroups = [
   {
     title: "Moderation Team",
     items: [
-      { name: "Jonesy", role: "Moderator", subRole: "Clothing Dev", color: "yellow" },
+      { name: "Jonesy", role: "Mod", subRole: "Clothing Dev", color: "yellow" },
       { name: "Plum", role: "Senior Mod", subRole: "Content & Events", color: "green" },
       { name: "Booberry", role: "Senior Mod", subRole: "Business Mgmt", color: "green" },
       { name: "Chach", role: "Mod", subRole: "Content & Events", color: "green" },
@@ -78,16 +90,17 @@ const getColorClasses = (color: string) => {
   }
 };
 
-const RoleIcon = ({ role, className, size }: { role: string, className?: string, size?: number }) => {
+const RoleIcon = ({ role, subRole, className, size }: { role: string, subRole?: string, className?: string, size?: number }) => {
   if (role === 'Owner') return <Crown className={className} size={size} />;
   if (role === 'Senior Admin') return <ShieldAlert className={className} size={size} />;
-  if (role === 'Clothing Dev') return <Shirt className={className} size={size} />;
+  // Check both role and subRole for Clothing Dev to correctly show the Shirt icon for Jonesy
+  if (role === 'Clothing Dev' || subRole === 'Clothing Dev') return <Shirt className={className} size={size} />;
   if (role === 'Senior Mod') return <ShieldCheck className={className} size={size} />;
   if (role === 'Mod' || role === 'Moderator') return <Gavel className={className} size={size} />;
   return <Shield className={className} size={size} />;
 };
 
-const StaffCard = ({ member, index }: { member: typeof staffGroups[0]['items'][0], index: number }) => {
+const StaffCard = React.memo(({ member, index }: { member: StaffMember, index: number }) => {
   const [isRatMode, setIsRatMode] = useState(false);
   const colors = getColorClasses(member.color);
   const isSoup = member.name === 'Soup';
@@ -130,7 +143,7 @@ const StaffCard = ({ member, index }: { member: typeof staffGroups[0]['items'][0
                   <Rat size={16} />
                 </motion.div>
               ) : (
-                <RoleIcon role={member.role} size={16} />
+                <RoleIcon role={member.role} subRole={member.subRole} size={16} />
               )}
             </div>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -169,7 +182,9 @@ const StaffCard = ({ member, index }: { member: typeof staffGroups[0]['items'][0
       </div>
     </motion.div>
   );
-};
+});
+
+StaffCard.displayName = 'StaffCard';
 
 export const Staff: React.FC = () => {
   return (
@@ -219,7 +234,7 @@ export const Staff: React.FC = () => {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {group.items.map((member, index) => (
-                <StaffCard key={index} member={member} index={index} />
+                <StaffCard key={`${group.title}-${index}`} member={member} index={index} />
               ))}
             </div>
           </div>
