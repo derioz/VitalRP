@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Car, Briefcase, Skull, DollarSign, Home, Shield } from 'lucide-react';
 
 const features = [
@@ -35,7 +35,7 @@ const features = [
   }
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
@@ -44,14 +44,14 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.21, 0.47, 0.32, 0.98]
+      ease: [0.21, 0.47, 0.32, 0.98] as const
     }
   }
 };

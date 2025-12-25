@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Plus, Minus, HelpCircle } from 'lucide-react';
 
 const faqs = [
@@ -25,7 +25,7 @@ const faqs = [
   }
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
@@ -34,14 +34,14 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.5,
-      ease: [0.21, 0.47, 0.32, 0.98]
+      ease: [0.21, 0.47, 0.32, 0.98] as const
     }
   }
 };

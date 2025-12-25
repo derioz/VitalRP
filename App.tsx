@@ -12,6 +12,7 @@ import { JoinCTA } from './components/JoinCTA';
 import { Footer } from './components/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ParallaxBackground } from './components/ParallaxBackground';
+import { ThemeProvider } from './components/ThemeContext';
 
 function App() {
   const { scrollYProgress } = useScroll();
@@ -22,37 +23,39 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative">
-      {/* Horizontal Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-vital-500 to-vital-400 origin-left z-[100]"
-        style={{ scaleX }}
-      />
+    <ThemeProvider>
+      <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative transition-colors duration-700">
+        {/* Horizontal Scroll Progress Bar */}
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-vital-500 to-vital-400 origin-left z-[100]"
+          style={{ scaleX }}
+        />
 
-      {/* Global Background */}
-      <ParallaxBackground />
+        {/* Global Background */}
+        <ParallaxBackground />
 
-      <Navbar />
-      
-      {/* Main Content - Relative to sit on top of background */}
-      <main className="relative z-10">
-        <Hero />
-        <Features />
-        <Values />
-        <Staff />
-        <Gallery />
-        <Rules />
-        <FAQ />
-        <JoinCTA />
-      </main>
-      
-      {/* Footer needs specific z-index handling */}
-      <div className="relative z-10">
-        <Footer />
+        <Navbar />
+        
+        {/* Main Content - Relative to sit on top of background */}
+        <main className="relative z-10">
+          <Hero />
+          <Features />
+          <Values />
+          <Staff />
+          <Gallery />
+          <Rules />
+          <FAQ />
+          <JoinCTA />
+        </main>
+        
+        {/* Footer needs specific z-index handling */}
+        <div className="relative z-10">
+          <Footer />
+        </div>
+        
+        <ScrollToTop />
       </div>
-      
-      <ScrollToTop />
-    </div>
+    </ThemeProvider>
   );
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Shield, Stethoscope, Skull, Briefcase, ArrowRight } from 'lucide-react';
 import { Button } from './Button';
 
@@ -50,7 +50,7 @@ const factions = [
   }
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
@@ -59,14 +59,14 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.8,
-      ease: [0.21, 0.47, 0.32, 0.98]
+      ease: [0.21, 0.47, 0.32, 0.98] as const
     }
   }
 };

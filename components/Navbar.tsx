@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Gamepad2, ShoppingCart, MessageSquare } from 'lucide-react';
+import { Menu, X, Gamepad2, ShoppingCart, MessageSquare, Snowflake } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
+import { useTheme } from './ThemeContext';
 
-// SVG Logo Component to match the provided image
-// Geometry updated to be 1:1 aspect ratio (80x80 visual weight) with parallel strokes
+// SVG Logo Component
 const VitalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
   <svg 
     viewBox="0 0 100 100" 
@@ -20,12 +20,6 @@ const VitalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
         <stop offset="100%" stopColor="#EF4444" /> {/* Red-500 */}
       </linearGradient>
     </defs>
-    {/* 
-      Symmetrical V shape
-      Outer points: (10,15), (50,95), (90,15) -> Width 80, Height 80 (1:1 ratio)
-      Inner points: (30,15), (50,55), (70,15)
-      Slope is exactly 2.0 for both inner and outer lines, creating constant thickness.
-    */}
     <path 
       d="M10 15 L50 95 L90 15 L70 15 L50 55 L30 15 Z" 
       fill="url(#vitalLogoGradient)" 
@@ -33,6 +27,21 @@ const VitalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
     />
   </svg>
 );
+
+// Better Santa Hat that fits the triangular logo
+const SantaHatOverlay = () => (
+  <motion.svg 
+    initial={{ opacity: 0, y: -10, rotate: -10 }}
+    animate={{ opacity: 1, y: 0, rotate: -10 }}
+    className="absolute -top-3 -left-3 w-8 h-8 pointer-events-none z-10 filter drop-shadow-lg"
+    viewBox="0 0 50 50"
+  >
+     <path d="M25 40 Q 10 40 5 35 Q 5 20 25 5 Q 40 25 45 35 Q 40 40 25 40" fill="#ef4444" />
+     <circle cx="45" cy="35" r="4" fill="white" />
+     <path d="M5 35 Q 15 42 25 40 Q 35 38 45 35 L 45 38 Q 35 44 25 44 Q 15 45 5 38 Z" fill="white" />
+  </motion.svg>
+);
+
 
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg 
@@ -51,8 +60,8 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
-  // Ref to store the timeout ID so we can clear it if the user mouses out quickly
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -64,14 +73,12 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const handleMouseEnter = () => {
-    // Set a delay before showing the tooltip to prevent accidental triggering
     hoverTimeoutRef.current = setTimeout(() => {
       setIsForumsHovered(true);
     }, 300);
   };
 
   const handleMouseLeave = () => {
-    // Clear the timeout if the user leaves before the delay finishes
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
@@ -96,8 +103,11 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <VitalLogo className="w-12 h-12 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]" />
+          <div className="flex items-center gap-3 relative">
+            <div className="relative">
+              <VitalLogo className="w-12 h-12 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]" />
+              {theme === 'winter' && <SantaHatOverlay />}
+            </div>
             <div className="flex flex-col">
               <span className="text-white font-display font-bold text-xl tracking-widest leading-none">VITAL</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600 font-tech text-xs tracking-[0.3em] leading-none font-bold">ROLEPLAY</span>
@@ -120,6 +130,17 @@ export const Navbar: React.FC = () => {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
             
+            {/* Theme Toggle */}
+            <motion.button
+              onClick={toggleTheme}
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              className={`p-2 rounded-full transition-colors ${theme === 'winter' ? 'bg-vital-500/20 text-vital-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+              title={theme === 'winter' ? "Switch to Default Theme" : "Switch to Winter Theme"}
+            >
+              <Snowflake size={18} />
+            </motion.button>
+
             {/* Forums Button with Tooltip */}
             <div 
               className="relative"
@@ -176,12 +197,21 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden text-white p-2"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X /> : <Menu />}
-          </button>
+          <div className="flex md:hidden items-center gap-4">
+            <motion.button
+              onClick={toggleTheme}
+              whileTap={{ scale: 0.9 }}
+              className={`p-2 rounded-full transition-colors ${theme === 'winter' ? 'bg-vital-500/20 text-vital-400' : 'bg-white/5 text-gray-400'}`}
+            >
+              <Snowflake size={18} />
+            </motion.button>
+            <button 
+              className="text-white p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
         </div>
       </div>
 

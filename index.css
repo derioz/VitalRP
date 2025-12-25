@@ -6,11 +6,11 @@
   background: #0a0a0a; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #f97316; 
+  background: rgb(var(--vital-500)); 
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ea580c; 
+  background: rgb(var(--vital-600)); 
 }
 
 /* Hide scrollbar on mobile (below 768px) */
@@ -21,5 +21,41 @@
   html, body {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
+  }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Default Vital Orange Theme */
+    --vital-50: 255 247 237;
+    --vital-100: 255 237 213;
+    --vital-200: 254 215 170;
+    --vital-300: 253 186 116;
+    --vital-400: 251 146 60;
+    --vital-500: 249 115 22;  /* #f97316 */
+    --vital-600: 234 88 12;
+    --vital-700: 194 65 12;
+    --vital-800: 154 52 18;
+    --vital-900: 124 45 18;
+    --vital-950: 67 20 7;
+  }
+
+  /* Winter Theme Overrides (Cyan/Ice) */
+  .theme-winter {
+    --vital-50: 236 254 255;
+    --vital-100: 207 250 254;
+    --vital-200: 165 243 252;
+    --vital-300: 103 232 249;
+    --vital-400: 34 211 238;
+    --vital-500: 6 182 212;   /* #06b6d4 (Cyan-500) */
+    --vital-600: 8 145 178;
+    --vital-700: 14 116 144;
+    --vital-800: 21 94 117;
+    --vital-900: 22 78 99;
+    --vital-950: 8 51 68;
   }
 }
