@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Youtube, Instagram, Ghost } from 'lucide-react';
+import { Youtube, Instagram, Ghost, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from './AuthProvider';
 
 // Centered vertically in 100x100 box (Y: 15-95)
 // Matches Navbar logo geometry
@@ -65,6 +66,7 @@ const TikTokLogo = ({ className }: { className?: string }) => (
 
 export const Footer: React.FC = () => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
+  const { login, user } = useAuth();
 
   const links = [
     { label: 'Home', href: '#home' },
@@ -141,9 +143,22 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-gray-600 text-xs font-sans order-2 md:order-1">
-            © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
-          </p>
+          
+          {/* Secret Admin Login Trigger */}
+          <div className="flex items-center gap-4 order-2 md:order-1">
+             <p className="text-gray-600 text-xs font-sans">
+              © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
+             </p>
+             {!user && (
+               <button 
+                 onClick={login}
+                 className="text-white/10 hover:text-vital-500 transition-colors duration-500"
+                 aria-label="Admin Access"
+               >
+                 <Lock size={12} />
+               </button>
+             )}
+          </div>
           
           <motion.div 
             className="flex items-center gap-2 order-1 md:order-2 bg-dark-900/50 px-3 py-1.5 rounded-full border border-white/5 hover:border-vital-500/50 transition-colors cursor-pointer select-none group/dev"

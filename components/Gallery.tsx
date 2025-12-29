@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { MapPin, ArrowUpRight, Instagram, Camera } from 'lucide-react';
+import { MapPin, ArrowUpRight, Camera } from 'lucide-react';
+import { EditableImage } from './EditableImage';
+import { EditableGalleryField } from './EditableGalleryField';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 interface GalleryItem {
   id: number;
@@ -11,7 +14,8 @@ interface GalleryItem {
   size: 'large' | 'tall' | 'wide' | 'small';
 }
 
-const galleryItems: GalleryItem[] = [
+// Fallback data for when Supabase is not connected
+const initialGalleryItems: GalleryItem[] = [
   {
     id: 1,
     src: "https://r2.fivemanage.com/image/X8BG7CABWS9D.png",
@@ -85,6 +89,58 @@ const itemVariants: Variants = {
 };
 
 export const Gallery: React.FC = () => {
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(initialGalleryItems);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch initial data from Supabase
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      fetchGallery();
+    } else {
+      setLoading(false); // Skip loading if no DB
+    }
+  }, []);
+
+  const fetchGallery = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('gallery_items')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        setGalleryItems(data as GalleryItem[]);
+      }
+    } catch (error) {
+      console.warn('Could not fetch gallery from Supabase, using fallback data.', error);
+      // We keep the initialGalleryItems
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Callback to refresh local state after an image update
+  const handleImageUpdate = (id: number, newSrc: string) => {
+    setGalleryItems(prev => 
+      prev.map(item => item.id === id ? { ...item, src: newSrc } : item)
+    );
+  };
+
+  const handleTextUpdate = (id: number, field: keyof GalleryItem, value: string) => {
+    setGalleryItems(prev => 
+      prev.map(item => item.id === id ? { ...item, [field]: value } : item)
+    );
+  };
+
+  if (loading) {
+    return (
+      <section className="py-32 flex justify-center items-center bg-dark-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vital-500"></div>
+      </section>
+    );
+  }
+
   return (
     <section id="gallery" className="py-32 relative overflow-hidden">
       {/* Background Overlay */}
@@ -138,7 +194,7 @@ export const Gallery: React.FC = () => {
           viewport={{ once: true, margin: "-50px" }}
           className="grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-6 grid-flow-dense"
         >
-          {galleryItems.map((item, index) => (
+          {galleryItems.map((item) => (
             <motion.div
               key={item.id}
               variants={itemVariants}
@@ -147,34 +203,55 @@ export const Gallery: React.FC = () => {
               {/* Image */}
               <div className="absolute inset-0 w-full h-full overflow-hidden">
                 <div className="absolute inset-0 bg-dark-900 z-0"></div>
-                <img 
-                  src={item.src} 
-                  alt={item.title} 
+                
+                {/* EditableImage handles its own updates, but informs parent for state */}
+                <EditableImage
+                  id={item.id}
+                  src={item.src}
+                  alt={item.title}
                   className="w-full h-full object-cover transform transition-transform duration-1000 ease-out group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                  onImageUpdate={(newSrc) => handleImageUpdate(item.id, newSrc)}
                 />
               </div>
 
-              {/* Gradient Overlay - Strengthened for better text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-90 transition-opacity duration-500"></div>
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-90 transition-opacity duration-500 pointer-events-none"></div>
 
               {/* Content Overlay */}
-              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+              <div className="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none">
                 
                 {/* Top Badge */}
-                <div className="self-start">
-                   <div className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-tech font-bold text-white uppercase tracking-widest opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                      {item.category}
+                <div className="self-start pointer-events-auto">
+                   <div className="inline-block px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-tech font-bold text-white uppercase tracking-widest opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                      <EditableGalleryField 
+                        id={item.id}
+                        field="category"
+                        value={item.category}
+                        onUpdate={(val) => handleTextUpdate(item.id, 'category', val)}
+                      />
                    </div>
                 </div>
 
                 {/* Bottom Info */}
-                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 ease-out">
+                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 ease-out pointer-events-auto">
                   <h3 className="text-2xl font-display font-bold text-white mb-2 leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                    {item.title}
+                    <EditableGalleryField 
+                        id={item.id}
+                        field="title"
+                        value={item.title}
+                        onUpdate={(val) => handleTextUpdate(item.id, 'title', val)}
+                    />
                   </h3>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                     <MapPin size={14} className="text-vital-500 drop-shadow-md" />
-                    <span className="text-sm font-sans text-gray-200 drop-shadow-md">{item.location}</span>
+                    <span className="text-sm font-sans text-gray-200 drop-shadow-md">
+                      <EditableGalleryField 
+                          id={item.id}
+                          field="location"
+                          value={item.location}
+                          onUpdate={(val) => handleTextUpdate(item.id, 'location', val)}
+                      />
+                    </span>
                   </div>
                   
                   {/* Decorative line */}
