@@ -12,7 +12,6 @@ import { JoinCTA } from './components/JoinCTA';
 import { Footer } from './components/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ParallaxBackground } from './components/ParallaxBackground';
-import { ThemeProvider } from './components/ThemeContext';
 import { AuthProvider } from './components/AuthProvider';
 import { AdminControls } from './components/AdminControls';
 
@@ -26,7 +25,6 @@ function App() {
 
   return (
     <AuthProvider>
-      <ThemeProvider>
         <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative transition-colors duration-700">
           {/* Admin Dashboard (Only shows if authorized) */}
           <AdminControls />
@@ -61,7 +59,6 @@ function App() {
           
           <ScrollToTop />
         </div>
-      </ThemeProvider>
     </AuthProvider>
   );
 }

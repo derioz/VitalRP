@@ -2,7 +2,7 @@
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
     <!-- Primary Meta Tags -->
     <title>Vital RP | Story-first roleplay</title>
@@ -25,6 +25,31 @@
     <meta property="twitter:title" content="Vital RP | Story-first roleplay" />
     <meta property="twitter:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
     <meta property="twitter:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+
+    <style>
+      :root {
+        /* Default Vital Orange Theme - Raw values for Tailwind rgb() */
+        --vital-50: 255 247 237;
+        --vital-100: 255 237 213;
+        --vital-200: 254 215 170;
+        --vital-300: 253 186 116;
+        --vital-400: 251 146 60;
+        --vital-500: 249 115 22;
+        --vital-600: 234 88 12;
+        --vital-700: 194 65 12;
+        --vital-800: 154 52 18;
+        --vital-900: 124 45 18;
+        --vital-950: 67 20 7;
+      }
+
+      /* Winter theme removed completely to prevent caching issues */
+
+      body {
+        background-color: #0a0a0a;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +97,8 @@
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.0"
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
   }
 }
 </script>
