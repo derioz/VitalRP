@@ -143,8 +143,8 @@ export const Gallery: React.FC = () => {
 
   return (
     <section id="gallery" className="py-32 relative overflow-hidden">
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-dark-900/80 backdrop-blur-sm z-0"></div>
+      {/* Background Overlay - Optimized for Mobile */}
+      <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/80 md:backdrop-blur-sm z-0"></div>
 
       {/* Ambient Background Localized */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-vital-500/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
@@ -222,7 +222,7 @@ export const Gallery: React.FC = () => {
                 
                 {/* Top Badge */}
                 <div className="self-start pointer-events-auto">
-                   <div className="inline-block px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-tech font-bold text-white uppercase tracking-widest opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                   <div className="inline-block px-3 py-1 rounded-full bg-black/40 md:backdrop-blur-md border border-white/10 text-[10px] font-tech font-bold text-white uppercase tracking-widest opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                       <EditableGalleryField 
                         id={item.id}
                         field="category"

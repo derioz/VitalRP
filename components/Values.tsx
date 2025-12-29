@@ -69,8 +69,8 @@ const itemVariants: Variants = {
 export const Values: React.FC = () => {
   return (
     <section id="values" className="py-24 relative overflow-hidden">
-       {/* Transparent BG to let parallax show through gaps */}
-       <div className="absolute inset-0 bg-dark-900/70 backdrop-blur-md"></div>
+       {/* Transparent BG to let parallax show through gaps, Solid dark on mobile for FPS */}
+       <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/70 md:backdrop-blur-md"></div>
        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -116,7 +116,7 @@ export const Values: React.FC = () => {
             <motion.div
               key={item.id}
               variants={itemVariants}
-              className={`relative group p-8 rounded-2xl border border-white/5 bg-dark-800/80 backdrop-blur hover:border-vital-500/30 transition-all duration-500 overflow-hidden ${item.className}`}
+              className={`relative group p-8 rounded-2xl border border-white/5 bg-dark-800 md:bg-dark-800/80 md:backdrop-blur hover:border-vital-500/30 transition-all duration-500 overflow-hidden ${item.className}`}
             >
               {/* Hover Gradient Background */}
               <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>

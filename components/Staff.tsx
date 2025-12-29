@@ -148,7 +148,7 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
     <motion.div
       variants={itemVariants}
       onClick={handleClick}
-      className={`group relative h-40 bg-dark-800/80 backdrop-blur rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup ? 'cursor-pointer' : ''}`}
+      className={`group relative h-40 bg-dark-800 md:bg-dark-800/80 md:backdrop-blur rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup ? 'cursor-pointer' : ''}`}
     >
       {/* Large Background Initial */}
       <div className="absolute -right-2 -bottom-4 font-display font-black text-[120px] leading-none text-white/[0.03] group-hover:text-white/[0.07] transition-colors select-none pointer-events-none">
@@ -163,7 +163,7 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
         
         {/* Top Bar */}
         <div className="flex justify-between items-start">
-            <div className={`w-8 h-8 rounded-lg bg-dark-900/80 backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`w-8 h-8 rounded-lg bg-dark-900/80 md:backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300`}>
               {isRatMode ? (
                 <motion.div
                   initial={{ rotate: -20, scale: 0.8 }}
@@ -218,7 +218,7 @@ export const Staff: React.FC = () => {
   return (
     <section id="staff" className="py-16 relative overflow-hidden">
       {/* Background Overlay */}
-      <div className="absolute inset-0 bg-dark-900/80 backdrop-blur-sm z-0"></div>
+      <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/80 md:backdrop-blur-sm z-0"></div>
 
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-10">

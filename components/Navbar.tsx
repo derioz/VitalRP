@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Gamepad2, ShoppingCart, MessageSquare, Snowflake } from 'lucide-react';
+import { Menu, X, Gamepad2, ShoppingCart, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
-import { useTheme } from './ThemeContext';
 
 // SVG Logo Component
 const VitalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
@@ -28,21 +27,6 @@ const VitalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
   </svg>
 );
 
-// Better Santa Hat that fits the triangular logo
-const SantaHatOverlay = () => (
-  <motion.svg 
-    initial={{ opacity: 0, y: -10, rotate: -10 }}
-    animate={{ opacity: 1, y: 0, rotate: -10 }}
-    className="absolute -top-3 -left-3 w-8 h-8 pointer-events-none z-10 filter drop-shadow-lg"
-    viewBox="0 0 50 50"
-  >
-     <path d="M25 40 Q 10 40 5 35 Q 5 20 25 5 Q 40 25 45 35 Q 40 40 25 40" fill="#ef4444" />
-     <circle cx="45" cy="35" r="4" fill="white" />
-     <path d="M5 35 Q 15 42 25 40 Q 35 38 45 35 L 45 38 Q 35 44 25 44 Q 15 45 5 38 Z" fill="white" />
-  </motion.svg>
-);
-
-
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg 
     role="img" 
@@ -60,7 +44,6 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -96,7 +79,7 @@ export const Navbar: React.FC = () => {
     <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
         isScrolled 
-          ? 'bg-dark-900/90 backdrop-blur-md border-white/10 py-3' 
+          ? 'bg-dark-900/95 md:bg-dark-900/90 md:backdrop-blur-md border-white/10 py-3 shadow-lg' 
           : 'bg-transparent border-transparent py-6'
       }`}
     >
@@ -106,7 +89,6 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-3 relative">
             <div className="relative">
               <VitalLogo className="w-12 h-12 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]" />
-              {theme === 'winter' && <SantaHatOverlay />}
             </div>
             <div className="flex flex-col">
               <span className="text-white font-display font-bold text-xl tracking-widest leading-none">VITAL</span>
@@ -130,17 +112,6 @@ export const Navbar: React.FC = () => {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
             
-            {/* Theme Toggle */}
-            <motion.button
-              onClick={toggleTheme}
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.1, rotate: 15 }}
-              className={`p-2 rounded-full transition-colors ${theme === 'winter' ? 'bg-vital-500/20 text-vital-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-              title={theme === 'winter' ? "Switch to Default Theme" : "Switch to Winter Theme"}
-            >
-              <Snowflake size={18} />
-            </motion.button>
-
             {/* Forums Button with Tooltip */}
             <div 
               className="relative"
@@ -198,16 +169,10 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile Menu Toggle */}
           <div className="flex md:hidden items-center gap-4">
-            <motion.button
-              onClick={toggleTheme}
-              whileTap={{ scale: 0.9 }}
-              className={`p-2 rounded-full transition-colors ${theme === 'winter' ? 'bg-vital-500/20 text-vital-400' : 'bg-white/5 text-gray-400'}`}
-            >
-              <Snowflake size={18} />
-            </motion.button>
             <button 
               className="text-white p-2"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X /> : <Menu />}
             </button>
