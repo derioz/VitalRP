@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
+    <!-- Force Dark Mode Declaration to prevent Browser Auto-Inversion -->
+    <meta name="color-scheme" content="dark only">
+    <meta name="supported-color-schemes" content="dark">
+    
     <!-- Primary Meta Tags -->
     <title>Vital RP | Story-first roleplay</title>
     <meta name="title" content="Vital RP | Story-first roleplay" />
@@ -28,6 +32,9 @@
 
     <style>
       :root {
+        /* Tell browser we handle dark mode natively */
+        color-scheme: dark;
+        
         /* Default Vital Orange Theme - Raw values for Tailwind rgb() */
         --vital-50: 255 247 237;
         --vital-100: 255 237 213;
@@ -42,12 +49,12 @@
         --vital-950: 67 20 7;
       }
 
-      /* Winter theme removed completely to prevent caching issues */
-
       body {
         background-color: #0a0a0a;
         margin: 0;
         padding: 0;
+        /* Prevent auto dark mode from messing with colors */
+        forced-color-adjust: none; 
       }
     </style>
 
@@ -57,6 +64,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
+        darkMode: 'class', // Disable system preference auto-switching
         theme: {
           extend: {
             fontFamily: {
