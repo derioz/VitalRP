@@ -40,7 +40,11 @@ const DiscordLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  onOpenStore: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
@@ -137,11 +141,9 @@ export const Navbar: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Tebex Store */}
+            {/* Tebex Store - Triggers Modal */}
             <Button 
-              href="https://vitalrp.tebex.io/" 
-              target="_blank" 
-              rel="noreferrer" 
+              onClick={onOpenStore}
               variant="ghost" 
               size="sm" 
               icon={<ShoppingCart size={18} />}
@@ -205,10 +207,12 @@ export const Navbar: React.FC = () => {
                   Forums (Soon)
                 </Button>
 
+                 {/* Mobile Menu Store Button */}
                  <Button 
-                    href="https://vitalrp.tebex.io/" 
-                    target="_blank" 
-                    rel="noreferrer" 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenStore();
+                    }}
                     variant="outline" 
                     fullWidth 
                     icon={<ShoppingCart size={18} />}

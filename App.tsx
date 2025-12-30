@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -14,8 +14,10 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { ParallaxBackground } from './components/ParallaxBackground';
 import { AuthProvider } from './components/AuthProvider';
 import { AdminControls } from './components/AdminControls';
+import { StoreModal } from './components/StoreModal';
 
 function App() {
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -38,7 +40,7 @@ function App() {
           {/* Global Background */}
           <ParallaxBackground />
 
-          <Navbar />
+          <Navbar onOpenStore={() => setIsStoreOpen(true)} />
           
           {/* Main Content - Relative to sit on top of background */}
           <main className="relative z-10">
@@ -54,8 +56,11 @@ function App() {
           
           {/* Footer needs specific z-index handling */}
           <div className="relative z-10">
-            <Footer />
+            <Footer onOpenStore={() => setIsStoreOpen(true)} />
           </div>
+          
+          {/* Global Modals */}
+          <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
           
           <ScrollToTop />
         </div>

@@ -64,7 +64,11 @@ const TikTokLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenStore: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
   const { login, user } = useAuth();
 
@@ -74,8 +78,15 @@ export const Footer: React.FC = () => {
     { label: 'Staff', href: '#staff' },
     { label: 'Gallery', href: '#gallery' },
     { label: 'Forums', href: '#', isComingSoon: true },
-    { label: 'Store', href: 'https://vitalrp.tebex.io/', isExternal: true },
+    { label: 'Store', href: 'https://vitalrp.tebex.io/', isExternal: true, isStore: true },
   ];
+
+  const handleLinkClick = (e: React.MouseEvent, item: any) => {
+    if (item.isStore) {
+      e.preventDefault();
+      onOpenStore();
+    }
+  };
 
   return (
     <footer className="bg-dark-950 pt-20 pb-10 border-t border-white/5">
@@ -110,6 +121,7 @@ export const Footer: React.FC = () => {
                       href={item.href} 
                       target={item.isExternal ? "_blank" : undefined}
                       rel={item.isExternal ? "noreferrer" : undefined}
+                      onClick={(e) => handleLinkClick(e, item)}
                       className="text-gray-500 hover:text-vital-500 transition-colors text-sm font-tech uppercase tracking-wider block"
                     >
                       {item.label}
