@@ -7,7 +7,7 @@ const DISCORD_CLIENT_ID = "1429603333416423614";
 
 // Replace this with your actual Discord User ID (Snowflake)
 const ADMIN_IDS = [
-  "150580708144840704", // Damon
+  "315834609823490049", // Damon
   // Add your ID here to give yourself admin access
 ];
 

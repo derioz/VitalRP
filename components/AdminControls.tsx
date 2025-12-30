@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Save, LogOut, Edit3, X, Database, WifiOff } from 'lucide-react';
+import { Settings, Save, LogOut, Edit3, X, Database, RefreshCw, Check } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
 
 export const AdminControls: React.FC = () => {
   const { user, isAdmin, editMode, toggleEditMode, logout } = useAuth();
+  const [saving, setSaving] = useState(false);
 
   if (!isAdmin || !user) return null;
 
   const handleSave = () => {
-    // In a real app, this would POST to a backend.
-    // Here, we'll just alert the user or log to console.
-    console.log("Saving configuration snapshot...");
-    alert("Config exported to console! (This is a demo save)");
+    setSaving(true);
+    // Since images save automatically to Supabase on-change,
+    // this button acts as a "Sync/Refresh" to ensure you see what the server sees.
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
   };
 
   const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
@@ -71,14 +74,19 @@ export const AdminControls: React.FC = () => {
             {editMode ? 'Stop Editing' : 'Edit Mode'}
           </button>
 
-          {/* Save Button */}
+          {/* Save / Sync Button */}
           {editMode && (
             <button
               onClick={handleSave}
-              className="p-2 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white transition-colors"
-              title="Save Changes"
+              disabled={saving}
+              className={`p-2 rounded-full transition-colors ${
+                saving 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white'
+              }`}
+              title="Refresh Data"
             >
-              <Save size={16} />
+              {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
             </button>
           )}
 
