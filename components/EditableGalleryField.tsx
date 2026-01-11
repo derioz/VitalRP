@@ -46,7 +46,7 @@ export const EditableGalleryField: React.FC<EditableGalleryFieldProps> = ({
     setIsSaving(true);
 
     try {
-      if (import.meta.env.VITE_FIREBASE_API_KEY) {
+      if (db && import.meta.env.VITE_FIREBASE_API_KEY) {
         // Update Firebase
         const docRef = doc(db, "gallery", id);
         await updateDoc(docRef, { [field]: value });

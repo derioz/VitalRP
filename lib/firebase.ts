@@ -12,7 +12,22 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+let app;
+let db: ReturnType<typeof getFirestore> | undefined;
+let auth: ReturnType<typeof getAuth> | undefined;
+let storage: ReturnType<typeof getStorage> | undefined;
+
+if (firebaseConfig.apiKey) {
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        storage = getStorage(app);
+    } catch (e) {
+        console.warn("Firebase initialization failed:", e);
+    }
+} else {
+    console.warn("Firebase config missing. Running in demo/local mode.");
+}
+
+export { db, auth, storage };

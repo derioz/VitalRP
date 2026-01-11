@@ -95,8 +95,8 @@ export const Gallery: React.FC = () => {
 
   // Fetch initial data from Firebase
   useEffect(() => {
-    // Basic check if Firebase env vars are present
-    if (import.meta.env.VITE_FIREBASE_API_KEY) {
+    // Basic check if Firebase env vars are present AND db is initialized
+    if (db) {
       fetchGallery();
     } else {
       setLoading(false); // Skip loading if no DB config
@@ -104,6 +104,7 @@ export const Gallery: React.FC = () => {
   }, []);
 
   const fetchGallery = async () => {
+    if (!db) return; // Safety check
     try {
       const q = query(collection(db, "gallery"));
       // Sorting by ID string might not give numeric order, but good enough for now.

@@ -49,7 +49,7 @@ export const EditableImage: React.FC<EditableImageProps> = ({
       setIsSaving(true);
 
       try {
-        if (import.meta.env.VITE_FIREBASE_API_KEY) {
+        if (db && import.meta.env.VITE_FIREBASE_API_KEY) {
           // Update Firebase
           const docRef = doc(db, "gallery", id);
           await updateDoc(docRef, { src: newUrl });
@@ -97,7 +97,7 @@ export const EditableImage: React.FC<EditableImageProps> = ({
             {isSaving ? "Saving..." : "Change Image"}
           </button>
           <span className="text-xs text-gray-300 font-mono bg-black/50 px-2 py-1 rounded">
-            ID: {id} {import.meta.env.VITE_FIREBASE_API_KEY ? '(Cloud)' : '(Local)'}
+            ID: {id} {db ? '(Cloud)' : '(Local)'}
           </span>
         </div>
       )}
