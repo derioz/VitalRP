@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
 import { RefreshCw, Save, Loader2 } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { db } from '../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface EditableImageProps {
-  id: number; // Matches DB primary key (bigint)
+  id: string; // Matches DB primary key (string for Firestore)
   src: string;
   alt: string;
   className?: string;
   onImageUpdate?: (newSrc: string) => void;
 }
 
-export const EditableImage: React.FC<EditableImageProps> = ({ 
-  id, 
-  src: initialSrc, 
-  alt, 
+export const EditableImage: React.FC<EditableImageProps> = ({
+  id,
+  src: initialSrc,
+  alt,
   className = "",
   onImageUpdate
 }) => {
@@ -22,45 +23,42 @@ export const EditableImage: React.FC<EditableImageProps> = ({
   const [src, setSrc] = useState(initialSrc);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load from LocalStorage if Supabase is missing (Demo Mode)
+  // Load from LocalStorage if Firebase is missing (Demo Mode)
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!import.meta.env.VITE_FIREBASE_API_KEY) {
       const saved = localStorage.getItem(`vital_img_${id}`);
       if (saved) {
         setSrc(saved);
         if (onImageUpdate) onImageUpdate(saved);
       }
     }
-  }, [id, isSupabaseConfigured]);
+  }, [id]);
 
   // Sync with prop updates (if other components update it)
   useEffect(() => {
     // Only update if we aren't using a locally saved override in Demo mode
-    if (isSupabaseConfigured || !localStorage.getItem(`vital_img_${id}`)) {
+    if (import.meta.env.VITE_FIREBASE_API_KEY || !localStorage.getItem(`vital_img_${id}`)) {
       setSrc(initialSrc);
     }
   }, [initialSrc, id]);
 
   const handleEdit = async () => {
     const newUrl = prompt("Enter the new Image URL (e.g., FiveManage link):", src);
-    
+
     if (newUrl && newUrl !== src) {
       setIsSaving(true);
-      
-      try {
-        if (isSupabaseConfigured) {
-          // Update Supabase
-          const { error } = await supabase
-            .from('gallery_items')
-            .update({ src: newUrl })
-            .eq('id', id);
 
-          if (error) throw error;
+      try {
+        if (import.meta.env.VITE_FIREBASE_API_KEY) {
+          // Update Firebase
+          const docRef = doc(db, "gallery", id);
+          await updateDoc(docRef, { src: newUrl });
+
           alert("Image updated successfully in the cloud!");
         } else {
           // Update Local Storage (Demo Mode)
           localStorage.setItem(`vital_img_${id}`, newUrl);
-          alert("Image saved to your browser (Demo Mode). Connect Supabase to save for everyone.");
+          alert("Image saved to your browser (Demo Mode). Connect Firebase to save for everyone.");
         }
 
         // Success - update local state
@@ -78,10 +76,10 @@ export const EditableImage: React.FC<EditableImageProps> = ({
 
   return (
     <div className={`relative group/image ${className}`}>
-      <img 
-        src={src} 
-        alt={alt} 
-        className="w-full h-full object-cover" 
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover"
       />
 
       {/* Admin Edit Overlay */}
@@ -99,7 +97,7 @@ export const EditableImage: React.FC<EditableImageProps> = ({
             {isSaving ? "Saving..." : "Change Image"}
           </button>
           <span className="text-xs text-gray-300 font-mono bg-black/50 px-2 py-1 rounded">
-            ID: {id} {isSupabaseConfigured ? '(Cloud)' : '(Local)'}
+            ID: {id} {import.meta.env.VITE_FIREBASE_API_KEY ? '(Cloud)' : '(Local)'}
           </span>
         </div>
       )}

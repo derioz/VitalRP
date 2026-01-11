@@ -21,7 +21,6 @@ const staffGroups: StaffGroup[] = [
       { name: "Grumpy", role: "Owner", subRole: "IFM", color: "amber" },
       { name: "Nez", role: "Owner", subRole: "LFM", color: "amber" },
       { name: "Soup", role: "Owner", color: "amber" },
-      { name: "Bug", role: "Senior Admin", subRole: "Community Manager", color: "purple" },
     ]
   },
   {
@@ -160,25 +159,25 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
 
       {/* Content */}
       <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
-        
+
         {/* Top Bar */}
         <div className="flex justify-between items-start">
-            <div className={`w-8 h-8 rounded-lg bg-dark-900/80 md:backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300`}>
-              {isRatMode ? (
-                <motion.div
-                  initial={{ rotate: -20, scale: 0.8 }}
-                  animate={{ rotate: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                >
-                  <Rat size={16} />
-                </motion.div>
-              ) : (
-                <RoleIcon role={member.role} subRole={member.subRole} size={16} />
-              )}
-            </div>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Star size={10} className={colors.text} fill="currentColor" />
-            </div>
+          <div className={`w-8 h-8 rounded-lg bg-dark-900/80 md:backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300`}>
+            {isRatMode ? (
+              <motion.div
+                initial={{ rotate: -20, scale: 0.8 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Rat size={16} />
+              </motion.div>
+            ) : (
+              <RoleIcon role={member.role} subRole={member.subRole} size={16} />
+            )}
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <Star size={10} className={colors.text} fill="currentColor" />
+          </div>
         </div>
 
         {/* Bottom Info */}
@@ -197,7 +196,7 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
               </>
             )}
           </div>
-          <motion.h4 
+          <motion.h4
             key={isRatMode ? 'rat' : 'normal'}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -205,7 +204,7 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
           >
             {isRatMode ? '"I look like a rat"' : member.name}
           </motion.h4>
-          
+
           {/* Decorative Line */}
           <div className={`h-0.5 w-6 mt-3 rounded-full ${colors.bg} group-hover:w-full transition-all duration-500 ease-out`}></div>
         </div>
@@ -222,12 +221,12 @@ export const Staff: React.FC = () => {
 
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-10">
-         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-vital-900/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
-         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-vital-900/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-        
+
         {/* Header */}
         <div className="text-center mb-12">
           <motion.h2
@@ -238,7 +237,7 @@ export const Staff: React.FC = () => {
           >
             Meet The <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">Staff</span>
           </motion.h2>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -252,7 +251,7 @@ export const Staff: React.FC = () => {
         {staffGroups.map((group) => (
           <div key={group.title} className="mb-10 last:mb-0">
             {/* Group Label */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -263,7 +262,7 @@ export const Staff: React.FC = () => {
             </motion.div>
 
             {/* Grid */}
-            <motion.div 
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
