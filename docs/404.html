@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Force Dark Mode Declaration to prevent Browser Auto-Inversion -->
+    <meta name="color-scheme" content="dark only">
+    <meta name="supported-color-schemes" content="dark">
+    
+    <!-- Primary Meta Tags -->
+    <title>Vital RP | Story-first roleplay</title>
+    <meta name="title" content="Vital RP | Story-first roleplay" />
+    <meta name="description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta name="theme-color" content="#f97316" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon-Br4zgiwC.svg" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vitalrp.net" />
+    <meta property="og:title" content="Vital RP | Story-first roleplay" />
+    <meta property="og:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta property="og:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+    <meta property="og:site_name" content="Vital RP" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://vitalrp.net" />
+    <meta property="twitter:title" content="Vital RP | Story-first roleplay" />
+    <meta property="twitter:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
+    <meta property="twitter:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+
+    <style>
+      :root {
+        /* Tell browser we handle dark mode natively */
+        color-scheme: dark;
+        
+        /* Default Vital Orange Theme - Raw values for Tailwind rgb() */
+        --vital-50: 255 247 237;
+        --vital-100: 255 237 213;
+        --vital-200: 254 215 170;
+        --vital-300: 253 186 116;
+        --vital-400: 251 146 60;
+        --vital-500: 249 115 22;
+        --vital-600: 234 88 12;
+        --vital-700: 194 65 12;
+        --vital-800: 154 52 18;
+        --vital-900: 124 45 18;
+        --vital-950: 67 20 7;
+      }
+
+      body {
+        background-color: #0a0a0a;
+        margin: 0;
+        padding: 0;
+        /* Prevent auto dark mode from messing with colors */
+        forced-color-adjust: none; 
+      }
+    </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // Disable system preference auto-switching
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Outfit', 'sans-serif'],
+              tech: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              vital: {
+                50: 'rgb(var(--vital-50) / <alpha-value>)',
+                100: 'rgb(var(--vital-100) / <alpha-value>)',
+                200: 'rgb(var(--vital-200) / <alpha-value>)',
+                300: 'rgb(var(--vital-300) / <alpha-value>)',
+                400: 'rgb(var(--vital-400) / <alpha-value>)',
+                500: 'rgb(var(--vital-500) / <alpha-value>)',
+                600: 'rgb(var(--vital-600) / <alpha-value>)',
+                700: 'rgb(var(--vital-700) / <alpha-value>)',
+                800: 'rgb(var(--vital-800) / <alpha-value>)',
+                900: 'rgb(var(--vital-900) / <alpha-value>)',
+                950: 'rgb(var(--vital-950) / <alpha-value>)',
+              },
+              dark: {
+                900: '#0a0a0a',
+                800: '#121212',
+                700: '#1e1e1e',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-BtHOcSJW.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DEk1_Kbi.css">
+</head>
+  <body class="bg-dark-900 text-white antialiased overflow-x-hidden transition-colors duration-700">
+    <div id="root"></div>
+  </body>
+</html>
