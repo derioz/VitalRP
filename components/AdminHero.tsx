@@ -54,7 +54,7 @@ export const AdminHero: React.FC<AdminHeroProps> = ({
 
             {/* Floating Particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(8)].map((_, i) => (
+                {[...Array(12)].map((_, i) => (
                     <motion.div
                         key={i}
                         initial={{
