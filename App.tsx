@@ -7,6 +7,7 @@ import { Dashboard } from './src/pages/admin/Dashboard';
 import { StaffRoster } from './src/pages/admin/StaffRoster';
 import { UsersPage } from './src/pages/admin/Users';
 import { GalleryManager } from './src/pages/admin/GalleryManager';
+import { Settings } from './src/pages/admin/Settings';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="staff" element={<StaffRoster />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="gallery" element={<GalleryManager />} />
+            <Route path="settings" element={<Settings />} />
             {/* Add more admin routes here */}
           </Route>
         </Routes>

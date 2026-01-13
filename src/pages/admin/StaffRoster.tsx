@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Save, X, Search, User, Briefcase, Crown, ShieldAle
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../lib/firebase';
+import { AdminHero } from '../../../components/AdminHero';
 
 interface StaffMember {
     id: string;
@@ -172,19 +173,19 @@ export const StaffRoster: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-display font-bold text-white mb-2">Staff Roster</h1>
-                    <p className="text-gray-400">Manage your team structure and permissions.</p>
-                </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-6 py-3 bg-vital-500 text-white rounded-xl hover:bg-vital-600 transition-colors shadow-lg shadow-vital-500/20 font-bold"
-                >
-                    <Plus size={20} />
-                    Add Staff Member
-                </button>
-            </div>
+            <AdminHero
+                title="Staff Roster"
+                subtitle="Manage your team structure and permissions."
+                rightElement={
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center gap-2 px-6 py-3 bg-vital-500/10 text-vital-400 rounded-xl border border-vital-500/20 hover:bg-vital-500/20 hover:border-vital-500/30 transition-all shadow-lg shadow-vital-500/5 font-bold hover:scale-[1.02] active:scale-95"
+                    >
+                        <Plus size={20} />
+                        Add Staff Member
+                    </button>
+                }
+            />
 
             {/* List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -193,44 +194,61 @@ export const StaffRoster: React.FC = () => {
                         key={member.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-dark-900 border border-white/5 rounded-2xl p-6 group hover:border-vital-500/30 transition-all relative overflow-hidden"
+                        className="bg-dark-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 group hover:border-vital-500/30 hover:bg-dark-900/60 transition-all relative overflow-hidden shadow-xl"
                     >
-                        <div className={`absolute top-0 right-0 w-24 h-24 bg-${member.color === 'green' ? 'emerald' : member.color}-500/5 blur-[50px] rounded-full -translate-y-1/2 translate-x-1/2`}></div>
+                        {/* Glow Effect */}
+                        <div className={`absolute top-0 right-0 w-32 h-32 bg-${member.color === 'green' ? 'emerald' : member.color}-500/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none transition-opacity duration-500`}></div>
 
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-12 h-12 rounded-xl bg-dark-800 border border-white/10 flex items-center justify-center text-${member.color === 'green' ? 'emerald' : member.color}-400 overflow-hidden relative group`}>
+                        <div className="flex justify-between items-start mb-6 relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 rounded-2xl bg-dark-800/50 border border-white/10 flex items-center justify-center text-${member.color === 'green' ? 'emerald' : member.color}-400 overflow-hidden relative shadow-lg`}>
                                     {member.image ? (
                                         <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <>
-                                            {member.role === 'Owner' && <Crown size={24} />}
-                                            {member.role.includes('Admin') && <ShieldAlert size={24} />}
-                                            {member.role.includes('Mod') && <ShieldCheck size={24} />}
-                                            {member.role.includes('Support') && <HeartHandshake size={24} />}
-                                            {member.role === 'Clothing Dev' && <Shirt size={24} />}
+                                            {member.role === 'Owner' && <Crown size={28} />}
+                                            {member.role.includes('Admin') && <ShieldAlert size={28} />}
+                                            {member.role.includes('Mod') && <ShieldCheck size={28} />}
+                                            {member.role.includes('Support') && <HeartHandshake size={28} />}
+                                            {member.role === 'Clothing Dev' && <Shirt size={28} />}
                                         </>
                                     )}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-white leading-none">{member.name}</h3>
-                                    <span className="text-xs text-vital-500 font-medium">{member.role}</span>
+                                    <h3 className="text-xl font-bold text-white leading-tight">{member.name}</h3>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <span className={`w-1.5 h-1.5 rounded-full bg-${member.color === 'green' ? 'emerald' : member.color}-500`}></span>
+                                        <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">{member.role}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleOpenModal(member)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Edit2 size={16} /></button>
-                                <button onClick={() => handleDelete(member.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => handleOpenModal(member)}
+                                    className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/5"
+                                    title="Edit Member"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(member.id)}
+                                    className="p-2 rounded-lg bg-red-500/5 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/10"
+                                    title="Delete Member"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         </div>
 
                         <div className="space-y-2 relative z-10">
-                            <div className="flex items-center justify-between text-sm bg-black/20 p-2 rounded-lg">
-                                <span className="text-gray-500">Category</span>
+                            <div className="flex items-center justify-between text-xs font-medium bg-black/20 p-3 rounded-xl border border-white/5">
+                                <span className="text-gray-500 uppercase tracking-wider">Category</span>
                                 <span className="text-gray-300">{member.category}</span>
                             </div>
-                            <div className="flex items-center justify-between text-sm bg-black/20 p-2 rounded-lg">
-                                <span className="text-gray-500">Sub-Role / Lead</span>
-                                <span className="text-gray-300">{member.subRole || '-'}</span>
+                            <div className="flex items-center justify-between text-xs font-medium bg-black/20 p-3 rounded-xl border border-white/5">
+                                <span className="text-gray-500 uppercase tracking-wider">Title</span>
+                                <span className="text-gray-300">{member.subRole || 'Staff Member'}</span>
                             </div>
                         </div>
                     </motion.div>

@@ -3,6 +3,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy, serverTime
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../components/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AdminHero } from '../../../components/AdminHero';
 import { Trash2, Edit2, Save, X, Shield, Crown, ShieldCheck, FileEdit, User } from 'lucide-react';
 
 interface UserData {
@@ -121,17 +122,15 @@ export const UsersPage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-display font-bold text-white mb-2">User Management</h1>
-                <p className="text-gray-400">Manage permissions for registered users.</p>
-                <p className="text-sm text-gray-500 mt-2">Users are automatically added here when they log in via Google. You can then assign them roles.</p>
-            </div>
+        <div className="max-w-7xl mx-auto">
+            <AdminHero
+                title="User Management"
+                subtitle="Manage permissions for registered users."
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {users.map((user) => {
-                    // Map old 'owner' role to 'superadmin' visually if needed, though we should migrate data too if possible.
-                    // detailed mapping:
+                    // Map old 'owner' role to 'superadmin' visually if needed
                     let roleValue = user.role;
                     if (roleValue === 'owner' as any) roleValue = 'superadmin';
 
@@ -142,35 +141,46 @@ export const UsersPage: React.FC = () => {
                             key={user.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-dark-900 border border-white/5 rounded-2xl p-6 relative group hover:border-vital-500/30 transition-all"
+                            className="bg-dark-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 group hover:border-vital-500/30 hover:bg-dark-900/60 transition-all relative overflow-hidden shadow-xl"
                         >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center text-white font-bold overflow-hidden">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-dark-800/50 border border-white/10 flex items-center justify-center text-white font-bold overflow-hidden shadow-lg relative group-hover:border-vital-500/20 transition-colors">
                                         {user.photoURL ? (
                                             <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
                                         ) : (
-                                            user.displayName?.[0] || user.email[0].toUpperCase()
+                                            <span className="text-xl">{user.displayName?.[0] || user.email[0].toUpperCase()}</span>
                                         )}
                                     </div>
                                     <div className="overflow-hidden">
-                                        <h3 className="text-lg font-bold text-white truncate">{user.displayName || 'User'}</h3>
-                                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                        <h3 className="text-lg font-bold text-white truncate leading-tight">{user.displayName || 'User'}</h3>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5 font-mono opacity-70">{user.email}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEdit(user)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Edit Role">
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => handleEdit(user)}
+                                        className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/5"
+                                        title="Edit Role"
+                                    >
                                         <Edit2 size={16} />
                                     </button>
-                                    <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" title="Delete User">
+                                    <button
+                                        onClick={() => handleDelete(user.id)}
+                                        className="p-2 rounded-lg bg-red-500/5 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/10"
+                                        title="Delete User"
+                                    >
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-${roleConfig.color}-500/10 text-${roleConfig.color}-400 border border-${roleConfig.color}-500/20`}>
-                                <roleConfig.icon size={12} />
-                                {roleConfig.label}
+                            <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/5 border-dashed">
+                                <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Current Role</span>
+                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-${roleConfig.color}-500/10 text-${roleConfig.color}-400 border border-${roleConfig.color}-500/20 shadow-sm`}>
+                                    <roleConfig.icon size={12} />
+                                    {roleConfig.label}
+                                </div>
                             </div>
                         </motion.div>
                     );
@@ -228,8 +238,8 @@ export const UsersPage: React.FC = () => {
                                             <label
                                                 key={role.value}
                                                 className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.role === role.value
-                                                        ? `bg-${role.color}-500/10 border-${role.color}-500/50 shadow-[0_0_15px_rgba(0,0,0,0.2)]`
-                                                        : 'bg-dark-950 border-white/5 hover:border-white/10 hover:bg-white/5'
+                                                    ? `bg-${role.color}-500/10 border-${role.color}-500/50 shadow-[0_0_15px_rgba(0,0,0,0.2)]`
+                                                    : 'bg-dark-950 border-white/5 hover:border-white/10 hover:bg-white/5'
                                                     }`}
                                             >
                                                 <input
