@@ -1,106 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
-import { RefreshCw, Save, Loader2 } from 'lucide-react';
+import { RefreshCw, Loader2, Image as ImageIcon } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { EditModal } from './EditModal';
 
 interface EditableImageProps {
-  id: string; // Matches DB primary key (string for Firestore)
-  src: string;
+  id: string; // Field name in Firestore
+  defaultSrc: string;
   alt: string;
   className?: string;
-  onImageUpdate?: (newSrc: string) => void;
+  collectionName?: string;
+  docId?: string;
+  label?: string;
 }
 
 export const EditableImage: React.FC<EditableImageProps> = ({
   id,
-  src: initialSrc,
+  defaultSrc,
   alt,
   className = "",
-  onImageUpdate
+  collectionName = 'site_content',
+  docId = 'home',
+  label = 'Change Image'
 }) => {
   const { editMode } = useAuth();
-  const [src, setSrc] = useState(initialSrc);
-  const [isSaving, setIsSaving] = useState(false);
+  const [src, setSrc] = useState(defaultSrc);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load from LocalStorage if Firebase is missing (Demo Mode)
+  // Real-time listener
   useEffect(() => {
-    if (!import.meta.env.VITE_FIREBASE_API_KEY) {
-      const saved = localStorage.getItem(`vital_img_${id}`);
-      if (saved) {
-        setSrc(saved);
-        if (onImageUpdate) onImageUpdate(saved);
-      }
-    }
-  }, [id]);
-
-  // Sync with prop updates (if other components update it)
-  useEffect(() => {
-    // Only update if we aren't using a locally saved override in Demo mode
-    if (import.meta.env.VITE_FIREBASE_API_KEY || !localStorage.getItem(`vital_img_${id}`)) {
-      setSrc(initialSrc);
-    }
-  }, [initialSrc, id]);
-
-  const handleEdit = async () => {
-    const newUrl = prompt("Enter the new Image URL (e.g., FiveManage link):", src);
-
-    if (newUrl && newUrl !== src) {
-      setIsSaving(true);
-
-      try {
-        if (db && import.meta.env.VITE_FIREBASE_API_KEY) {
-          // Update Firebase
-          const docRef = doc(db, "gallery", id);
-          await updateDoc(docRef, { src: newUrl });
-
-          alert("Image updated successfully in the cloud!");
-        } else {
-          // Update Local Storage (Demo Mode)
-          localStorage.setItem(`vital_img_${id}`, newUrl);
-          alert("Image saved to your browser (Demo Mode). Connect Firebase to save for everyone.");
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, collectionName, docId), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if (data && data[id]) {
+          setSrc(data[id]);
         }
-
-        // Success - update local state
-        setSrc(newUrl);
-        if (onImageUpdate) onImageUpdate(newUrl);
-
-      } catch (err) {
-        console.error("Error updating image:", err);
-        alert("Failed to update image. Check console for details.");
-      } finally {
-        setIsSaving(false);
       }
-    }
+    });
+    return () => unsub();
+  }, [id, collectionName, docId]);
+
+  const handleSave = async (newUrl: string) => {
+    if (!db || !newUrl) return;
+    await setDoc(doc(db, collectionName, docId), {
+      [id]: newUrl
+    }, { merge: true });
   };
 
   return (
-    <div className={`relative group/image ${className}`}>
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover"
-      />
+    <>
+      <div className={`relative group/image ${className}`}>
+        <img
+          src={src}
+          alt={alt}
+          className={`w-full h-full object-cover ${className}`} // Ensure class applies to img or container as needed
+        />
 
-      {/* Admin Edit Overlay */}
-      {editMode && (
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/image:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-50 backdrop-blur-sm border-2 border-vital-500 m-2 rounded-lg border-dashed">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit();
-            }}
-            disabled={isSaving}
-            className="bg-vital-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-vital-600 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
-          >
-            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-            {isSaving ? "Saving..." : "Change Image"}
-          </button>
-          <span className="text-xs text-gray-300 font-mono bg-black/50 px-2 py-1 rounded">
-            ID: {id} {db ? '(Cloud)' : '(Local)'}
-          </span>
-        </div>
-      )}
-    </div>
+        {/* Admin Edit Overlay */}
+        {editMode && (
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/image:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-50 backdrop-blur-sm border-2 border-vital-500 m-2 rounded-lg border-dashed">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsModalOpen(true);
+              }}
+              className="bg-vital-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-vital-600 hover:scale-105 transition-all flex items-center gap-2"
+            >
+              <ImageIcon size={16} />
+              Change Image
+            </button>
+            <span className="text-xs text-gray-300 font-mono bg-black/50 px-2 py-1 rounded">
+              ID: {id}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <EditModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        initialValue={src}
+        label={label}
+      />
+    </>
   );
 };

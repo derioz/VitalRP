@@ -1,48 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Crown, ShieldAlert, Shield, Star, Rat, ShieldCheck, Gavel, Shirt } from 'lucide-react';
+import { Crown, ShieldAlert, Shield, Star, Rat, ShieldCheck, Gavel, Shirt, Edit2 } from 'lucide-react';
+import { useAuth } from './AuthProvider';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { StaffEditModal } from './StaffEditModal';
 
 interface StaffMember {
+  id?: string;
   name: string;
   role: string;
   subRole?: string;
   color: string;
+  category: string;
+  image?: string;
 }
 
 interface StaffGroup {
   title: string;
   items: StaffMember[];
 }
-
-const staffGroups: StaffGroup[] = [
-  {
-    title: "Management",
-    items: [
-      { name: "Grumpy", role: "Owner", subRole: "IFM", color: "amber" },
-      { name: "Nez", role: "Owner", subRole: "LFM", color: "amber" },
-      { name: "Soup", role: "Owner", color: "amber" },
-    ]
-  },
-  {
-    title: "Administration",
-    items: [
-      { name: "Rue", role: "Admin", subRole: "Rules", color: "red" },
-      { name: "Damon", role: "Admin", subRole: "Whitelist Team", color: "red" },
-      { name: "Peaches", role: "Admin", subRole: "Property Mgmt", color: "red" },
-      { name: "Parzival", role: "Admin", color: "red" },
-      { name: "Artemis", role: "Admin", subRole: "LFM", color: "red" },
-    ]
-  },
-  {
-    title: "Moderation Team",
-    items: [
-      { name: "Jonesy", role: "Mod", subRole: "Clothing Dev", color: "yellow" },
-      { name: "Plum", role: "Senior Mod", subRole: "Content & Events", color: "green" },
-      { name: "Booberry", role: "Senior Mod", subRole: "Business Mgmt", color: "green" },
-      { name: "Chach", role: "Mod", subRole: "Content & Events", color: "green" },
-    ]
-  }
-];
 
 const getColorClasses = (color: string) => {
   switch (color) {
@@ -130,15 +107,17 @@ const itemVariants: Variants = {
 interface StaffCardProps {
   member: StaffMember;
   index: number;
+  onEdit?: (member: StaffMember) => void;
 }
 
-const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
+const StaffCard: React.FC<StaffCardProps> = ({ member, onEdit }) => {
+  const { editMode } = useAuth();
   const [isRatMode, setIsRatMode] = useState(false);
   const colors = getColorClasses(member.color);
   const isSoup = member.name === 'Soup';
 
-  const handleClick = () => {
-    if (isSoup) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (isSoup && !editMode) {
       setIsRatMode(!isRatMode);
     }
   };
@@ -147,8 +126,22 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
     <motion.div
       variants={itemVariants}
       onClick={handleClick}
-      className={`group relative h-40 bg-dark-800 md:bg-dark-800/80 md:backdrop-blur rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup ? 'cursor-pointer' : ''}`}
+      className={`group relative h-40 bg-dark-800 md:bg-dark-800/80 md:backdrop-blur rounded-xl overflow-hidden border border-white/5 ${colors.border} transition-all duration-300 ${colors.glow} ${isSoup && !editMode ? 'cursor-pointer' : ''}`}
     >
+      {/* Edit Button (Admin Only) */}
+      {editMode && onEdit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(member);
+          }}
+          className="absolute top-2 right-2 z-50 p-2 bg-dark-900/80 backdrop-blur text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-vital-500 hover:scale-110 shadow-lg border border-white/10"
+          title="Edit Card"
+        >
+          <Edit2 size={14} />
+        </button>
+      )}
+
       {/* Large Background Initial */}
       <div className="absolute -right-2 -bottom-4 font-display font-black text-[120px] leading-none text-white/[0.03] group-hover:text-white/[0.07] transition-colors select-none pointer-events-none">
         {isRatMode ? '🐀' : member.name.charAt(0)}
@@ -162,17 +155,19 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
 
         {/* Top Bar */}
         <div className="flex justify-between items-start">
-          <div className={`w-8 h-8 rounded-lg bg-dark-900/80 md:backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300`}>
+          <div className={`w-10 h-10 rounded-lg bg-dark-900/80 md:backdrop-blur border border-white/10 flex items-center justify-center ${colors.text} group-hover:scale-110 transition-transform duration-300 overflow-hidden`}>
             {isRatMode ? (
               <motion.div
                 initial={{ rotate: -20, scale: 0.8 }}
                 animate={{ rotate: 0, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
-                <Rat size={16} />
+                <Rat size={20} />
               </motion.div>
+            ) : member.image ? (
+              <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
             ) : (
-              <RoleIcon role={member.role} subRole={member.subRole} size={16} />
+              <RoleIcon role={member.role} subRole={member.subRole} size={20} />
             )}
           </div>
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -214,6 +209,68 @@ const StaffCard: React.FC<StaffCardProps> = ({ member }) => {
 };
 
 export const Staff: React.FC = () => {
+  const [staffGroups, setStaffGroups] = useState<StaffGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingMember, setEditingMember] = useState<StaffMember | null>(null);
+
+  useEffect(() => {
+    if (!db) {
+      setLoading(false);
+      return;
+    }
+
+    // Realtime listener
+    const q = query(collection(db, 'staff'), orderBy('role'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const allStaff: StaffMember[] = [];
+      snapshot.forEach(doc => allStaff.push({ id: doc.id, ...doc.data() } as StaffMember));
+
+      // Grouping logic
+      const groups: StaffGroup[] = [
+        {
+          title: "Management",
+          items: allStaff.filter(s => s.category === 'Management')
+        },
+        {
+          title: "Administration",
+          items: allStaff.filter(s => s.category === 'Administration')
+        },
+        {
+          title: "Moderation Team",
+          items: allStaff.filter(s => s.category === 'Moderation Team')
+        }
+      ].filter(g => g.items.length > 0);
+
+      setStaffGroups(groups);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching staff:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveMember = async (data: any) => {
+    if (!editingMember?.id || !db) return;
+
+    const docRef = doc(db, 'staff', editingMember.id);
+    await setDoc(docRef, {
+      name: data.name,
+      role: data.role,
+      subRole: data.subRole || '',
+      image: data.image || '',
+      color: data.color,
+      category: data.category
+    }, { merge: true });
+  };
+
+  const handleDeleteMember = async () => {
+    if (!editingMember?.id || !db) return;
+    await deleteDoc(doc(db, 'staff', editingMember.id));
+  };
+
+
   return (
     <section id="staff" className="py-16 relative overflow-hidden">
       {/* Background Overlay */}
@@ -248,35 +305,59 @@ export const Staff: React.FC = () => {
           </motion.div>
         </div>
 
-        {staffGroups.map((group) => (
-          <div key={group.title} className="mb-10 last:mb-0">
-            {/* Group Label */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-4 mb-5"
-            >
-              <h3 className="text-lg font-display font-bold text-gray-500 uppercase tracking-widest">{group.title}</h3>
-              <div className="h-px bg-white/10 flex-grow"></div>
-            </motion.div>
-
-            {/* Grid */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-              {group.items.map((member, index) => (
-                <StaffCard key={index} member={member} index={index} />
-              ))}
-            </motion.div>
+        {loading ? (
+          <div className="text-center text-gray-500">Loading roster...</div>
+        ) : staffGroups.length === 0 ? (
+          <div className="text-center text-gray-500 py-10">
+            <p>No staff members listed yet.</p>
           </div>
-        ))}
+        ) : (
+          staffGroups.map((group) => (
+            <div key={group.title} className="mb-10 last:mb-0">
+              {/* Group Label */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="flex items-center gap-4 mb-5"
+              >
+                <h3 className="text-lg font-display font-bold text-gray-500 uppercase tracking-widest">{group.title}</h3>
+                <div className="h-px bg-white/10 flex-grow"></div>
+              </motion.div>
+
+              {/* Grid */}
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+              >
+                {group.items.map((member, index) => (
+                  <StaffCard
+                    key={member.id || index}
+                    member={member}
+                    index={index}
+                    onEdit={setEditingMember}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          ))
+        )}
 
       </div>
+
+      {/* Edit Modal */}
+      {editingMember && (
+        <StaffEditModal
+          isOpen={!!editingMember}
+          onClose={() => setEditingMember(null)}
+          onSave={handleSaveMember}
+          onDelete={handleDeleteMember}
+          initialData={editingMember}
+        />
+      )}
     </section>
   );
 };

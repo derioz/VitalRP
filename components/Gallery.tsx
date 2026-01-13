@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { MapPin, ArrowUpRight, Camera } from 'lucide-react';
-import { EditableImage } from './EditableImage';
-import { EditableGalleryField } from './EditableGalleryField';
+import { MapPin, ArrowUpRight, Camera, Edit2 } from 'lucide-react';
+import { useAuth } from './AuthProvider';
 import { db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { GalleryEditModal } from './GalleryEditModal';
 
 interface GalleryItem {
   id: string;
@@ -90,36 +90,26 @@ const itemVariants: Variants = {
 };
 
 export const Gallery: React.FC = () => {
+  const { editMode } = useAuth();
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(initialGalleryItems);
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
 
-  // Fetch initial data from Firebase
+  // Fetch initial data from Firebase with real-time updates
   useEffect(() => {
-    // Basic check if Firebase env vars are present AND db is initialized
-    if (db) {
-      fetchGallery();
-    } else {
-      setLoading(false); // Skip loading if no DB config
+    if (!db) {
+      setLoading(false);
+      return;
     }
-  }, []);
 
-  const fetchGallery = async () => {
-    if (!db) return; // Safety check
-    try {
-      const q = query(collection(db, "gallery"));
-      // Sorting by ID string might not give numeric order, but good enough for now.
-      // Ideally we'd have a 'order' field. 
-      // For now let's just fetch.
-
-      const querySnapshot = await getDocs(q);
+    const q = query(collection(db, "gallery"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const items: GalleryItem[] = [];
-
-      querySnapshot.forEach((doc) => {
+      snapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() } as GalleryItem);
       });
 
       if (items.length > 0) {
-        // Optional: Sort by ID if they are numeric strings "1", "2" etc.
         items.sort((a, b) => {
           const numA = parseInt(a.id);
           const numB = parseInt(b.id);
@@ -128,24 +118,41 @@ export const Gallery: React.FC = () => {
         });
         setGalleryItems(items);
       }
-    } catch (error) {
-      console.warn('Could not fetch gallery from Firebase, using fallback data.', error);
-    } finally {
       setLoading(false);
+    }, (error) => {
+      console.warn('Could not fetch gallery from Firebase, using fallback data.', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveItem = async (data: any) => {
+    if (!editingItem?.id || !db) return;
+
+    try {
+      const docRef = doc(db, 'gallery', editingItem.id);
+      await setDoc(docRef, {
+        title: data.title || '',
+        location: data.location || '',
+        category: data.category || '',
+        src: data.src || '',
+        size: data.size || 'small'
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error saving gallery item:", error);
+      throw error; // Re-throw so modal can catch it
     }
   };
 
-  // Callback to refresh local state after an image update
-  const handleImageUpdate = (id: string, newSrc: string) => {
-    setGalleryItems(prev =>
-      prev.map(item => item.id === id ? { ...item, src: newSrc } : item)
-    );
-  };
-
-  const handleTextUpdate = (id: string, field: keyof GalleryItem, value: string) => {
-    setGalleryItems(prev =>
-      prev.map(item => item.id === id ? { ...item, [field]: value } : item)
-    );
+  const handleDeleteItem = async () => {
+    if (!editingItem?.id || !db) return;
+    try {
+      await deleteDoc(doc(db, 'gallery', editingItem.id));
+    } catch (error) {
+      console.error("Error deleting gallery item:", error);
+      throw error;
+    }
   };
 
   if (loading) {
@@ -215,17 +222,24 @@ export const Gallery: React.FC = () => {
               variants={itemVariants}
               className={`group relative rounded-xl overflow-hidden bg-dark-800 ${getSizeClasses(item.size)} shadow-2xl shadow-black/50`}
             >
+              {/* Edit Button (Admin Only) */}
+              {editMode && (
+                <button
+                  onClick={() => setEditingItem(item)}
+                  className="absolute top-3 right-3 z-50 p-2 bg-dark-900/80 backdrop-blur text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-vital-500 hover:scale-110 shadow-lg border border-white/10"
+                  title="Edit Gallery Item"
+                >
+                  <Edit2 size={14} />
+                </button>
+              )}
+
               {/* Image */}
               <div className="absolute inset-0 w-full h-full overflow-hidden">
                 <div className="absolute inset-0 bg-dark-900 z-0"></div>
-
-                {/* EditableImage handles its own updates, but informs parent for state */}
-                <EditableImage
-                  id={item.id}
+                <img
                   src={item.src}
                   alt={item.title}
                   className="w-full h-full object-cover transform transition-transform duration-1000 ease-out group-hover:scale-105 opacity-90 group-hover:opacity-100"
-                  onImageUpdate={(newSrc) => handleImageUpdate(item.id, newSrc)}
                 />
               </div>
 
@@ -238,34 +252,19 @@ export const Gallery: React.FC = () => {
                 {/* Top Badge */}
                 <div className="self-start pointer-events-auto">
                   <div className="inline-block px-3 py-1 rounded-full bg-black/40 md:backdrop-blur-md border border-white/10 text-[10px] font-tech font-bold text-white uppercase tracking-widest opacity-0 transform -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                    <EditableGalleryField
-                      id={item.id}
-                      field="category"
-                      value={item.category}
-                      onUpdate={(val) => handleTextUpdate(item.id, 'category', val)}
-                    />
+                    {item.category}
                   </div>
                 </div>
 
                 {/* Bottom Info */}
                 <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 ease-out pointer-events-auto">
                   <h3 className="text-2xl font-display font-bold text-white mb-2 leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                    <EditableGalleryField
-                      id={item.id}
-                      field="title"
-                      value={item.title}
-                      onUpdate={(val) => handleTextUpdate(item.id, 'title', val)}
-                    />
+                    {item.title}
                   </h3>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                     <MapPin size={14} className="text-vital-500 drop-shadow-md" />
                     <span className="text-sm font-sans text-gray-200 drop-shadow-md">
-                      <EditableGalleryField
-                        id={item.id}
-                        field="location"
-                        value={item.location}
-                        onUpdate={(val) => handleTextUpdate(item.id, 'location', val)}
-                      />
+                      {item.location}
                     </span>
                   </div>
 
@@ -299,6 +298,17 @@ export const Gallery: React.FC = () => {
 
         </motion.div>
       </div>
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <GalleryEditModal
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={handleSaveItem}
+          onDelete={handleDeleteItem}
+          initialData={editingItem}
+        />
+      )}
     </section>
   );
 };
