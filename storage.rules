@@ -1,8 +1,70 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    // --- Helper Functions ---
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Retrieve user data from Firestore
+    // Note: This requires Firestore to be enabled in the same project
+    function getUserData() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.token.email.lower())).data;
+    }
+    
+    // Check roles using Firestore data
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    // Super Admin: Hardcoded email or 'superadmin'/'owner' role
+    function isSuperAdmin() {
+      return (isAuthenticated() && request.auth.token.email.lower() == 'tx.davidj@gmail.com') 
+             || hasRole('superadmin') 
+             || hasRole('owner');
+    }
+    
+    // Admin: Super Admin or 'admin' role
+    function isAdmin() {
+      return isSuperAdmin() || hasRole('admin');
+    }
+
+    // Editor: Admin or 'editor' role
+    function isEditor() {
+      return isAdmin() || hasRole('editor');
+    }
+
+    // --- Rules ---
+
+    // GALLERY: Public Read, Editor/Admin Write
+    // Path pattern matches what is used in GalleryEditModal.tsx
+    match /gallery/{allPaths=**} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    // STAFF IMAGES: Public Read, Admin Write
+    // Path pattern matches what is used in StaffRoster.tsx
+    match /staff-images/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // AVATARS: Public Read, User Write (Own Only)
+    // Path pattern matches what is used in Settings.tsx: avatars/{uid}_{timestamp}
+    // We strictly check that the filename starts with the user's UID to prevent overwriting others.
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
+    }
+
+    // DEFAULT DENY
+    // All other paths are denied by default
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

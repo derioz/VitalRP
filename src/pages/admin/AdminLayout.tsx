@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../components/AuthProvider';
 import { AnimatePresence } from 'framer-motion';
+import { VitalLogo } from '../../../components/VitalLogo';
 
 export const AdminLayout: React.FC = () => {
     const { user, isAdmin, loading, logout } = useAuth();
@@ -82,9 +83,7 @@ export const AdminLayout: React.FC = () => {
             {/* Mobile Header */}
             <div className="lg:hidden flex items-center justify-between p-4 bg-dark-900 border-b border-white/5 sticky top-0 z-40">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-vital-500 to-vital-600 rounded-lg flex items-center justify-center font-bold text-white font-display">
-                        V
-                    </div>
+                    <VitalLogo className="w-8 h-8 filter drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
                     <span className="font-display font-bold text-white">VITAL RP</span>
                 </div>
                 <button
@@ -121,7 +120,7 @@ export const AdminLayout: React.FC = () => {
                     <div className="flex items-center gap-4 relative z-10 w-full">
                         <div className="relative shrink-0">
                             <div className="absolute inset-0 bg-vital-500 blur-xl opacity-20 animate-pulse" />
-                            <img src="/src/assets/vital-logo.png" alt="Vital RP" className="w-12 h-12 object-contain relative z-10 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]" />
+                            <VitalLogo className="w-12 h-12 relative z-10 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]" />
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-white font-display font-black text-xl leading-none tracking-wide bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
