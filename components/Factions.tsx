@@ -75,7 +75,7 @@ export const Factions: React.FC = () => {
   return (
     <section className="py-24 bg-dark-900 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="text-center mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -83,7 +83,7 @@ export const Factions: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
               CHOOSE YOUR <span className="text-vital-500">PATH</span>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg font-sans">
@@ -92,7 +92,7 @@ export const Factions: React.FC = () => {
           </motion.div>
         </div>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -107,9 +107,9 @@ export const Factions: React.FC = () => {
             >
               {/* Background Image with Overlay */}
               <div className="absolute inset-0">
-                <img 
-                  src={faction.image} 
-                  alt={faction.title} 
+                <img
+                  src={faction.image}
+                  alt={faction.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-20"
                 />
                 <div className={`absolute inset-0 bg-gradient-to-t ${faction.bgGradient} via-dark-900/80 to-dark-900/90`}></div>
@@ -133,7 +133,7 @@ export const Factions: React.FC = () => {
                   <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
                     {faction.description}
                   </p>
-                  
+
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                     <button className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wider hover:text-vital-400 transition-colors">
                       Learn More <ArrowRight size={16} />

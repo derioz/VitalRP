@@ -61,7 +61,7 @@ export const Community: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
               PLAYER <span className="text-vital-500">STORIES</span>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg font-sans">
@@ -70,7 +70,7 @@ export const Community: React.FC = () => {
           </motion.div>
         </div>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -84,11 +84,11 @@ export const Community: React.FC = () => {
               className="bg-dark-800 p-8 rounded-2xl border border-white/5 relative group hover:border-vital-500/30 transition-colors"
             >
               <Quote className="absolute top-8 right-8 text-vital-500/20 w-12 h-12" />
-              
+
               <div className="flex items-center gap-4 mb-6">
-                <img 
-                  src={item.image} 
-                  alt={item.name} 
+                <img
+                  src={item.image}
+                  alt={item.name}
                   className="w-16 h-16 rounded-full object-cover border-2 border-vital-500/50"
                 />
                 <div>

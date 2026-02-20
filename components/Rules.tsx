@@ -69,9 +69,9 @@ const itemVariants: Variants = {
 export const Rules: React.FC = () => {
   return (
     <section id="rules" className="py-24 bg-dark-800 relative overflow-hidden">
-       {/* Background noise texture */}
-       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5"></div>
-       
+      {/* Background noise texture */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5"></div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-16">
           <motion.div
@@ -80,7 +80,7 @@ export const Rules: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
               SERVER <span className="text-vital-500">RULES</span>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg font-sans">
@@ -89,7 +89,7 @@ export const Rules: React.FC = () => {
           </motion.div>
         </div>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -116,9 +116,9 @@ export const Rules: React.FC = () => {
         </motion.div>
 
         <div className="mt-12 text-center">
-          <a 
-            href="https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0" 
-            target="_blank" 
+          <a
+            href="https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0"
+            target="_blank"
             rel="noreferrer"
             className="text-gray-500 hover:text-vital-500 text-sm mb-6 inline-flex items-center gap-2 underline underline-offset-4 decoration-white/20 hover:decoration-vital-500 transition-all"
           >

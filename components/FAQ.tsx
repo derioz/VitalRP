@@ -52,18 +52,18 @@ export const FAQ: React.FC = () => {
   return (
     <section className="py-24 bg-dark-800 relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vital-500/10 text-vital-500 mb-4">
             <HelpCircle size={24} />
           </div>
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
             COMMON <span className="text-vital-500">QUESTIONS</span>
           </h2>
           <p className="text-gray-400">Everything you need to know before flying in.</p>
         </div>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -85,7 +85,7 @@ export const FAQ: React.FC = () => {
                   {openIndex === index ? <Minus size={20} /> : <Plus size={20} />}
                 </span>
               </button>
-              
+
               <AnimatePresence>
                 {openIndex === index && (
                   <motion.div

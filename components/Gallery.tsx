@@ -185,8 +185,8 @@ export const Gallery: React.FC = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="max-w-2xl text-center md:text-left"
           >
-            <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight">
-              CAPTURED <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">IN CITY</span>
+            <h2 className="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">
+              CAPTURED <span className="text-vital-500">IN CITY</span>
             </h2>
             <p className="text-lg text-gray-400 font-sans font-light leading-relaxed">
               Every street corner in Los Santos holds a story. From high-stakes criminal operations to the vibrant nightlife of Vinewood, witness the moments that define our community.

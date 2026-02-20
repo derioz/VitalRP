@@ -69,15 +69,15 @@ const itemVariants: Variants = {
 export const Values: React.FC = () => {
   return (
     <section id="values" className="py-24 relative overflow-hidden">
-       {/* Transparent BG to let parallax show through gaps, Solid dark on mobile for FPS */}
-       <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/70 md:backdrop-blur-md"></div>
-       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+      {/* Transparent BG to let parallax show through gaps, Solid dark on mobile for FPS */}
+      <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/70 md:backdrop-blur-md"></div>
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -88,12 +88,12 @@ export const Values: React.FC = () => {
               <Crown size={16} className="text-vital-500" />
               <span className="text-vital-500 font-tech uppercase tracking-widest text-xs font-bold">Our Philosophy</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-white">
-              WHAT WE <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">VALUE</span>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
+              WHAT WE <span className="text-vital-500">VALUE</span>
             </h2>
           </motion.div>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -105,7 +105,7 @@ export const Values: React.FC = () => {
         </div>
 
         {/* Bento Grid Layout */}
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -120,7 +120,7 @@ export const Values: React.FC = () => {
             >
               {/* Hover Gradient Background */}
               <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
-              
+
               {/* Background ID Number */}
               <div className="absolute top-4 right-6 text-6xl font-display font-black text-white/5 group-hover:text-white/10 transition-colors duration-500 select-none">
                 {item.id}
@@ -139,7 +139,7 @@ export const Values: React.FC = () => {
                     {item.description}
                   </p>
                 </div>
-                
+
                 {/* Decorative Line */}
                 <div className="w-8 h-1 bg-vital-500/30 rounded-full group-hover:w-full group-hover:bg-vital-500 transition-all duration-500"></div>
               </div>
