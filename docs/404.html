@@ -1,101 +1,135 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    
-    <!-- Force Dark Mode Declaration to prevent Browser Auto-Inversion -->
-    <meta name="color-scheme" content="dark only">
-    <meta name="supported-color-schemes" content="dark">
-    
-    <!-- Primary Meta Tags -->
-    <title>Vital RP | Story-first roleplay</title>
-    <meta name="title" content="Vital RP | Story-first roleplay" />
-    <meta name="description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
-    <meta name="theme-color" content="#f97316" />
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon-Br4zgiwC.svg" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://vitalrp.net" />
-    <meta property="og:title" content="Vital RP | Story-first roleplay" />
-    <meta property="og:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
-    <meta property="og:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
-    <meta property="og:site_name" content="Vital RP" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://vitalrp.net" />
-    <meta property="twitter:title" content="Vital RP | Story-first roleplay" />
-    <meta property="twitter:description" content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos." />
-    <meta property="twitter:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+  <!-- Force Dark Mode Declaration to prevent Browser Auto-Inversion -->
+  <meta name="color-scheme" content="dark only">
+  <meta name="supported-color-schemes" content="dark">
 
-    <style>
-      :root {
-        /* Tell browser we handle dark mode natively */
-        color-scheme: dark;
-        
-        /* Default Vital Orange Theme - Raw values for Tailwind rgb() */
-        --vital-50: 255 247 237;
-        --vital-100: 255 237 213;
-        --vital-200: 254 215 170;
-        --vital-300: 253 186 116;
-        --vital-400: 251 146 60;
-        --vital-500: 249 115 22;
-        --vital-600: 234 88 12;
-        --vital-700: 194 65 12;
-        --vital-800: 154 52 18;
-        --vital-900: 124 45 18;
-        --vital-950: 67 20 7;
+  <!-- Primary Meta Tags -->
+  <title>Vital RP | Story-first FiveM Roleplay Community</title>
+  <meta name="title" content="Vital RP | Story-first FiveM Roleplay Community" />
+  <meta name="description"
+    content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today." />
+  <meta name="keywords"
+    content="VitalRP, Vital RP, FiveM roleplay, FiveM server, GTA RP, Los Santos roleplay, FiveM community, RP server, GTA V roleplay, story-driven RP" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#f97316" />
+  <link rel="canonical" href="https://vitalrp.net/" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Br4zgiwC.svg" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vitalrp.net/" />
+  <meta property="og:title" content="Vital RP | Story-first FiveM Roleplay Community" />
+  <meta property="og:description"
+    content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today." />
+  <meta property="og:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Vital RP — FiveM Roleplay Community" />
+  <meta property="og:site_name" content="Vital RP" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://vitalrp.net/" />
+  <meta property="twitter:title" content="Vital RP | Story-first FiveM Roleplay Community" />
+  <meta property="twitter:description"
+    content="Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today." />
+  <meta property="twitter:image" content="https://r2.fivemanage.com/image/nABguUthLZVW.png" />
+  <meta property="twitter:image:alt" content="Vital RP — FiveM Roleplay Community" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Vital RP",
+      "url": "https://vitalrp.net",
+      "logo": "https://vitalrp.net/favicon.svg",
+      "image": "https://r2.fivemanage.com/image/nABguUthLZVW.png",
+      "description": "Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos.",
+      "sameAs": [],
+      "knowsAbout": ["FiveM", "GTA V Roleplay", "Online Gaming", "Roleplay Community"],
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Gamers, Roleplay enthusiasts"
       }
+    }
+    </script>
 
-      body {
-        background-color: #0a0a0a;
-        margin: 0;
-        padding: 0;
-        /* Prevent auto dark mode from messing with colors */
-        forced-color-adjust: none; 
-      }
-    </style>
+  <style>
+    :root {
+      /* Tell browser we handle dark mode natively */
+      color-scheme: dark;
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        darkMode: 'class', // Disable system preference auto-switching
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              display: ['Outfit', 'sans-serif'],
-              tech: ['JetBrains Mono', 'monospace'],
+      /* Default Vital Orange Theme - Raw values for Tailwind rgb() */
+      --vital-50: 255 247 237;
+      --vital-100: 255 237 213;
+      --vital-200: 254 215 170;
+      --vital-300: 253 186 116;
+      --vital-400: 251 146 60;
+      --vital-500: 249 115 22;
+      --vital-600: 234 88 12;
+      --vital-700: 194 65 12;
+      --vital-800: 154 52 18;
+      --vital-900: 124 45 18;
+      --vital-950: 67 20 7;
+    }
+
+    body {
+      background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
+      /* Prevent auto dark mode from messing with colors */
+      forced-color-adjust: none;
+    }
+  </style>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class', // Disable system preference auto-switching
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+            tech: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            vital: {
+              50: 'rgb(var(--vital-50) / <alpha-value>)',
+              100: 'rgb(var(--vital-100) / <alpha-value>)',
+              200: 'rgb(var(--vital-200) / <alpha-value>)',
+              300: 'rgb(var(--vital-300) / <alpha-value>)',
+              400: 'rgb(var(--vital-400) / <alpha-value>)',
+              500: 'rgb(var(--vital-500) / <alpha-value>)',
+              600: 'rgb(var(--vital-600) / <alpha-value>)',
+              700: 'rgb(var(--vital-700) / <alpha-value>)',
+              800: 'rgb(var(--vital-800) / <alpha-value>)',
+              900: 'rgb(var(--vital-900) / <alpha-value>)',
+              950: 'rgb(var(--vital-950) / <alpha-value>)',
             },
-            colors: {
-              vital: {
-                50: 'rgb(var(--vital-50) / <alpha-value>)',
-                100: 'rgb(var(--vital-100) / <alpha-value>)',
-                200: 'rgb(var(--vital-200) / <alpha-value>)',
-                300: 'rgb(var(--vital-300) / <alpha-value>)',
-                400: 'rgb(var(--vital-400) / <alpha-value>)',
-                500: 'rgb(var(--vital-500) / <alpha-value>)',
-                600: 'rgb(var(--vital-600) / <alpha-value>)',
-                700: 'rgb(var(--vital-700) / <alpha-value>)',
-                800: 'rgb(var(--vital-800) / <alpha-value>)',
-                900: 'rgb(var(--vital-900) / <alpha-value>)',
-                950: 'rgb(var(--vital-950) / <alpha-value>)',
-              },
-              dark: {
-                900: '#0a0a0a',
-                800: '#121212',
-                700: '#1e1e1e',
-              }
+            dark: {
+              900: '#0a0a0a',
+              800: '#121212',
+              700: '#1e1e1e',
             }
           }
         }
       }
-    </script>
+    }
+  </script>
 
   <script type="importmap">
 {
@@ -114,7 +148,60 @@
   <script type="module" crossorigin src="/assets/index-KtgAyLH0.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DEk1_Kbi.css">
 </head>
-  <body class="bg-dark-900 text-white antialiased overflow-x-hidden transition-colors duration-700">
-    <div id="root"></div>
-  </body>
+
+<body class="bg-dark-900 text-white antialiased overflow-x-hidden transition-colors duration-700">
+
+  <!-- Static SEO Shell: Visible to crawlers before React loads. Hidden by JS on mount. -->
+  <div id="seo-shell" aria-hidden="true"
+    style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
+    <header>
+      <h1>Vital RP — Story-First FiveM Roleplay Community</h1>
+      <p>Vital RP (VitalRP) is a premium FiveM GTA V roleplay server centered on deep storytelling, rich character
+        development, and immersive gameplay in Los Santos. We offer a welcoming environment for dedicated roleplayers
+        who want more than just a game — we want a story.</p>
+    </header>
+    <main>
+      <section>
+        <h2>What is Vital RP?</h2>
+        <p>Vital RP is a FiveM roleplay community built from the ground up to prioritize narrative-driven experiences.
+          Our server runs on a custom framework designed for cinematic, story-first roleplay that puts your character
+          and their journey at the center of everything.</p>
+      </section>
+      <section>
+        <h2>Why Join Vital RP?</h2>
+        <ul>
+          <li>Story-driven FiveM roleplay with an active and passionate community</li>
+          <li>Dedicated staff team ensuring fair, immersive gameplay</li>
+          <li>Character progression and development at the heart of every interaction</li>
+          <li>Regular events, contests, and community activities</li>
+          <li>Strict quality standards for an authentic GTA V RP experience</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Join Our FiveM Server</h2>
+        <p>Ready to begin your story in Los Santos? Visit vitalrp.net to learn more about our community, rules, and how
+          to get whitelisted on our FiveM roleplay server. Whether you're new to GTA RP or a seasoned roleplayer, Vital
+          RP has a place for you.</p>
+      </section>
+    </main>
+    <footer>
+      <p>Vital RP &mdash; FiveM Roleplay &mdash; Los Santos &mdash; GTA V RP Community &mdash; vitalrp.net</p>
+    </footer>
+  </div>
+
+  <div id="root"></div>
+  <script>
+    // Hide the static SEO shell as soon as the React root is populated
+    var observer = new MutationObserver(function () {
+      var root = document.getElementById('root');
+      if (root && root.children.length > 0) {
+        var shell = document.getElementById('seo-shell');
+        if (shell) shell.remove();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.getElementById('root'), { childList: true });
+  </script>
+</body>
+
 </html>
