@@ -303,7 +303,7 @@ export const Hero: React.FC = () => {
                 duration: easterEggActive ? 0.2 : 6, 
                 ease: "easeInOut" 
               }}
-              className="absolute -top-8 -right-12 z-30 w-80"
+              className="absolute -top-8 -left-12 z-30 w-80"
             >
               {/* Glassmorphic Container */}
               <div className="relative bg-dark-900/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
@@ -347,30 +347,7 @@ export const Hero: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Faction / Economy Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-dark-800/50 rounded-lg p-3 border border-white/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield size={12} className="text-blue-400" />
-                        <span className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">LSPD Units</span>
-                      </div>
-                      <div className="w-full bg-dark-950 rounded-full h-1.5 mb-1">
-                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                      </div>
-                      <div className="text-right text-[8px] text-gray-500 font-tech">12 ACTIVE</div>
-                    </div>
-                    
-                    <div className="bg-dark-800/50 rounded-lg p-3 border border-white/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Briefcase size={12} className="text-emerald-400" />
-                        <span className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">Economy</span>
-                      </div>
-                      <div className="w-full bg-dark-950 rounded-full h-1.5 mb-1">
-                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '85%' }}></div>
-                      </div>
-                      <div className="text-right text-[8px] text-gray-500 font-tech">BOOMING</div>
-                    </div>
-                  </div>
+
 
                   {/* Threat Level */}
                   <div className="bg-gradient-to-r from-red-500/10 to-transparent border-l-2 border-red-500 rounded-r-lg p-3 flex items-center justify-between">
