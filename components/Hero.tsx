@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { Copy, Check, Users, Wifi, ArrowRight, Zap, Globe, Shield, Activity, Clock } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Copy, Check, Users, Wifi, ArrowRight, Zap, Globe, Shield, Activity, Clock, Briefcase, AlertTriangle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { Button } from './Button';
 
 
@@ -15,7 +16,59 @@ const CFX_SERVER_ID = 'ogpvmv';
 export const Hero: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [serverStats, setServerStats] = useState({ online: false, players: 0, max: 2048 });
+  const [easterEggActive, setEasterEggActive] = useState(false);
+  const [serverTime, setServerTime] = useState('08:00 AM');
+  
   const { scrollY } = useScroll();
+
+  // Simulate RP Time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const date = new Date();
+      // Fast forward time slightly for the "RP" feel
+      let hours = (date.getHours() * 2) % 24;
+      let minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+      setServerTime(`${hours}:${strMinutes} ${ampm}`);
+    }, 60000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const triggerEasterEgg = () => {
+    setEasterEggActive(true);
+    
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#f97316', '#10b981', '#3b82f6']
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#f97316', '#10b981', '#3b82f6']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+
+    setTimeout(() => {
+      setEasterEggActive(false);
+    }, 4000);
+  };
 
   // Parallax effects for Hero specifically
   const yText = useTransform(scrollY, [0, 300], [0, 100]);
@@ -60,7 +113,7 @@ export const Hero: React.FC = () => {
           {/* 2. LEFT COLUMN: Content */}
           <motion.div
             style={{ y: yText, opacity: opacityHero }}
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
+            className={`flex flex-col items-center lg:items-start text-center lg:text-left transition-all duration-300 ${easterEggActive ? 'hue-rotate-180 contrast-125' : ''}`}
           >
 
             {/* Badge */}
@@ -171,11 +224,36 @@ export const Hero: React.FC = () => {
             {/* Main Image Container with Tilt/3D effect */}
             <div className="relative z-10 w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
               <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent z-10 opacity-60"></div>
-              <img
+              <motion.img
+                animate={easterEggActive ? { 
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(90deg)', 'hue-rotate(270deg)', 'hue-rotate(0deg)'],
+                  scale: [1, 1.05, 0.95, 1.1, 1]
+                } : {}}
+                transition={{ duration: 0.5, repeat: easterEggActive ? Infinity : 0 }}
                 src="https://r2.fivemanage.com/image/nABguUthLZVW.png"
                 alt="Vital RP City"
                 className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
               />
+
+              {/* Easter Egg Trigger Pill (Bottom Left) */}
+              <button 
+                onClick={triggerEasterEgg}
+                className="absolute bottom-6 left-6 z-30 group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1.5 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
+                  <motion.img 
+                    animate={easterEggActive ? { rotate: 360 } : {}}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    src="/damon-icon.jpg" 
+                    alt="Damon" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
+                </div>
+                <span className="text-[10px] font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
+                  Made by Damon
+                </span>
+              </button>
 
               {/* Floating HUD Element - Bottom Right */}
               <div className="absolute bottom-6 right-6 z-20">
@@ -193,81 +271,96 @@ export const Hero: React.FC = () => {
 
             {/* Enhanced Floating Stats Panel - REDESIGNED */}
             <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-              className="absolute -top-12 -left-8 z-30 w-72"
+              animate={easterEggActive ? { 
+                x: [-10, 10, -10, 10, 0],
+                y: [-10, 10, -10, 10, 0],
+                filter: 'hue-rotate(90deg) contrast(200%)'
+              } : { y: [0, -10, 0] }}
+              transition={{ 
+                repeat: easterEggActive ? Infinity : Infinity, 
+                duration: easterEggActive ? 0.2 : 6, 
+                ease: "easeInOut" 
+              }}
+              className="absolute -top-8 -right-12 z-30 w-80"
             >
               {/* Glassmorphic Container */}
               <div className="relative bg-dark-900/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
 
                 {/* Decorative Top Line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-vital-500 to-transparent"></div>
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${easterEggActive ? 'from-red-500 to-purple-500' : 'from-vital-500 to-transparent'}`}></div>
 
                 {/* Header */}
-                <div className="flex justify-between items-center p-5 pb-2">
+                <div className="flex justify-between items-center p-4 border-b border-white/5">
                   <div className="flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${serverStats.online ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${serverStats.online ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                    </span>
-                    <span className="text-xs font-bold font-tech text-white tracking-widest uppercase">
-                      {serverStats.online ? 'System Online' : 'System Offline'}
+                    <Shield size={14} className={easterEggActive ? 'text-red-500' : 'text-vital-500'} />
+                    <span className={`text-xs font-bold font-tech tracking-widest uppercase ${easterEggActive ? 'text-red-500' : 'text-white'}`}>
+                      {easterEggActive ? 'DAMON OVERRIDE' : 'CITY DASHBOARD'}
                     </span>
                   </div>
-                  <span className="text-[10px] text-gray-500 font-tech">US-EAST</span>
+                  <span className="text-[10px] text-gray-400 font-tech px-2 py-1 bg-white/5 rounded-md border border-white/5">
+                    {serverTime}
+                  </span>
                 </div>
 
                 {/* Main Stats */}
-                <div className="px-6 py-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-gray-400 text-xs font-sans font-medium">Active Citizens</span>
-                    <span className="text-vital-500 text-xs font-tech">{(serverStats.players / serverStats.max * 100).toFixed(0)}% LOAD</span>
-                  </div>
-
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-6xl font-display font-black text-white tracking-tighter leading-none">{serverStats.players}</span>
-                    <span className="text-lg text-gray-600 font-tech font-bold">/{serverStats.max}</span>
-                  </div>
-
-                  {/* Queue & Ping Grid */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="bg-white/5 rounded-lg p-2.5 border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-gray-500 uppercase font-tech mb-1">Queue Length</span>
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-gray-400" />
-                        <span className="text-white font-bold">{queueCount}</span>
+                <div className="px-5 py-4">
+                  
+                  {/* Population */}
+                  <div className="flex justify-between items-end mb-4">
+                    <div>
+                      <span className="text-[10px] text-gray-500 uppercase font-tech block mb-1">Active Population</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-5xl font-display font-black text-white tracking-tighter leading-none">{easterEggActive ? '9999' : serverStats.players}</span>
+                        <span className="text-sm text-gray-600 font-tech font-bold">/{serverStats.max}</span>
                       </div>
                     </div>
-                    <div className="bg-white/5 rounded-lg p-2.5 border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-gray-500 uppercase font-tech mb-1">Avg Latency</span>
-                      <div className="flex items-center gap-2">
-                        <Wifi size={14} className="text-emerald-500" />
-                        <span className="text-white font-bold">12ms</span>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${serverStats.online ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${serverStats.online ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                        </span>
+                        <span className="text-[9px] text-emerald-400 font-tech font-bold uppercase tracking-wider">{serverStats.online ? 'Online' : 'Offline'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Server Health Graph */}
-                  <div className="relative h-10 w-full bg-dark-950/50 rounded-lg overflow-hidden border border-white/5">
-                    {/* Grid Lines */}
-                    <div className="absolute inset-0 grid grid-cols-6 gap-px opacity-10">
-                      {[...Array(6)].map((_, i) => <div key={i} className="bg-white/50 h-full w-px"></div>)}
+                  {/* Faction / Economy Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-dark-800/50 rounded-lg p-3 border border-white/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield size={12} className="text-blue-400" />
+                        <span className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">LSPD Units</span>
+                      </div>
+                      <div className="w-full bg-dark-950 rounded-full h-1.5 mb-1">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '65%' }}></div>
+                      </div>
+                      <div className="text-right text-[8px] text-gray-500 font-tech">12 ACTIVE</div>
                     </div>
+                    
+                    <div className="bg-dark-800/50 rounded-lg p-3 border border-white/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Briefcase size={12} className="text-emerald-400" />
+                        <span className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">Economy</span>
+                      </div>
+                      <div className="w-full bg-dark-950 rounded-full h-1.5 mb-1">
+                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                      <div className="text-right text-[8px] text-gray-500 font-tech">BOOMING</div>
+                    </div>
+                  </div>
 
-                    {/* Line */}
-                    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                      <motion.path
-                        d="M0,20 L10,20 L20,15 L30,25 L40,20 L50,10 L60,30 L70,20 L80,22 L90,18 L100,20 L110,5 L120,35 L130,20 L140,20 L200,20 L210,10 L220,30 L300,20"
-                        fill="none"
-                        stroke="#f97316"
-                        strokeWidth="1.5"
-                        vectorEffect="non-scaling-stroke"
-                        initial={{ x: -100 }}
-                        animate={{ x: 0 }}
-                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      />
-                    </svg>
-                    <div className="absolute bottom-1 right-2 text-[8px] text-vital-500 font-tech">TICK: 60</div>
+                  {/* Threat Level */}
+                  <div className="bg-gradient-to-r from-red-500/10 to-transparent border-l-2 border-red-500 rounded-r-lg p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle size={16} className={easterEggActive ? 'text-red-500 animate-bounce' : 'text-red-500/80'} />
+                      <div>
+                        <div className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">City Threat Level</div>
+                        <div className={`text-xs font-bold font-tech uppercase ${easterEggActive ? 'text-red-500 animate-pulse' : 'text-red-400'}`}>
+                          {easterEggActive ? 'CRITICAL OVERRIDE' : 'ELEVATED - MODERATE'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
