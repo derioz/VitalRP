@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, ArrowLeft, ExternalLink, Shirt, Coffee, Sticker, Package, Star, Sparkles, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -86,8 +86,18 @@ export const Merch: React.FC = () => {
     ? products
     : products.filter(p => p.category === activeCategory);
 
+  // Scroll to top on mount for smooth transition
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white"
+    >
 
       {/* Fixed Top Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-900/95 backdrop-blur-md border-b border-white/10 py-3">
@@ -405,6 +415,6 @@ export const Merch: React.FC = () => {
           </Link>
         </div>
       </footer>
-    </div>
+    </motion.div>
   );
 };

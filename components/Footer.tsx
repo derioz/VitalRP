@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Youtube, Instagram, Ghost, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 
 // Centered vertically in 100x100 box (Y: 15-95)
@@ -71,6 +72,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
   const { login, user } = useAuth();
+  const navigate = useNavigate();
 
   const links = [
     { label: 'Home', href: '#home' },
@@ -86,6 +88,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
     if (item.isStore) {
       e.preventDefault();
       onOpenStore();
+    } else if (item.href.startsWith('/')) {
+      e.preventDefault();
+      navigate(item.href);
     }
   };
 
