@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './src/pages/Home';
+import { Merch } from './src/pages/Merch';
 import { AdminLayout } from './src/pages/admin/AdminLayout';
 import { Dashboard } from './src/pages/admin/Dashboard';
 import { StaffRoster } from './src/pages/admin/StaffRoster';
@@ -15,6 +16,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/merch" element={<Merch />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
