@@ -8,8 +8,8 @@ import { VitalLogo } from '../../components/VitalLogo';
 // -----------------------------------------------------------------------
 // CONFIGURATION — Update this URL once your Fourthwall store is live
 // -----------------------------------------------------------------------
-const FOURTHWALL_STORE_URL = '#'; // e.g., 'https://vitalrp.fourthwall.com'
-const STORE_LIVE = false; // Set to true when Fourthwall store is ready
+const FOURTHWALL_STORE_URL = 'https://vitalrp-shop.fourthwall.com/';
+const STORE_LIVE = true;
 
 interface Product {
   id: string;
