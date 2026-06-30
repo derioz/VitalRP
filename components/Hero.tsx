@@ -31,15 +31,15 @@ export const Hero: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`https://servers-frontend.fivem.net/api/servers/single/${CFX_SERVER_ID}`);
+        const response = await fetch(`https://frontend.cfx-services.net/api/servers/single/${CFX_SERVER_ID}`);
         if (!response.ok) throw new Error('Unreachable');
         const data = await response.json();
         if (data && data.Data) {
           setServerStats({ online: true, players: data.Data.clients, max: data.Data.sv_maxclients });
         }
       } catch (e) {
-        // Fallback for demo/dev purposes or if API is unreachable
-        setServerStats({ online: true, players: 412, max: 2048 });
+        // Server unreachable — show offline state
+        setServerStats({ online: false, players: 0, max: 175 });
       }
     };
     fetchStats();
