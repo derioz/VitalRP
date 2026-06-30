@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Gamepad2, ShoppingCart, MessageSquare } from 'lucide-react';
+import { Menu, X, Gamepad2, ShoppingCart, MessageSquare, Shirt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
 
@@ -26,8 +26,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
+  const [isMerchHovered, setIsMerchHovered] = useState(false);
 
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const merchHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,6 +50,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
       clearTimeout(hoverTimeoutRef.current);
     }
     setIsForumsHovered(false);
+  };
+
+  const handleMerchMouseEnter = () => {
+    merchHoverTimeoutRef.current = setTimeout(() => {
+      setIsMerchHovered(true);
+    }, 300);
+  };
+
+  const handleMerchMouseLeave = () => {
+    if (merchHoverTimeoutRef.current) {
+      clearTimeout(merchHoverTimeoutRef.current);
+    }
+    setIsMerchHovered(false);
   };
 
   const navLinks = [
@@ -104,6 +119,31 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               </Button>
               <AnimatePresence>
                 {isForumsHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-vital-500 text-dark-900 text-[10px] font-bold px-3 py-1.5 rounded shadow-lg whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none"
+                  >
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-vital-500 rotate-45"></div>
+                    Coming Soon!
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Merch Button with Tooltip */}
+            <div
+              className="relative"
+              onMouseEnter={handleMerchMouseEnter}
+              onMouseLeave={handleMerchMouseLeave}
+            >
+              <Button variant="ghost" size="sm" icon={<Shirt size={18} />}>
+                Merch
+              </Button>
+              <AnimatePresence>
+                {isMerchHovered && (
                   <motion.div
                     initial={{ opacity: 0, y: 5, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -182,6 +222,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               <div className="pt-4 flex flex-col gap-3">
                 <Button variant="outline" fullWidth icon={<MessageSquare size={18} />} className="opacity-75">
                   Forums (Soon)
+                </Button>
+
+                <Button variant="outline" fullWidth icon={<Shirt size={18} />} className="opacity-75">
+                  Merch (Soon)
                 </Button>
 
                 {/* Mobile Menu Store Button */}
