@@ -208,6 +208,28 @@ export const Hero: React.FC = () => {
               </div>
             </div>
 
+            {/* Mobile Easter Egg Pill */}
+            <div className="lg:hidden mt-6 w-full flex justify-center">
+              <button 
+                onClick={triggerEasterEgg}
+                className="group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1.5 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
+                  <motion.img 
+                    animate={easterEggActive ? { rotate: 360 } : {}}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    src="/damon-icon.jpg" 
+                    alt="Damon" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
+                </div>
+                <span className="text-[10px] font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
+                  Made by Damon
+                </span>
+              </button>
+            </div>
+
           </motion.div>
 
           {/* 3. RIGHT COLUMN: Visual Composition */}
