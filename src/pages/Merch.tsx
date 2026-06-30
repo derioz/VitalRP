@@ -23,6 +23,7 @@ interface Product {
 }
 
 const products: Product[] = [
+  // Original 6
   {
     id: 'hoodie-classic',
     name: 'Vital Classic Hoodie',
@@ -74,9 +75,129 @@ const products: Product[] = [
     image: '/merch/mousepad.png',
     badge: 'Popular',
   },
+  
+  // New Additions: Apparel
+  {
+    id: 'joggers',
+    name: 'Vital Premium Joggers',
+    description: 'Slim-fit black joggers with orange V logo on the thigh. Ultra-soft fleece.',
+    price: '$49.99',
+    category: 'Apparel',
+    image: '/merch/joggers.png',
+  },
+  {
+    id: 'beanie',
+    name: 'Classic Knit Beanie',
+    description: 'Warm winter beanie with woven Vital RP tag on the cuff.',
+    price: '$24.99',
+    category: 'Apparel',
+    image: '/merch/beanie.png',
+  },
+  {
+    id: 'zipup-hoodie',
+    name: 'Vital Zip-Up Hoodie',
+    description: 'Lightweight premium zip-up with subtle chest logo.',
+    price: '$54.99',
+    category: 'Apparel',
+    image: '/merch/zipup.png',
+  },
+  {
+    id: 'longsleeve-tee',
+    name: 'Los Santos Long Sleeve',
+    description: 'Long sleeve tee with "LOS SANTOS" typography down the arms.',
+    price: '$34.99',
+    category: 'Apparel',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Long+Sleeve',
+  },
+  {
+    id: 'windbreaker',
+    name: 'Vital Windbreaker',
+    description: 'Water-resistant lightweight jacket perfect for breezy nights.',
+    price: '$64.99',
+    category: 'Apparel',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Windbreaker',
+    badge: 'Premium',
+  },
+
+  // New Additions: Accessories & EDC
+  {
+    id: 'neon-sign',
+    name: 'V Logo Neon Sign',
+    description: 'LED neon wall sign to elevate your gaming setup.',
+    price: '$89.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Neon+Sign',
+    badge: 'Limited',
+  },
+  {
+    id: 'keycap',
+    name: 'Artisan Keycap',
+    description: 'Custom mechanical keyboard keycap featuring the Vital logo.',
+    price: '$19.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Keycap',
+  },
+  {
+    id: 'coasters',
+    name: 'Matte Slate Coasters',
+    description: 'Set of 4 heavy-duty slate coasters with engraved logo.',
+    price: '$24.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Coasters',
+  },
+  {
+    id: 'phone-case',
+    name: 'Tough Phone Case',
+    description: 'Matte black phone case with geometric pattern and logo.',
+    price: '$29.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Phone+Case',
+  },
+  {
+    id: 'lanyard',
+    name: 'Vital Lanyard & Keychain',
+    description: 'Heavy duty lanyard with metal enamel V logo keychain.',
+    price: '$14.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Lanyard',
+  },
+  {
+    id: 'tote-bag',
+    name: 'Canvas Tote Bag',
+    description: 'Durable black canvas tote for everyday carry.',
+    price: '$22.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Tote+Bag',
+  },
+  {
+    id: 'water-bottle',
+    name: 'Insulated Water Bottle',
+    description: 'Keeps drinks cold for 24h during long RP sessions.',
+    price: '$34.99',
+    category: 'Accessories',
+    image: 'https://placehold.co/800x800/1e1e1e/f97316?text=Water+Bottle',
+  },
+
+  // New Additions: In-Game Factions
+  {
+    id: 'lspd-tee',
+    name: 'LSPD Dept Tee',
+    description: 'Official Los Santos Police Department graphic tee.',
+    price: '$29.99',
+    category: 'In-Game',
+    image: 'https://placehold.co/800x800/1e1e1e/3b82f6?text=LSPD',
+  },
+  {
+    id: 'burgershot-tee',
+    name: 'Burgershot Uniform',
+    description: 'Vintage wash tee featuring the iconic Burgershot logo.',
+    price: '$29.99',
+    category: 'In-Game',
+    image: 'https://placehold.co/800x800/1e1e1e/ef4444?text=Burgershot',
+  },
 ];
 
-const categories = ['All', 'Apparel', 'Accessories'];
+const categories = ['All', 'Apparel', 'Accessories', 'In-Game'];
 
 export const Merch: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
