@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, ExternalLink, Shirt, Coffee, Sticker, Package, Star, Sparkles, Tag } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, ExternalLink, Shirt, Coffee, Sticker, Package, Star, Sparkles, Tag, Globe, CheckCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/Button';
 import { VitalLogo } from '../../components/VitalLogo';
@@ -202,6 +203,29 @@ const categories = ['All', 'Apparel', 'Accessories', 'In-Game'];
 export const Merch: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
+  const [easterEggActive, setEasterEggActive] = useState(false);
+
+  const triggerEasterEgg = () => {
+    setEasterEggActive(true);
+    
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+        colors: ['#f97316', '#10b981', '#3b82f6']
+      });
+      confetti({
+        particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+        colors: ['#f97316', '#10b981', '#3b82f6']
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
+
+    setTimeout(() => setEasterEggActive(false), 4000);
+  };
 
   const filteredProducts = activeCategory === 'All'
     ? products
@@ -258,8 +282,8 @@ export const Merch: React.FC = () => {
       <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-28 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-vital-500/8 blur-[120px] rounded-full pointer-events-none"></div>
-          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-vital-600/5 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] blur-[120px] rounded-full pointer-events-none transition-colors duration-1000 ${easterEggActive ? 'bg-red-500/20' : 'bg-vital-500/8'}`}></div>
+          <div className={`absolute bottom-0 right-0 w-[400px] h-[400px] blur-[80px] rounded-full pointer-events-none transition-colors duration-1000 ${easterEggActive ? 'bg-purple-500/10' : 'bg-vital-600/5'}`}></div>
         </div>
 
         {/* Grid Pattern */}
@@ -271,51 +295,114 @@ export const Merch: React.FC = () => {
         ></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            {/* Badge */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            
+            {/* Left Column: Title & Info */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className={`text-center lg:text-left transition-all duration-300 ${easterEggActive ? 'hue-rotate-180 contrast-125 scale-105' : ''}`}
             >
-              <Shirt size={14} className="text-vital-400" />
-              <span className="text-xs font-tech text-gray-300 uppercase tracking-widest">Official Collection</span>
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm"
+              >
+                <Shirt size={14} className={easterEggActive ? 'text-red-500' : 'text-vital-400'} />
+                <span className="text-xs font-tech text-gray-300 uppercase tracking-widest font-bold">
+                  {easterEggActive ? 'OVERRIDE PROTOCOL' : 'Official Collection'}
+                </span>
+              </motion.div>
+
+              {/* Main Heading */}
+              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-6 drop-shadow-xl">
+                VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">MERCH</span>
+              </h1>
+
+              <p className="text-lg sm:text-xl text-gray-400 font-light leading-relaxed mb-10 max-w-lg mx-auto lg:mx-0">
+                Rep the community. Premium quality apparel and accessories designed exclusively for the{' '}
+                <span className="text-white font-medium">Vital RP</span> universe.
+              </p>
+
+              {/* Interactive Pills */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                <div className="flex items-center gap-2 bg-dark-800/80 border border-white/5 px-4 py-2 rounded-lg">
+                  <CheckCircle size={16} className="text-emerald-500" />
+                  <span className="text-sm font-tech text-gray-300 uppercase tracking-wider">Premium Quality</span>
+                </div>
+                <div className="flex items-center gap-2 bg-dark-800/80 border border-white/5 px-4 py-2 rounded-lg">
+                  <Globe size={16} className="text-blue-400" />
+                  <span className="text-sm font-tech text-gray-300 uppercase tracking-wider">Global Shipping</span>
+                </div>
+                
+                {/* Easter Egg Trigger Pill */}
+                <button 
+                  onClick={triggerEasterEgg}
+                  className="group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
+                    <motion.img 
+                      animate={easterEggActive ? { rotate: 360 } : {}}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      src="/damon-icon.jpg" 
+                      alt="Damon" 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
+                  </div>
+                  <span className="text-xs font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
+                    Made by Damon
+                  </span>
+                </button>
+              </div>
             </motion.div>
 
-            {/* Main Heading */}
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-6">
-              VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">MERCH</span>
-            </h1>
+            {/* Right Column: Visual Dashboard */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={easterEggActive ? { 
+                opacity: 1, 
+                x: [-10, 10, -10, 10, 0],
+                filter: 'hue-rotate(90deg) contrast(200%)'
+              } : { opacity: 1, x: 0 }}
+              transition={{ duration: easterEggActive ? 0.2 : 0.6, repeat: easterEggActive ? Infinity : 0 }}
+              className="hidden lg:block relative"
+            >
+              <div className="bg-dark-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${easterEggActive ? 'from-red-500 to-red-600' : 'from-vital-500 to-vital-600'}`}></div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <span className="text-[10px] text-gray-500 font-tech uppercase tracking-widest block mb-2">Total Collection</span>
+                    <div className="text-5xl font-display font-black text-white">{easterEggActive ? '999' : products.length}</div>
+                    <span className="text-sm text-vital-500 font-tech">ACTIVE ITEMS</span>
+                  </div>
+                  
+                  <div>
+                    <span className="text-[10px] text-gray-500 font-tech uppercase tracking-widest block mb-2">Global Orders</span>
+                    <div className="text-5xl font-display font-black text-white">2.4k+</div>
+                    <span className="text-sm text-emerald-500 font-tech">DELIVERED</span>
+                  </div>
+                </div>
 
-            <p className="text-lg sm:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed mb-10">
-              Rep the community. Premium quality apparel and accessories designed for the{' '}
-              <span className="text-white font-medium">Vital RP</span> community.
-            </p>
+                <div className="mt-8 pt-6 border-t border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${easterEggActive ? 'bg-red-500 animate-ping' : 'bg-vital-500 animate-pulse'}`}></div>
+                      <span className="text-xs text-gray-400 font-tech uppercase tracking-widest">Store Status</span>
+                    </div>
+                    <span className={`text-sm font-bold font-tech uppercase tracking-widest ${easterEggActive ? 'text-red-500' : 'text-white'}`}>
+                      {easterEggActive ? 'CRITICAL OVERRIDE' : 'ONLINE & SHIPPING'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-            {/* Stats Row */}
-            <div className="flex items-center justify-center gap-8 sm:gap-12">
-              <div className="flex flex-col items-center">
-                <span className="text-2xl font-display font-bold text-white">{products.length}</span>
-                <span className="text-[10px] font-tech text-gray-500 uppercase tracking-wider">Products</span>
-              </div>
-              <div className="w-px h-8 bg-white/10"></div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl font-display font-bold text-vital-400">Premium</span>
-                <span className="text-[10px] font-tech text-gray-500 uppercase tracking-wider">Quality</span>
-              </div>
-              <div className="w-px h-8 bg-white/10"></div>
-              <div className="flex flex-col items-center">
-                <span className="text-2xl font-display font-bold text-white">🌍</span>
-                <span className="text-[10px] font-tech text-gray-500 uppercase tracking-wider">Worldwide</span>
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
