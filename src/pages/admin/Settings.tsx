@@ -4,8 +4,8 @@ import { User, Lock, Settings as SettingsIcon, Save, Camera, Mail, Globe, Shield
 import { useAuth } from '../../../components/AuthProvider';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from '../../../lib/firebase';
+import { db, auth } from '../../../lib/firebase';
+import { uploadImage } from '../../../lib/fivemanage';
 import { AdminHero } from '../../../components/AdminHero';
 
 export const Settings: React.FC = () => {
@@ -85,13 +85,11 @@ export const Settings: React.FC = () => {
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !storage || !user) return;
+        if (!file || !user) return;
 
         setLoading(true);
         try {
-            const storageRef = ref(storage, `avatars/${user.uid}_${Date.now()}`);
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
+            const downloadURL = await uploadImage(file, 'avatars');
 
             setProfileData(prev => ({ ...prev, photoURL: downloadURL }));
 
@@ -315,7 +313,34 @@ export const Settings: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        <div className="bg-dark-950/50 border border-white/10 rounded-xl p-5">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <h3 className="text-white font-bold flex items-center gap-2">
+                                                        <Globe size={18} className="text-vital-500" />
+                                                        FiveManage Media Service
+                                                    </h3>
+                                                    <p className="text-xs text-gray-400 mt-1">
+                                                        Image upload host for gallery items, staff portraits, and user avatars.
+                                                    </p>
+                                                </div>
+                                                <span className={`text-xs font-mono px-2.5 py-1 rounded-full border ${
+                                                    import.meta.env.VITE_FIVEMANAGE_API_KEY 
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                }`}>
+                                                    {import.meta.env.VITE_FIVEMANAGE_API_KEY ? 'API Key Configured' : 'Missing API Key'}
+                                                </span>
+                                            </div>
+                                            {!import.meta.env.VITE_FIVEMANAGE_API_KEY && (
+                                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300">
+                                                    Add <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">VITE_FIVEMANAGE_API_KEY=your_token</code> to your <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">.env</code> file to enable direct FiveManage image uploads.
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <h3 className="text-white font-bold flex items-center gap-2">

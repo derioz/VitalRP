@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Trash2, Upload, Loader2, Minimize, Maximize } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { uploadImage } from '../lib/fivemanage';
 
 interface GalleryItemData {
     id: string;
@@ -72,18 +71,11 @@ export const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !storage) return;
+        if (!file) return;
 
         setUploading(true);
         try {
-            // Upload file immediately
-            const filename = `gallery/${Date.now()}_${file.name}`;
-            const storageRef = ref(storage, filename);
-
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
-
-            // Set the uploaded URL as the image source
+            const downloadURL = await uploadImage(file, 'gallery');
             setFormData(prev => ({ ...prev, src: downloadURL }));
         } catch (error: any) {
             console.error("Upload failed:", error);
@@ -223,11 +215,10 @@ export const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
                                                 type="file"
                                                 onChange={handleFileUpload}
                                                 accept="image/*"
-                                                disabled={!storage}
+                                                disabled={uploading}
                                                 className="hidden"
                                             />
                                         </div>
-                                        {!storage && <p className="text-xs text-red-500">Firebase Storage is not configured.</p>}
                                     </div>
                                 </form>
                             </div>

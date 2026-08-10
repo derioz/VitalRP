@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Upload, Trash2 } from 'lucide-react';
+import { X, Save, Upload, Trash2, Loader2 } from 'lucide-react';
+import { uploadImage } from '../lib/fivemanage';
 
 interface StaffMemberData {
     name: string;
@@ -44,11 +45,29 @@ export const StaffEditModal: React.FC<StaffEditModalProps> = ({
     const [formData, setFormData] = useState<StaffMemberData>(initialData);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     // Update form data when initialData changes or modal opens
     React.useEffect(() => {
         setFormData(initialData);
     }, [initialData, isOpen]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const downloadURL = await uploadImage(file, 'staff-images');
+            setFormData(prev => ({ ...prev, image: downloadURL }));
+        } catch (error: any) {
+            console.error("Upload failed:", error);
+            alert("Image upload failed: " + (error.message || "Unknown error"));
+        } finally {
+            setUploading(false);
+        }
+    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -158,6 +177,11 @@ export const StaffEditModal: React.FC<StaffEditModalProps> = ({
                                             className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-vital-500 outline-none transition-colors"
                                             placeholder="https://..."
                                         />
+                                        <label className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg cursor-pointer transition-colors text-xs font-medium text-gray-300 whitespace-nowrap">
+                                            {uploading ? <Loader2 size={16} className="animate-spin text-vital-500" /> : <Upload size={16} className="text-vital-500" />}
+                                            <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+                                            <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                                        </label>
                                     </div>
                                     <p className="text-[10px] text-gray-500">Leave empty to use the default role icon.</p>
 

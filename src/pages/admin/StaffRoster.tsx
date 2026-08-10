@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit2, Save, X, Search, User, Briefcase, Crown, ShieldAlert, Shield, ShieldCheck, Gavel, Shirt, HeartHandshake, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../../lib/firebase';
+import { db } from '../../../lib/firebase';
+import { uploadImage } from '../../../lib/fivemanage';
 import { AdminHero } from '../../../components/AdminHero';
+
 
 interface StaffMember {
     id: string;
@@ -125,21 +126,15 @@ export const StaffRoster: React.FC = () => {
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !storage) return;
+        if (!file) return;
 
         setUploading(true);
         try {
-            // Create a unique filename
-            const filename = `staff-images/${Date.now()}_${file.name}`;
-            const storageRef = ref(storage, filename);
-
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
-
+            const downloadURL = await uploadImage(file, 'staff-images');
             setFormData(prev => ({ ...prev, image: downloadURL }));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error uploading image:", error);
-            alert("Failed to upload image.");
+            alert("Failed to upload image: " + (error.message || "Unknown error"));
         } finally {
             setUploading(false);
         }
