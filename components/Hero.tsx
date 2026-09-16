@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Copy, Check, Users, Wifi, ArrowRight, Zap, Globe, Shield, Activity, Clock, Briefcase, AlertTriangle } from 'lucide-react';
@@ -84,15 +86,17 @@ export const Hero: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`https://frontend.cfx-services.net/api/servers/single/${CFX_SERVER_ID}`);
+        const response = await fetch('/api/cfx/population');
         if (!response.ok) throw new Error('Unreachable');
         const data = await response.json();
-        if (data && data.Data) {
-          setServerStats({ online: true, players: data.Data.clients, max: data.Data.sv_maxclients });
+        if (data && data.online) {
+          setServerStats({ online: true, players: data.players, max: data.max || 2048 });
+        } else {
+          setServerStats({ online: false, players: 0, max: 2048 });
         }
       } catch (e) {
         // Server unreachable — show offline state
-        setServerStats({ online: false, players: 0, max: 175 });
+        setServerStats({ online: false, players: 0, max: 2048 });
       }
     };
     fetchStats();

@@ -1,15 +1,17 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, ArrowRight, Edit3 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
 
 export const AdminControls: React.FC = () => {
-  const { user, isAdmin, logout, toggleEditMode, editMode } = useAuth();
+  const { user, logout, toggleEditMode, editMode } = useAuth();
 
-  if (!isAdmin || !user) return null;
+  if (!user || !user.permissions.canAccessAdmin) return null;
 
-  const avatarUrl = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`;
+  const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`;
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]">
@@ -19,8 +21,8 @@ export const AdminControls: React.FC = () => {
         className="bg-dark-900/90 backdrop-blur-xl border border-vital-500/30 rounded-full p-2 pl-2 pr-2 shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center gap-2 group transition-all hover:border-vital-500/60"
       >
         {/* Dashboard Link */}
-        <NavLink
-          to="/admin"
+        <Link
+          href="/admin"
           className="flex items-center gap-3 pl-2 pr-4 py-1.5 hover:bg-white/5 rounded-full transition-colors"
         >
           <div className="relative">
@@ -40,7 +42,7 @@ export const AdminControls: React.FC = () => {
           </div>
 
           <ArrowRight size={14} className="text-gray-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-        </NavLink>
+        </Link>
 
         <div className="h-6 w-px bg-white/10"></div>
 

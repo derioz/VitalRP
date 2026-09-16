@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------------------------------
+ * Orange Vertical Scrollbar — Vital RP Theme
+ * WebKit (Chrome, Edge, Safari, Opera) + Standard CSS (Firefox)
+ * -------------------------------------------------------------------------- */
+
+/* Standard properties for modern browsers including desktop Firefox */
+html {
+  scrollbar-color: rgb(249 115 22) #0a0a0a;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  color-scheme: dark only;
+  height: -webkit-fill-available;
+}
+
+/* WebKit / Chromium custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(249 115 22);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(234 88 12);
+}
+
+/* Hide scrollbar on mobile devices (<= 768px) */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+@layer base {
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    background-color: #0a0a0a;
+    color: #ffffff;
+    forced-color-adjust: none;
+  }
+}
+
+@layer utilities {
+  .mobile-safe-blur {
+    @apply backdrop-blur-sm md:backdrop-blur-md;
+  }
+
+  .bg-vital-alpha {
+    background-color: rgba(249, 115, 22, 0.1);
+  }
+
+  /* Utility to hide scrollbar */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

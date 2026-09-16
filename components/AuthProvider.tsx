@@ -1,142 +1,113 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  User as FirebaseUser
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+'use client';
 
-// -----------------------------------------------------------------------
-// CONFIGURATION
-// -----------------------------------------------------------------------
-// TODO: Replace with the actual email address provided by the user
-const ADMIN_EMAILS = [
-  "tx.davidj@gmail.com",
-  // Add more emails here
-];
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Role, UserPermissions } from '@/lib/auth/rbac';
+
+export interface AuthUser {
+  discordId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  photoURL?: string;
+  email?: string;
+  role: Role;
+  permissions: UserPermissions;
+}
 
 interface AuthContextType {
-  user: FirebaseUser | null;
-  isAdmin: boolean;
-  editMode: boolean;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-  toggleEditMode: () => void;
+  user: AuthUser | null;
   loading: boolean;
+  editMode: boolean;
+  toggleEditMode: () => void;
+  login: (redirect?: string) => void;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
+
+const defaultPermissions: UserPermissions = {
+  canAccessAdmin: false,
+  canManageUsers: false,
+  canManageGallery: false,
+  canManageStaff: false,
+  canManageSettings: false,
+};
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  isAdmin: false,
-  editMode: false,
-  login: async () => { },
-  logout: async () => { },
-  toggleEditMode: () => { },
   loading: true,
+  editMode: false,
+  toggleEditMode: () => {},
+  login: () => {},
+  logout: async () => {},
+  refresh: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    if (!auth) {
-      console.error("Firebase Auth not initialized");
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-
-      if (currentUser && currentUser.email) {
-        let isAuthorized = false;
-
-        // 1. Check Hardcoded Superadmins (Fallback)
-        if (ADMIN_EMAILS.includes(currentUser.email)) {
-          isAuthorized = true;
-        }
-
-        // 2. Check Firestore Permissions & Auto-Save
-        if (db) {
-          try {
-            const userRef = doc(db, 'users', currentUser.email.toLowerCase());
-            const userDoc = await getDoc(userRef);
-
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              if (userData.role === 'superadmin' || userData.role === 'admin' || userData.role === 'editor' || userData.role === 'owner') { // 'owner' kept for legacy
-                isAuthorized = true;
-              }
-              // Update latest info
-              await setDoc(userRef, {
-                displayName: currentUser.displayName,
-                photoURL: currentUser.photoURL,
-                lastLogin: new Date()
-              }, { merge: true });
-            } else {
-              // Create new user entry
-              await setDoc(userRef, {
-                email: currentUser.email,
-                displayName: currentUser.displayName,
-                photoURL: currentUser.photoURL,
-                role: 'user', // Default role
-                createdAt: new Date(),
-                lastLogin: new Date()
-              });
-            }
-          } catch (err) {
-            console.error("Error fetching/saving user:", err);
-          }
-        }
-
-        setIsAdmin(isAuthorized);
-        if (isAuthorized) console.log("✅ Admin Authorized:", currentUser.email);
-        else console.log("❌ User not authorized (Role: User/None):", currentUser.email);
-
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = async () => {
-    if (!auth) return;
+  const fetchSession = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed:", error);
+      const res = await fetch('/api/auth/me');
+      if (!res.ok) throw new Error('Failed to fetch session');
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setUser(data.user);
+      } else {
+        setUser(null);
+        setEditMode(false);
+      }
+    } catch (err) {
+      console.warn('Could not retrieve active session:', err);
+      setUser(null);
+      setEditMode(false);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchSession();
+  }, []);
+
+  const login = (redirect?: string) => {
+    const target = redirect ? `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}` : '/api/auth/discord/login';
+    window.location.href = target;
+  };
+
   const logout = async () => {
-    if (!auth) return;
     try {
-      await signOut(auth);
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setUser(null);
       setEditMode(false);
-      setIsAdmin(false);
-    } catch (error) {
-      console.error("Logout failed:", error);
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout error:', err);
+      window.location.href = '/';
     }
   };
 
   const toggleEditMode = () => {
-    if (isAdmin) setEditMode(prev => !prev);
+    if (user?.permissions.canManageGallery || user?.permissions.canManageStaff) {
+      setEditMode((prev) => !prev);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, editMode, login, logout, toggleEditMode, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        editMode,
+        toggleEditMode,
+        login,
+        logout,
+        refresh: fetchSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

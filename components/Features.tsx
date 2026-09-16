@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import { Users, Shield, Gavel, Hammer, DollarSign, Calendar, Home, Store, Coffee, Crosshair, Skull, MapPin, Sword, Car, Dices } from 'lucide-react';

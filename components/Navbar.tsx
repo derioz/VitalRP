@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, Gamepad2, ShoppingCart, MessageSquare, Shirt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from './Button';
 
 import { VitalLogo } from './VitalLogo';
@@ -27,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -122,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
             {/* Merch Button */}
             <Button
-              onClick={() => navigate('/merch')}
+              onClick={() => router.push('/merch')}
               variant="ghost"
               size="sm"
               icon={<Shirt size={18} />}
@@ -196,7 +198,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   Forums (Soon)
                 </Button>
 
-                <Button onClick={() => { setIsMobileMenuOpen(false); navigate('/merch'); }} variant="outline" fullWidth icon={<Shirt size={18} />}>
+                <Button onClick={() => { setIsMobileMenuOpen(false); router.push('/merch'); }} variant="outline" fullWidth icon={<Shirt size={18} />}>
                   Merch
                 </Button>
 

@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Upload, Trash2, Loader2 } from 'lucide-react';
-import { uploadImage } from '../lib/fivemanage';
+import { uploadImage } from '@/lib/upload';
 
 interface StaffMemberData {
     name: string;

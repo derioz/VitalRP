@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Upload, Loader2 } from 'lucide-react';
-import { uploadImage } from '../lib/fivemanage';
+import { uploadImage } from '@/lib/upload';
 
 interface EditModalProps {
     isOpen: boolean;

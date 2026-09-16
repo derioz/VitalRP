@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { MapPin, ArrowUpRight, Camera, Edit2 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase/client';
 import { collection, getDocs, query, orderBy, doc, deleteDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { GalleryEditModal } from './GalleryEditModal';
 

@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Trash2, Upload, Loader2, Minimize, Maximize } from 'lucide-react';
-import { uploadImage } from '../lib/fivemanage';
+import { uploadImage } from '@/lib/upload';
 
 interface GalleryItemData {
     id: string;

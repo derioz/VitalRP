@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { useAuth } from './AuthProvider';
 import { collection, query, orderBy, doc, deleteDoc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase/client';
 import { StaffEditModal } from './StaffEditModal';
 import { GlassStaffCard } from './ui/glass-staff-card';
 
