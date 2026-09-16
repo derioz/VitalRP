@@ -20,12 +20,6 @@ service cloud.firestore {
         getUserData().role in ['owner', 'management', 'senior_admin', 'admin']
       );
     }
-    
-    function isStaff() {
-      return isAuthenticated() && (
-        isAdmin() || getUserData().role in ['moderator', 'support', 'staff']
-      );
-    }
 
     // --- Collection Rules ---
 
