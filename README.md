@@ -1,52 +1,38 @@
-# Vital RP Landing Page
+# Vital RP - Official Website (v2 Rebuild)
 
-A premium, high-performance landing page for the Vital RP FiveM community, focused on storytelling and immersion.
+A modern, high-performance web platform for the **Vital RP** FiveM community, built with Next.js 15, Supabase Auth, and Tailwind CSS.
 
-## Created By
-**Damon**
+## Technology Stack
 
-## Project Overview
-This project is built using:
-- React 19
-- Vite
-- Tailwind CSS
-- Framer Motion
-- Lucide React
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Frontend**: React 19, Tailwind CSS, Framer Motion, Lucide Icons
+- **Authentication**: [Supabase Auth](https://supabase.com/) with Discord OAuth 2.0
+- **Database / RBAC**: Supabase PostgreSQL (`public.profiles`) with Row Level Security (RLS)
+- **Media Uploads**: Server-side FiveManage API v3 Proxy (`/api/upload`)
+- **Live Server Status**: CFX / FiveM Server Population API (`/api/cfx/population`)
+- **Deployment**: [Vercel](https://vercel.com/)
 
-## Development
+## Getting Started
 
-To start the development server:
-
+### 1. Install Dependencies
 ```bash
 npm install
-npm run dev
 ```
 
-## Deployment
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env.local` and provide your credentials:
+```bash
+cp .env.example .env.local
+```
 
-This project is configured for **GitHub Pages** deployment using the `docs/` folder on the `main` branch.
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### How to Deploy
+## Deployment on Vercel
 
-1. **Build the Project**
-   Run the build command to generate the production files in the `docs` folder. This also ensures the `CNAME` file is correctly placed for the custom domain.
-   ```bash
-   npm run build
-   ```
-
-2. **Push to GitHub**
-   Commit the changes, specifically ensuring the `docs` folder is included, and push to the `main` branch.
-   ```bash
-   git add .
-   git commit -m "Deploy update"
-   git push origin main
-   ```
-
-3. **GitHub Settings**
-   - Go to your repository on GitHub.
-   - Navigate to **Settings** > **Pages**.
-   - Under **Build and deployment**, select **Source** as "Deploy from a branch".
-   - Under **Branch**, select `main` and the `/docs` folder.
-   - Click **Save**.
-
-The site will be live at `https://vitalrp.net` (once DNS propagates).
+1. Import the repository in Vercel with framework preset **Next.js**.
+2. Configure **Environment Variables** in Vercel project settings.
+3. Deploy the `rebuild-v2` branch.
