@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clearSessionCookie } from '@/lib/auth/session';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
-  await clearSessionCookie();
-  return NextResponse.json({ success: true });
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return NextResponse.redirect(new URL('/', request.nextUrl.origin));
 }
 
 export async function GET(request: NextRequest) {
-  await clearSessionCookie();
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   return NextResponse.redirect(new URL('/', request.nextUrl.origin));
 }
