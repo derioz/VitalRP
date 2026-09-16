@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Role, UserPermissions } from '@/lib/auth/rbac';
+import { createClient } from '@/lib/supabase/client';
 
 export interface AuthUser {
   discordId: string;
@@ -19,7 +20,7 @@ interface AuthContextType {
   loading: boolean;
   editMode: boolean;
   toggleEditMode: () => void;
-  login: (redirect?: string) => void;
+  login: (redirect?: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -37,7 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   editMode: false,
   toggleEditMode: () => {},
-  login: () => {},
+  login: async () => {},
   logout: async () => {},
   refresh: async () => {},
 });
@@ -71,23 +72,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchSession();
+
+    // Listen to Supabase client auth changes
+    try {
+      const supabase = createClient();
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+        fetchSession();
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch {
+      // Ignored if offline
+    }
   }, []);
 
-  const login = (redirect?: string) => {
-    const target = redirect ? `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}` : '/api/auth/discord/login';
-    window.location.href = target;
+  const login = async (redirect: string = '/admin') => {
+    try {
+      const supabase = createClient();
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: redirectUrl,
+          scopes: 'identify email guilds.members.read',
+        },
+      });
+
+      if (error || !data.url) {
+        console.warn('Direct Supabase OAuth error, falling back to server route:', error);
+        window.location.href = `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}`;
+      } else {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.warn('Login error, falling back to server route:', err);
+      window.location.href = `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}`;
+    }
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      setEditMode(false);
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Logout error:', err);
-      window.location.href = '/';
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore
     }
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore
+    }
+    setUser(null);
+    setEditMode(false);
+    window.location.href = '/';
   };
 
   const toggleEditMode = () => {
