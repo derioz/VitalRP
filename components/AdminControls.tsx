@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, ArrowRight, Edit3 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import Link from 'next/link';
 
 export const AdminControls: React.FC = () => {
   const { user, logout, toggleEditMode, editMode } = useAuth();
@@ -21,7 +20,7 @@ export const AdminControls: React.FC = () => {
         className="bg-dark-900/90 backdrop-blur-xl border border-vital-500/30 rounded-full p-2 pl-2 pr-2 shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center gap-2 group transition-all hover:border-vital-500/60"
       >
         {/* Dashboard Link */}
-        <Link
+        <a
           href="/admin"
           className="flex items-center gap-3 pl-2 pr-4 py-1.5 hover:bg-white/5 rounded-full transition-colors"
         >
@@ -42,7 +41,7 @@ export const AdminControls: React.FC = () => {
           </div>
 
           <ArrowRight size={14} className="text-gray-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-        </Link>
+        </a>
 
         <div className="h-6 w-px bg-white/10"></div>
 

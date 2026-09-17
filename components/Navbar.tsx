@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, Gamepad2, ShoppingCart, MessageSquare, Shirt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { Button } from './Button';
 
 import { VitalLogo } from './VitalLogo';
@@ -29,7 +28,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
-  const router = useRouter();
 
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,8 +74,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               <VitalLogo className="w-12 h-12 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]" />
             </div>
             <div className="flex flex-col">
-              <span className="text-white font-display font-bold text-xl tracking-widest leading-none">VITAL</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600 font-tech text-xs tracking-[0.3em] leading-none font-bold">ROLEPLAY</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-display font-bold text-xl tracking-widest leading-none">VITAL</span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-vital-500/15 border border-vital-500/30 text-[9px] font-tech text-vital-400 font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(249,115,22,0.2)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-vital-500 animate-ping" />
+                  v2.0 Live
+                </span>
+              </div>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600 font-tech text-xs tracking-[0.3em] leading-none font-bold mt-0.5">ROLEPLAY</span>
             </div>
           </div>
 
@@ -124,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
             {/* Merch Button */}
             <Button
-              onClick={() => router.push('/merch')}
+              href="/merch"
               variant="ghost"
               size="sm"
               icon={<Shirt size={18} />}
@@ -198,7 +202,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   Forums (Soon)
                 </Button>
 
-                <Button onClick={() => { setIsMobileMenuOpen(false); router.push('/merch'); }} variant="outline" fullWidth icon={<Shirt size={18} />}>
+                <Button href="/merch" onClick={() => setIsMobileMenuOpen(false)} variant="outline" fullWidth icon={<Shirt size={18} />}>
                   Merch
                 </Button>
 

@@ -120,18 +120,22 @@ export const Hero: React.FC = () => {
             className={`flex flex-col items-center lg:items-start text-center lg:text-left transition-all duration-300 ${easterEggActive ? 'hue-rotate-180 contrast-125' : ''}`}
           >
 
-            {/* Badge */}
+            {/* Announcement Banner */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase tracking-widest mb-6 backdrop-blur-sm"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-vital-500/25 via-vital-500/10 to-transparent border border-vital-500/40 text-xs font-tech font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_25px_rgba(249,115,22,0.25)]"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vital-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-vital-500"></span>
               </span>
-              Accepting Applications
+              <span className="text-white font-bold tracking-widest">Vital RP 2.0</span>
+              <span className="text-vital-500">&bull;</span>
+              <span className="text-vital-400">Server Live</span>
+              <span className="text-vital-500">&bull;</span>
+              <span className="text-emerald-400">Applications Open</span>
             </motion.div>
 
             {/* Heading */}
@@ -141,10 +145,10 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
             >
               <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-4 drop-shadow-2xl">
-                VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600 pr-3 pb-1">RP</span>
+                VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 via-vital-500 to-orange-500 pr-3 pb-1 drop-shadow-[0_0_35px_rgba(249,115,22,0.4)]">RP</span>
               </h1>
               <p className="text-xl sm:text-2xl text-gray-400 font-light tracking-wide mb-8 lg:max-w-[90%]">
-                Story-first roleplay, with a community that <span className="text-white font-medium">actually feels alive.</span>
+                Story-first roleplay, with a community that <span className="text-white font-medium underline decoration-vital-500/50 decoration-2 underline-offset-4">actually feels alive.</span>
               </p>
             </motion.div>
 
@@ -153,10 +157,26 @@ export const Hero: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-gray-400 text-base sm:text-lg max-w-xl leading-relaxed mb-10"
+              className="text-gray-400 text-base sm:text-lg max-w-xl leading-relaxed mb-8"
             >
               Vital RP is built for immersive scenes, fair conflict, and the kind of RP you remember later. Win or lose, the goal is always the story.
             </motion.div>
+
+            {/* Live Feature Pills */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs font-tech text-gray-400 mb-8">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-emerald-400 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                FiveM v3095 Active
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-vital-400 font-semibold">
+                <Zap size={12} className="text-vital-400" />
+                Custom Economy &amp; Jobs
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-gray-300 font-semibold">
+                <Shield size={12} className="text-blue-400" />
+                Semi-Serious 18+
+              </span>
+            </div>
 
             {/* Interactive Actions */}
             <motion.div
