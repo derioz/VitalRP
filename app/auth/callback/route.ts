@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') || requestUrl.searchParams.get('redirect') || '/';
+  const next = requestUrl.searchParams.get('next') || requestUrl.searchParams.get('redirect') || '/admin';
 
   if (code) {
     const supabase = await createClient();

@@ -105,6 +105,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(authUserData);
         setIsAdmin(permissions.canAccessAdmin);
         setLoading(false);
+
+        // Auto-redirect to admin console if user just authenticated via OAuth
+        if (permissions.canAccessAdmin && typeof window !== 'undefined') {
+          const pending = localStorage.getItem('vital_auth_redirect');
+          const isOAuthCallback = window.location.hash.includes('access_token=') || window.location.search.includes('code=');
+
+          if (pending) {
+            localStorage.removeItem('vital_auth_redirect');
+            if (window.location.pathname !== pending) {
+              window.location.href = pending;
+              return;
+            }
+          } else if (isOAuthCallback && window.location.pathname === '/') {
+            window.location.href = '/admin';
+            return;
+          }
+        }
+
         return;
       }
 
@@ -156,7 +174,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (redirect: string = '/admin') => {
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const redirectUrl = `${origin}${redirect.startsWith('/') ? redirect : '/' + redirect}`;
+      const targetPath = redirect.startsWith('/') ? redirect : '/' + redirect;
+      const redirectUrl = `${origin}${targetPath}`;
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('vital_auth_redirect', targetPath);
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
-  const returnTo = request.nextUrl.searchParams.get('redirect') || '/';
+  const returnTo = request.nextUrl.searchParams.get('redirect') || '/admin';
   const supabase = await createClient();
   const redirectTo = `${request.nextUrl.origin}/auth/callback?next=${encodeURIComponent(returnTo)}`;
 
