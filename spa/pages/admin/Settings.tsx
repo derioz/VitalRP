@@ -1,10 +1,11 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Lock, Settings as SettingsIcon, Save, Camera, Mail, Globe, ShieldAlert, Loader2 } from 'lucide-react';
+import { User, Lock, Save, Camera, Mail, Globe, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../components/AuthProvider';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { db, auth } from '../../../lib/firebase';
+import { db } from '../../../lib/firebase';
 import { uploadImage } from '../../../lib/fivemanage';
 import { AdminHero } from '../../../components/AdminHero';
 
@@ -18,7 +19,7 @@ export const Settings: React.FC = () => {
     const [profileData, setProfileData] = useState({
         displayName: user?.displayName || '',
         email: user?.email || '',
-        photoURL: user?.photoURL || ''
+        photoURL: user?.photoURL || user?.avatar || ''
     });
 
     // System State
@@ -34,7 +35,7 @@ export const Settings: React.FC = () => {
             setProfileData({
                 displayName: user.displayName || '',
                 email: user.email || '',
-                photoURL: user.photoURL || ''
+                photoURL: user.photoURL || user.avatar || ''
             });
         }
         fetchSystemConfig();
@@ -56,22 +57,17 @@ export const Settings: React.FC = () => {
     };
 
     const handleProfileUpdate = async () => {
-        if (!user || !auth) return;
+        if (!user || !db) return;
         setLoading(true);
         try {
-            await updateProfile(user, {
+            const targetId = user.discordId || user.id || 'me';
+            await setDoc(doc(db, 'users', targetId), {
                 displayName: profileData.displayName,
-                photoURL: profileData.photoURL
-            });
-
-            // Also update the user document in Firestore to keep it in sync
-            if (db) {
-                await setDoc(doc(db, 'users', user.uid), {
-                    displayName: profileData.displayName,
-                    photoURL: profileData.photoURL,
-                    email: user.email
-                }, { merge: true });
-            }
+                photoURL: profileData.photoURL,
+                avatar: profileData.photoURL,
+                email: profileData.email || user.email || '',
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
 
             setSuccessMsg('Profile updated successfully!');
             setTimeout(() => setSuccessMsg(''), 3000);
@@ -93,10 +89,12 @@ export const Settings: React.FC = () => {
 
             setProfileData(prev => ({ ...prev, photoURL: downloadURL }));
 
-            // Auto-save the new avatar immediately
-            await updateProfile(user, { photoURL: downloadURL });
             if (db) {
-                await updateDoc(doc(db, 'users', user.uid), { photoURL: downloadURL });
+                const targetId = user.discordId || user.id || 'me';
+                await updateDoc(doc(db, 'users', targetId), {
+                    photoURL: downloadURL,
+                    avatar: downloadURL
+                });
             }
 
             setSuccessMsg('Avatar updated!');
@@ -104,21 +102,6 @@ export const Settings: React.FC = () => {
         } catch (error: any) {
             console.error("Error uploading avatar:", error);
             alert(`Failed to upload avatar: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handlePasswordReset = async () => {
-        if (!auth || !user?.email) return;
-        setLoading(true);
-        try {
-            await sendPasswordResetEmail(auth, user.email);
-            setSuccessMsg(`Password reset email sent to ${user.email}`);
-            setTimeout(() => setSuccessMsg(''), 5000);
-        } catch (error) {
-            console.error("Error sending reset email:", error);
-            alert("Failed to send reset email.");
         } finally {
             setLoading(false);
         }
@@ -207,9 +190,9 @@ export const Settings: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-white font-medium">Profile Photo</h3>
-                                        <p className="text-sm text-gray-500 mb-2">Click the image to upload a new one.</p>
+                                        <p className="text-sm text-gray-500 mb-2">Click the image to upload a new one via FiveManage.</p>
                                         <p className="text-xs text-vital-500 uppercase font-bold tracking-wider">
-                                            {user?.emailVerified ? 'Verified' : 'Unverified'}
+                                            Role: {user?.role || 'User'}
                                         </p>
                                     </div>
                                 </div>
@@ -240,7 +223,7 @@ export const Settings: React.FC = () => {
                                                 className="w-full bg-dark-950/50 border border-white/5 rounded-lg py-2 pl-10 pr-4 text-gray-400 cursor-not-allowed"
                                             />
                                         </div>
-                                        <p className="text-xs text-gray-600 mt-1">Email cannot be changed directly.</p>
+                                        <p className="text-xs text-gray-600 mt-1">Managed via your Discord account.</p>
                                     </div>
 
                                     <div className="pt-4">
@@ -265,27 +248,26 @@ export const Settings: React.FC = () => {
                                     <div className="bg-dark-950/50 border border-white/5 rounded-xl p-6">
                                         <h3 className="text-lg font-medium text-white mb-2 flex items-center gap-2">
                                             <Lock size={18} className="text-vital-500" />
-                                            Password
+                                            Discord Authentication
                                         </h3>
-                                        <p className="text-sm text-gray-400 mb-4">
-                                            We'll send a password reset link to <span className="text-white font-mono">{user?.email}</span>.
+                                        <p className="text-sm text-gray-400 mb-2">
+                                            Vital RP authentication is strictly handled through Discord OAuth 2.0. Account passwords, Multi-Factor Authentication, and login sessions are protected directly through Discord.
                                         </p>
-                                        <button
-                                            onClick={handlePasswordReset}
-                                            disabled={loading}
-                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium transition-colors border border-white/10 hover:border-white/20"
-                                        >
-                                            Send Reset Link
-                                        </button>
+                                        <p className="text-xs text-gray-500 font-mono">
+                                            Canonical Discord ID: {user?.discordId}
+                                        </p>
                                     </div>
 
-                                    <div className="bg-dark-950/50 border border-white/5 rounded-xl p-6 opacity-75">
+                                    <div className="bg-dark-950/50 border border-white/5 rounded-xl p-6">
                                         <h3 className="text-lg font-medium text-white mb-2 flex items-center gap-2">
-                                            <ShieldAlert size={18} className="text-gray-500" />
-                                            Two-Factor Authentication
+                                            <ShieldAlert size={18} className="text-emerald-500" />
+                                            Role & Session Security
                                         </h3>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            2FA is currently managed via your Google Account settings since you signed in with Google.
+                                        <p className="text-sm text-gray-400 mb-2">
+                                            Your assigned role is <span className="text-vital-400 font-bold uppercase">{user?.role}</span>.
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            All administrative routes and API mutations are verified server-side with HMAC-SHA256 session signatures and centralized role-based access control (RBAC).
                                         </p>
                                     </div>
                                 </div>
@@ -321,22 +303,13 @@ export const Settings: React.FC = () => {
                                                         FiveManage Media Service
                                                     </h3>
                                                     <p className="text-xs text-gray-400 mt-1">
-                                                        Image upload host for gallery items, staff portraits, and user avatars.
+                                                        Image uploads for gallery items, staff portraits, and avatars route securely through <code className="bg-black/40 px-1 py-0.5 rounded text-vital-400">/api/upload</code>.
                                                     </p>
                                                 </div>
-                                                <span className={`text-xs font-mono px-2.5 py-1 rounded-full border ${
-                                                    import.meta.env.VITE_FIVEMANAGE_API_KEY 
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                }`}>
-                                                    {import.meta.env.VITE_FIVEMANAGE_API_KEY ? 'API Key Configured' : 'Missing API Key'}
+                                                <span className="text-xs font-mono px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                                    Server-Side Endpoint Active
                                                 </span>
                                             </div>
-                                            {!import.meta.env.VITE_FIVEMANAGE_API_KEY && (
-                                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300">
-                                                    Add <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">VITE_FIVEMANAGE_API_KEY=your_token</code> to your <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">.env</code> file to enable direct FiveManage image uploads.
-                                                </div>
-                                            )}
                                         </div>
 
                                         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
@@ -348,7 +321,7 @@ export const Settings: React.FC = () => {
                                                         Maintenance Mode
                                                     </h3>
                                                     <p className="text-xs text-gray-400 mt-1">
-                                                        If enabled, non-admin users will see a maintenance page.
+                                                        If enabled, non-admin users will see a maintenance notice.
                                                     </p>
                                                 </div>
                                                 <button
@@ -388,3 +361,5 @@ export const Settings: React.FC = () => {
         </div>
     );
 };
+
+export default Settings;
