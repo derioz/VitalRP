@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import { Youtube, Instagram, Ghost, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 
 // Centered vertically in 100x100 box (Y: 15-95)
@@ -75,7 +73,6 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
   const { login, user } = useAuth();
-  const router = useRouter();
 
   const links = [
     { label: 'Home', href: '#home' },
@@ -93,7 +90,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
       onOpenStore();
     } else if (item.href.startsWith('/')) {
       e.preventDefault();
-      router.push(item.href);
+      window.location.href = item.href;
     }
   };
 
@@ -171,13 +168,13 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
             </p>
             {user ? (
-              <Link
+              <a
                 href="/admin"
                 className="text-white/10 hover:text-white transition-colors duration-500"
                 aria-label="Admin Panel"
               >
                 <Lock size={12} />
-              </Link>
+              </a>
             ) : (
               <button
                 onClick={() => login('/admin')}

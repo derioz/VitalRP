@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Block admin routes from crawlers
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://vitalrp.net/sitemap.xml

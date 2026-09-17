@@ -1,10 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Role, UserPermissions } from '@/lib/auth/rbac';
-import { createClient } from '@/lib/supabase/client';
+import { Role, UserPermissions, getPermissions, normalizeRole } from '@/lib/auth/rbac';
+import { supabase } from '@/lib/supabase/client';
 
 export interface AuthUser {
+  id?: string;
   discordId: string;
   username: string;
   displayName: string;
@@ -17,6 +18,7 @@ export interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null;
+  isAdmin: boolean;
   loading: boolean;
   editMode: boolean;
   toggleEditMode: () => void;
@@ -35,6 +37,7 @@ const defaultPermissions: UserPermissions = {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  isAdmin: false,
   loading: true,
   editMode: false,
   toggleEditMode: () => {},
@@ -47,23 +50,87 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
   const fetchSession = async () => {
     try {
-      const res = await fetch('/api/auth/me');
-      if (!res.ok) throw new Error('Failed to fetch session');
-      const data = await res.json();
-      if (data.authenticated && data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-        setEditMode(false);
+      // 1. Check client-side Supabase session (works in both static /docs and dynamic hosting)
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const meta = session.user.user_metadata || {};
+        const discordId =
+          meta.provider_id ||
+          meta.sub ||
+          session.user.identities?.find((i: any) => i.provider === 'discord')?.id ||
+          '';
+
+        let role: Role = discordId === '150580708144840704' ? 'owner' : 'user';
+        let displayName = meta.full_name || meta.name || meta.user_name || session.user.email || 'User';
+        let username = meta.user_name || displayName;
+        let avatar = meta.avatar_url || meta.picture || '';
+
+        // Query Supabase profiles table for role if not owner
+        if (role !== 'owner') {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, display_name, username, avatar_url')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            if (profile?.role) role = normalizeRole(profile.role);
+            if (profile?.display_name) displayName = profile.display_name;
+            if (profile?.username) username = profile.username;
+            if (profile?.avatar_url) avatar = profile.avatar_url;
+          } catch {
+            // Ignore DB errors
+          }
+        }
+
+        const permissions = getPermissions(role);
+        const authUserData: AuthUser = {
+          id: session.user.id,
+          discordId,
+          username,
+          displayName,
+          avatar,
+          email: session.user.email,
+          role,
+          permissions,
+        };
+
+        setUser(authUserData);
+        setIsAdmin(permissions.canAccessAdmin);
+        setLoading(false);
+        return;
       }
+
+      // 2. Fallback check to /api/auth/me if in server environment (Next.js / Vercel)
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            setUser(data.user);
+            setIsAdmin(data.user.permissions?.canAccessAdmin || false);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Not a server environment (e.g. GitHub Pages)
+      }
+
+      setUser(null);
+      setIsAdmin(false);
+      setEditMode(false);
     } catch (err) {
       console.warn('Could not retrieve active session:', err);
       setUser(null);
+      setIsAdmin(false);
       setEditMode(false);
     } finally {
       setLoading(false);
@@ -73,9 +140,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchSession();
 
-    // Listen to Supabase client auth changes
+    // Listen to Supabase client auth state changes
     try {
-      const supabase = createClient();
       const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
         fetchSession();
       });
@@ -89,11 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (redirect: string = '/admin') => {
     try {
-      const supabase = createClient();
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const redirectUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
+      const redirectUrl = `${origin}${redirect.startsWith('/') ? redirect : '/' + redirect}`;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
           redirectTo: redirectUrl,
@@ -101,21 +166,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
 
-      if (error || !data.url) {
-        console.warn('Direct Supabase OAuth error, falling back to server route:', error);
-        window.location.href = `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}`;
-      } else {
-        window.location.href = data.url;
+      if (error) {
+        console.error('Supabase OAuth error:', error);
       }
     } catch (err) {
-      console.warn('Login error, falling back to server route:', err);
-      window.location.href = `/api/auth/discord/login?redirect=${encodeURIComponent(redirect)}`;
+      console.error('Login error:', err);
     }
   };
 
   const logout = async () => {
     try {
-      const supabase = createClient();
       await supabase.auth.signOut();
     } catch {
       // Ignore
@@ -126,12 +186,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore
     }
     setUser(null);
+    setIsAdmin(false);
     setEditMode(false);
     window.location.href = '/';
   };
 
   const toggleEditMode = () => {
-    if (user?.permissions.canManageGallery || user?.permissions.canManageStaff) {
+    if (user?.permissions.canManageGallery || user?.permissions.canManageStaff || isAdmin) {
       setEditMode((prev) => !prev);
     }
   };
@@ -140,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
+        isAdmin,
         loading,
         editMode,
         toggleEditMode,
