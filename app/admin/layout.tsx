@@ -17,8 +17,8 @@ export default async function AdminRootLayout({
     redirect('/api/auth/discord/login?redirect=/admin');
   }
 
-  // Server-side authorization check
-  if (!session.permissions.canAccessAdmin) {
+  // Server-side authorization check (Strict Discord Guild Membership + Role 733091115577901158)
+  if (!session.isAdmin) {
     return (
       <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4">
         <div className="bg-dark-900 border border-red-500/20 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">

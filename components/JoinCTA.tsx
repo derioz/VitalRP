@@ -20,7 +20,7 @@ const DiscordLogo = ({ className }: { className?: string }) => (
 
 export const JoinCTA: React.FC = () => {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section id="join" className="py-24 relative overflow-hidden scroll-mt-24">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img

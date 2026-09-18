@@ -40,7 +40,7 @@ const SectionLabel = ({ label }: { label: string }) => (
 
 export const Features: React.FC = () => {
   return (
-    <section id="features" className="py-24 relative overflow-hidden">
+    <section id="features" className="py-24 relative overflow-hidden scroll-mt-24">
       {/* Background */}
       <div className="absolute inset-0 bg-dark-950/90 backdrop-blur-md z-0"></div>
 

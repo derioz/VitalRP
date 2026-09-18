@@ -8,7 +8,7 @@ import { useAuth } from './AuthProvider';
 export const AdminControls: React.FC = () => {
   const { user, logout, toggleEditMode, editMode } = useAuth();
 
-  if (!user || !user.permissions.canAccessAdmin) return null;
+  if (!user || !user.isAdmin) return null;
 
   const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`;
 

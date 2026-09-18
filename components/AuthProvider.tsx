@@ -14,6 +14,7 @@ export interface AuthUser {
   email?: string;
   role: Role;
   permissions: UserPermissions;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -25,7 +26,9 @@ interface AuthContextType {
   login: (redirect?: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  updateDisplayName: (name: string) => Promise<boolean>;
 }
+
 
 const defaultPermissions: UserPermissions = {
   canAccessAdmin: false,
@@ -44,7 +47,9 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   refresh: async () => {},
+  updateDisplayName: async () => false,
 });
+
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -56,7 +61,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchSession = async () => {
     try {
-      // 1. Check client-side Supabase session (works in both static /docs and dynamic hosting)
+      // 1. Authoritative server-side verification via /api/auth/me (validates Discord Guild + Admin Role)
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            setUser({
+              ...data.user,
+              isAdmin: Boolean(data.isAdmin ?? data.user.isAdmin),
+            });
+            setIsAdmin(Boolean(data.isAdmin ?? data.user.isAdmin));
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback for static environments without Next.js API routes
+      }
+
+      // 2. Client-side fallback check (never grants admin status without server verification)
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
@@ -67,30 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           session.user.identities?.find((i: any) => i.provider === 'discord')?.id ||
           '';
 
-        let role: Role = discordId === '150580708144840704' ? 'owner' : 'user';
-        let displayName = meta.full_name || meta.name || meta.user_name || session.user.email || 'User';
-        let username = meta.user_name || displayName;
-        let avatar = meta.avatar_url || meta.picture || '';
+        const displayName =
+          meta.custom_display_name ||
+          meta.full_name ||
+          meta.name ||
+          meta.user_name ||
+          session.user.email ||
+          'User';
+        const username = meta.user_name || displayName;
+        const avatar = meta.avatar_url || meta.picture || '';
 
-        // Query Supabase profiles table for role if not owner
-        if (role !== 'owner') {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role, display_name, username, avatar_url')
-              .eq('id', session.user.id)
-              .maybeSingle();
-
-            if (profile?.role) role = normalizeRole(profile.role);
-            if (profile?.display_name) displayName = profile.display_name;
-            if (profile?.username) username = profile.username;
-            if (profile?.avatar_url) avatar = profile.avatar_url;
-          } catch {
-            // Ignore DB errors
-          }
-        }
-
-        const permissions = getPermissions(role);
         const authUserData: AuthUser = {
           id: session.user.id,
           discordId,
@@ -98,48 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           displayName,
           avatar,
           email: session.user.email,
-          role,
-          permissions,
+          role: 'user',
+          permissions: defaultPermissions,
+          isAdmin: false,
         };
 
         setUser(authUserData);
-        setIsAdmin(permissions.canAccessAdmin);
+        setIsAdmin(false);
         setLoading(false);
-
-        // Auto-redirect to admin console if user just authenticated via OAuth
-        if (permissions.canAccessAdmin && typeof window !== 'undefined') {
-          const pending = localStorage.getItem('vital_auth_redirect');
-          const isOAuthCallback = window.location.hash.includes('access_token=') || window.location.search.includes('code=');
-
-          if (pending) {
-            localStorage.removeItem('vital_auth_redirect');
-            if (window.location.pathname !== pending) {
-              window.location.href = pending;
-              return;
-            }
-          } else if (isOAuthCallback && window.location.pathname === '/') {
-            window.location.href = '/admin';
-            return;
-          }
-        }
-
         return;
-      }
-
-      // 2. Fallback check to /api/auth/me if in server environment (Next.js / Vercel)
-      try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            setUser(data.user);
-            setIsAdmin(data.user.permissions?.canAccessAdmin || false);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch {
-        // Not a server environment (e.g. GitHub Pages)
       }
 
       setUser(null);
@@ -214,8 +191,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = '/';
   };
 
+  const updateDisplayName = async (name: string): Promise<boolean> => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    try {
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { custom_display_name: trimmed },
+      });
+      if (authErr) throw authErr;
+
+      if (user?.id) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ display_name: trimmed })
+            .eq('id', user.id);
+        } catch {
+          // Non-blocking if table is missing or constrained
+        }
+      }
+
+      await fetchSession();
+      return true;
+    } catch (err) {
+      console.error('Failed to update display name:', err);
+      return false;
+    }
+  };
+
   const toggleEditMode = () => {
-    if (user?.permissions.canManageGallery || user?.permissions.canManageStaff || isAdmin) {
+    if (isAdmin) {
       setEditMode((prev) => !prev);
     }
   };
@@ -231,9 +236,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         refresh: fetchSession,
+        updateDisplayName,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+
 };

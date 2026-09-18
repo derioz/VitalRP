@@ -70,7 +70,7 @@ const itemVariants: Variants = {
 
 export const Values: React.FC = () => {
   return (
-    <section id="values" className="py-24 relative overflow-hidden">
+    <section id="values" className="py-24 relative overflow-hidden scroll-mt-24">
       {/* Transparent BG to let parallax show through gaps, Solid dark on mobile for FPS */}
       <div className="absolute inset-0 bg-dark-950 md:bg-dark-900/70 md:backdrop-blur-md"></div>
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>

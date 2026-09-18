@@ -6,8 +6,6 @@ import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { Features } from '@/components/Features';
 import { Values } from '@/components/Values';
-import { Staff } from '@/components/Staff';
-import { Gallery } from '@/components/Gallery';
 import { Rules } from '@/components/Rules';
 import { FAQ } from '@/components/FAQ';
 import { JoinCTA } from '@/components/JoinCTA';
@@ -40,18 +38,40 @@ export default function HomePage() {
       {/* Global Ambient Background */}
       <ParallaxBackground />
 
+      {/* Redesigned Floating Navbar */}
       <Navbar onOpenStore={() => setIsStoreOpen(true)} />
 
-      {/* Main Content */}
-      <main className="relative z-10">
-        <Hero />
-        <Features />
-        <Values />
-        <Staff />
-        <Gallery />
-        <Rules />
-        <FAQ />
-        <JoinCTA />
+      {/* Main Content - Modular Section Slots */}
+      <main className="relative z-10 flex flex-col">
+        {/* Hero Section */}
+        <div id="home-slot" className="relative w-full">
+          <Hero />
+        </div>
+
+        {/* Features Section */}
+        <div id="features-slot" className="relative w-full">
+          <Features />
+        </div>
+
+        {/* Values Section */}
+        <div id="values-slot" className="relative w-full">
+          <Values />
+        </div>
+
+        {/* Rules Section */}
+        <div id="rules-slot" className="relative w-full">
+          <Rules />
+        </div>
+
+        {/* FAQ Section */}
+        <div id="faq-slot" className="relative w-full">
+          <FAQ />
+        </div>
+
+        {/* Join CTA Section */}
+        <div id="join-slot" className="relative w-full">
+          <JoinCTA />
+        </div>
       </main>
 
       {/* Footer */}

@@ -36,3 +36,4 @@ pnpm-debug.log*
 # Temporary and archives
 *.zip
 _external_components/
+*.tsbuildinfo

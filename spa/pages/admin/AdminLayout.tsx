@@ -3,8 +3,6 @@ import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
-    Users,
-    Image,
     Settings,
     LogOut,
     ShieldAlert,
@@ -71,9 +69,7 @@ export const AdminLayout: React.FC = () => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-        { icon: Users, label: 'Staff Roster', path: '/admin/staff' },
         { icon: ShieldAlert, label: 'User Management', path: '/admin/users' },
-        { icon: Image, label: 'Gallery', path: '/admin/gallery' },
         { icon: ShieldAlert, label: 'Rules & FAQ', path: '/admin/rules' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];

@@ -47,7 +47,7 @@ const ROLES: { value: Role; label: string; description: string; color: string; i
     {
         value: 'admin',
         label: 'Administrator',
-        description: 'Admin team member managing content, gallery, and staff roster.',
+        description: 'Admin team member managing community settings, users, and server content.',
         color: 'orange',
         icon: ShieldCheck
     },

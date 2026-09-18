@@ -303,7 +303,7 @@ export const Settings: React.FC = () => {
                                                         FiveManage Media Service
                                                     </h3>
                                                     <p className="text-xs text-gray-400 mt-1">
-                                                        Image uploads for gallery items, staff portraits, and avatars route securely through <code className="bg-black/40 px-1 py-0.5 rounded text-vital-400">/api/upload</code>.
+                                                        Image uploads and custom avatars route securely through <code className="bg-black/40 px-1 py-0.5 rounded text-vital-400">/api/upload</code>.
                                                     </p>
                                                 </div>
                                                 <span className="text-xs font-mono px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">

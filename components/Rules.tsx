@@ -70,7 +70,7 @@ const itemVariants: Variants = {
 
 export const Rules: React.FC = () => {
   return (
-    <section id="rules" className="py-24 bg-dark-800 relative overflow-hidden">
+    <section id="rules" className="py-24 bg-dark-800 relative overflow-hidden scroll-mt-24">
       {/* Background noise texture */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5"></div>
 

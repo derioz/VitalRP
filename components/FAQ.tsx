@@ -52,7 +52,7 @@ export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-24 bg-dark-800 relative">
+    <section id="faq" className="py-24 bg-dark-800 relative scroll-mt-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         <div className="text-center mb-16">

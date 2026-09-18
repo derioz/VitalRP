@@ -6,8 +6,6 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  Users,
-  Image as ImageIcon,
   Settings,
   LogOut,
   Home,
@@ -25,9 +23,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-    { icon: Users, label: 'Staff Roster', path: '/admin/staff' },
     { icon: Shield, label: 'User Management', path: '/admin/users' },
-    { icon: ImageIcon, label: 'Gallery', path: '/admin/gallery' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
@@ -79,9 +75,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-white font-display font-black text-xl leading-none tracking-wide bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
                 VITAL RP
               </h1>
-              <span className="text-[10px] text-vital-500 font-bold tracking-[0.2em] uppercase mt-1">
-                Command Center
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-vital-500 font-bold tracking-[0.2em] uppercase">
+                  Command Center
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-tech font-bold uppercase tracking-wider w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Discord Verified</span>
+              </div>
             </div>
           </div>
           <button

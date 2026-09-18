@@ -49,13 +49,15 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, isAdmin } = useAuth();
 
   const links = [
     { label: 'Home', href: '#home' },
-    { label: 'Rules', href: 'https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0', isExternal: true },
-    { label: 'Staff', href: '#staff' },
-    { label: 'Gallery', href: '#gallery' },
+    { label: 'Features', href: '#features' },
+    { label: 'About', href: '#values' },
+    { label: 'Rules', href: '#rules' },
+    { label: 'FAQ', href: '#faq' },
+    { label: 'Join', href: '#join' },
     { label: 'Merch', href: '/merch' },
     { label: 'Forums', href: '#', isComingSoon: true },
     { label: 'Store', href: 'https://vitalrp.tebex.io/', isExternal: true, isStore: true },
@@ -144,15 +146,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
             <p className="text-gray-600 text-xs font-sans">
               © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
             </p>
-            {user ? (
+            {isAdmin ? (
               <a
                 href="/admin"
-                className="text-white/10 hover:text-white transition-colors duration-500"
+                className="text-white/10 hover:text-vital-500 transition-colors duration-500"
                 aria-label="Admin Panel"
               >
                 <Lock size={12} />
               </a>
-            ) : (
+            ) : !user ? (
               <button
                 onClick={() => login('/admin')}
                 className="text-white/10 hover:text-vital-500 transition-colors duration-500"
@@ -160,7 +162,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               >
                 <Lock size={12} />
               </button>
-            )}
+            ) : null}
           </div>
 
           <motion.div
