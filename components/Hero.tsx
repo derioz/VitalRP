@@ -232,6 +232,7 @@ export const Hero: React.FC = () => {
           alt="Vital RP - Los Santos"
           fill
           priority
+          unoptimized
           quality={90}
           sizes="100vw"
           className="object-cover object-[75%_center] lg:object-[80%_center] select-none"
