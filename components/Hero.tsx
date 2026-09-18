@@ -293,8 +293,8 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
               className="inline-flex items-center gap-3 mb-4 sm:mb-5"
             >
-              <span className="w-7 sm:w-9 h-[2px] bg-[#faa200]" />
-              <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-[#faa200] drop-shadow-[0_0_12px_rgba(250,162,0,0.4)]">
+              <span className="w-7 sm:w-9 h-[2px] bg-vital-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+              <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-vital-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.45)]">
                 SERIOUS ROLEPLAY. PLAYER-DRIVEN STORIES.
               </span>
             </motion.div>
@@ -312,7 +312,7 @@ export const Hero: React.FC = () => {
                 </span>
                 <span className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.75rem] font-display font-black text-white uppercase leading-[0.88] tracking-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.85)]">
                   VITAL{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#faa200] via-[#faa200] to-amber-500 drop-shadow-[0_0_35px_rgba(250,162,0,0.4)]">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-vital-400 via-vital-500 to-vital-600 drop-shadow-[0_0_35px_rgba(249,115,22,0.5)]">
                     RP
                   </span>
                 </span>
@@ -362,8 +362,8 @@ export const Hero: React.FC = () => {
               {/* Live CFX Population */}
               <div className="inline-flex items-center gap-2 text-white font-medium">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#faa200] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#faa200]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vital-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-vital-500 shadow-[0_0_8px_#f97316]" />
                 </span>
                 <span>
                   {serverStats.online
@@ -392,7 +392,7 @@ export const Hero: React.FC = () => {
               {/* Primary Action: Enter Los Santos */}
               <button
                 onClick={handleEnterLosSantos}
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-[#faa200] hover:bg-[#e09200] text-dark-950 font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(250,162,0,0.35)] hover:shadow-[0_0_35px_rgba(250,162,0,0.55)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(249,115,22,0.4)] hover:shadow-[0_0_35px_rgba(249,115,22,0.65)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 <span>Enter Los Santos</span>
                 <ArrowRight
@@ -406,9 +406,9 @@ export const Hero: React.FC = () => {
                 href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.09] text-white border border-white/15 hover:border-white/35 backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.09] text-white border border-white/15 hover:border-vital-500/40 backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <DiscordIcon className="w-4 h-4 fill-current opacity-80 group-hover:opacity-100 transition-opacity text-[#faa200]" />
+                <DiscordIcon className="w-4 h-4 fill-current opacity-80 group-hover:opacity-100 transition-opacity text-vital-500" />
                 <span>Join the Community</span>
               </a>
             </motion.div>
@@ -440,7 +440,7 @@ export const Hero: React.FC = () => {
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            className="w-full h-1/2 bg-[#faa200] rounded-full shadow-[0_0_8px_#faa200]"
+            className="w-full h-1/2 bg-vital-500 rounded-full shadow-[0_0_8px_#f97316]"
           />
         </div>
       </motion.div>
