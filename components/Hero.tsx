@@ -340,15 +340,12 @@ export const Hero: React.FC = () => {
             </motion.p>
           </motion.div>
 
-          {/* LAYER 4: CTA & SERVER METADATA (Slightly Stronger Depth Rate) */}
+          {/* LAYER 4: CTA & SERVER METADATA */}
           <motion.div
             style={{
-              x: fgOffsetX,
               y: prefersReducedMotion ? 0 : ctaScrollY,
               opacity: prefersReducedMotion ? 1 : ctaOpacity,
               scale: prefersReducedMotion ? 1 : ctaScale,
-              transformStyle: 'preserve-3d',
-              translateZ: prefersReducedMotion ? 0 : 40,
             }}
             className="w-full flex flex-col items-start will-change-transform"
           >
@@ -366,9 +363,9 @@ export const Hero: React.FC = () => {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-vital-500 shadow-[0_0_8px_#f97316]" />
                 </span>
                 <span>
-                  {serverStats.online
-                    ? `${serverStats.players} players in Los Santos`
-                    : 'Los Santos Online'}
+                  {serverStats.online && serverStats.players > 0
+                    ? `${serverStats.players} Citizens in City`
+                    : 'City Live'}
                 </span>
               </div>
 
@@ -392,12 +389,12 @@ export const Hero: React.FC = () => {
               {/* Primary Action: Enter Los Santos */}
               <button
                 onClick={handleEnterLosSantos}
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(249,115,22,0.4)] hover:shadow-[0_0_35px_rgba(249,115,22,0.65)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-gradient-to-r from-vital-500 to-vital-600 hover:brightness-110 text-white font-display font-black text-sm uppercase tracking-widest transition-[filter,box-shadow] duration-200 shadow-[0_0_20px_rgba(249,115,22,0.35)] hover:shadow-[0_0_35px_rgba(249,115,22,0.65)] cursor-pointer active:scale-[0.98]"
               >
                 <span>Enter Los Santos</span>
                 <ArrowRight
                   size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-1 stroke-[2.5]"
+                  className="transition-transform duration-200 group-hover:translate-x-1.5 stroke-[2.5]"
                 />
               </button>
 
@@ -406,7 +403,7 @@ export const Hero: React.FC = () => {
                 href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.09] text-white border border-white/15 hover:border-vital-500/40 backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/15 hover:border-vital-500/50 hover:shadow-[0_0_20px_rgba(249,115,22,0.15)] backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-colors duration-200 active:scale-[0.98]"
               >
                 <DiscordIcon className="w-4 h-4 fill-current opacity-80 group-hover:opacity-100 transition-opacity text-vital-500" />
                 <span>Join the Community</span>

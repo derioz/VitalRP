@@ -554,6 +554,7 @@ const Merch: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [easterEggActive, setEasterEggActive] = useState(false);
+  const [wiggleKey, setWiggleKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -561,6 +562,7 @@ const Merch: React.FC = () => {
 
   const triggerEasterEgg = () => {
     setEasterEggActive(true);
+    setWiggleKey((k) => k + 1);
     
     const duration = 3000;
     const end = Date.now() + duration;
@@ -966,9 +968,21 @@ const Merch: React.FC = () => {
           </p>
 
           {/* Easter Egg Trigger Pill */}
-          <button 
+          <motion.button 
+            key={wiggleKey}
             onClick={triggerEasterEgg}
-            className="group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden cursor-pointer"
+            animate={wiggleKey > 0 ? {
+              rotate: [0, -12, 12, -8, 8, -4, 4, 0],
+              scale: [1, 1.08, 0.98, 1.04, 1],
+            } : {}}
+            transition={{ duration: 0.55, ease: "easeInOut" }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`group/pill flex items-center gap-2 bg-dark-900/50 hover:bg-dark-900/80 backdrop-blur-md border p-1 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden cursor-pointer ${
+              easterEggActive
+                ? 'border-vital-500/80 shadow-[0_0_25px_rgba(249,115,22,0.4)]'
+                : 'border-white/10 hover:border-vital-500/50'
+            }`}
           >
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
               <motion.img 
@@ -980,10 +994,14 @@ const Merch: React.FC = () => {
               />
               <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
             </div>
-            <span className="text-xs font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
-              Made by Damon
+            <span className={`text-xs font-tech uppercase tracking-widest font-bold transition-colors ${
+              easterEggActive
+                ? 'text-vital-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]'
+                : 'text-gray-400 group-hover/pill:text-white'
+            }`}>
+              {easterEggActive ? "what's up n shit" : 'Made by Damon'}
             </span>
-          </button>
+          </motion.button>
 
           <Link href="/" className="text-gray-500 hover:text-vital-400 text-xs font-tech uppercase tracking-widest transition-colors">
             ← Back to VitalRP.net

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Youtube, Instagram, Ghost, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { useAuth } from './AuthProvider';
 import { VitalLogo } from './VitalLogo';
 
@@ -49,7 +50,27 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
+  const [wiggleKey, setWiggleKey] = useState(0);
   const { login, user, isAdmin } = useAuth();
+
+  const toggleEasterEgg = () => {
+    const next = !foundEasterEgg;
+    setFoundEasterEgg(next);
+    setWiggleKey((k) => k + 1);
+
+    if (next) {
+      try {
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { y: 0.9 },
+          colors: ['#f97316', '#ea580c', '#fb923c'],
+        });
+      } catch {
+        // Ignore in environments without canvas
+      }
+    }
+  };
 
   const links = [
     { label: 'Home', href: '#home' },
@@ -166,20 +187,32 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
           </div>
 
           <motion.div
-            className="flex items-center gap-2 order-1 md:order-2 bg-dark-900/50 px-3 py-1.5 rounded-full border border-white/5 hover:border-vital-500/50 transition-colors cursor-pointer select-none group/dev"
-            onClick={() => setFoundEasterEgg(!foundEasterEgg)}
+            key={wiggleKey}
+            className={`flex items-center gap-2 order-1 md:order-2 bg-dark-900/60 px-3.5 py-1.5 rounded-full border transition-all duration-300 cursor-pointer select-none group/dev ${
+              foundEasterEgg
+                ? 'border-vital-500/80 shadow-[0_0_20px_rgba(249,115,22,0.35)] bg-dark-900/90'
+                : 'border-white/5 hover:border-vital-500/50'
+            }`}
+            onClick={toggleEasterEgg}
+            animate={wiggleKey > 0 ? {
+              rotate: [0, -12, 12, -8, 8, -4, 4, 0],
+              scale: [1, 1.08, 0.98, 1.04, 1],
+            } : {}}
+            transition={{ duration: 0.55, ease: "easeInOut" }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className={`text-[10px] font-tech uppercase tracking-widest transition-colors ${foundEasterEgg ? 'text-vital-500 font-bold' : 'text-gray-500'}`}>
-              {foundEasterEgg ? 'Damon was here' : 'Created by Damon'}
+            <span className={`text-[10px] font-tech uppercase tracking-widest transition-colors ${
+              foundEasterEgg ? 'text-vital-500 font-bold drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'text-gray-500 group-hover/dev:text-gray-300'
+            }`}>
+              {foundEasterEgg ? "what's up n shit" : 'Made by Damon'}
             </span>
             <motion.div
-              animate={{ rotate: foundEasterEgg ? 180 : 0 }}
+              animate={{ rotate: foundEasterEgg ? 360 : 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 10 }}
             >
               {foundEasterEgg ? (
-                <Ghost className="w-5 h-5 text-vital-500" />
+                <Ghost className="w-5 h-5 text-vital-500 animate-bounce" />
               ) : (
                 <img src="https://r2.fivemanage.com/image/hVrQuL5nJWbT.png" alt="Crown" className="w-5 h-5 object-contain opacity-70 group-hover/dev:opacity-100 transition-opacity" />
               )}
