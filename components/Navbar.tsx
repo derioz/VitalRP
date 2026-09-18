@@ -234,6 +234,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               <span>Play</span>
             </a>
 
+            {/* Special Admin Link: ONLY visible when user holds Discord Admin role */}
+            {user && isAdmin && (
+              <Link
+                href="/admin"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all text-xs font-tech font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]"
+                title="Access Admin Panel"
+              >
+                <Shield size={13} className="text-vital-400" />
+                <span className="hidden md:inline">Admin Panel</span>
+              </Link>
+            )}
+
             {/* Profile Button / Discord Login Trigger */}
             <div className="flex items-center pl-1 sm:pl-2 border-l border-white/10">
               {loading ? (
@@ -244,7 +256,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               ) : (
                 /* Login Button */
                 <button
-                  onClick={() => login('/admin')}
+                  onClick={() => login('/')}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#5865F2]/15 hover:bg-[#5865F2]/25 text-[#8a94fd] hover:text-white border border-[#5865F2]/30 transition-all text-xs font-tech font-bold uppercase tracking-wider"
                   title="Sign in with Discord"
                 >
@@ -440,7 +452,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      login('/admin');
+                      login('/');
                     }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#5865F2]/20"
                   >

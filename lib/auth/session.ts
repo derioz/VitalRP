@@ -1,6 +1,7 @@
 import { createClient as createServerClientInstance } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient as createSupabaseJsClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase/client';
 import { Role, UserPermissions, getPermissions } from './rbac';
 import { isVitalAdmin } from './vital-admin';
 
@@ -19,37 +20,47 @@ export interface SessionUser {
 /**
  * Robust Discord ID extractor from Supabase user object.
  * Strictly verifies the ID is a numeric Discord snowflake (17-20 digits).
- * Prevents treating internal Supabase UUIDs as Discord IDs.
+ * Checks all known provider data fields, identities, and metadata.
  */
 export function extractDiscordId(user: any): string | null {
   if (!user) return null;
+
+  // Helper validator
+  const isSnowflake = (val: any): val is string =>
+    typeof val === 'string' && /^\d{17,20}$/.test(val);
 
   // 1. Check user.identities for provider 'discord'
   if (Array.isArray(user.identities) && user.identities.length > 0) {
     const discordIdentity = user.identities.find((i: any) => i.provider === 'discord');
     if (discordIdentity) {
-      const idFromData =
-        discordIdentity.identity_data?.provider_id ||
-        discordIdentity.identity_data?.sub;
-      if (typeof idFromData === 'string' && /^\d{17,20}$/.test(idFromData)) {
-        return idFromData;
+      const idData = discordIdentity.identity_data;
+      if (idData) {
+        if (isSnowflake(idData.id)) return idData.id;
+        if (isSnowflake(idData.provider_id)) return idData.provider_id;
+        if (isSnowflake(idData.sub)) return idData.sub;
       }
-      if (typeof discordIdentity.id === 'string' && /^\d{17,20}$/.test(discordIdentity.id)) {
+      if (isSnowflake(discordIdentity.id)) {
         return discordIdentity.id;
       }
     }
   }
 
-  // 2. Check user.user_metadata.provider_id
-  const providerId = user.user_metadata?.provider_id;
-  if (typeof providerId === 'string' && /^\d{17,20}$/.test(providerId)) {
-    return providerId;
+  // 2. Check user.user_metadata
+  const meta = user.user_metadata;
+  if (meta) {
+    if (isSnowflake(meta.provider_id)) return meta.provider_id;
+    if (isSnowflake(meta.sub)) return meta.sub;
+    if (isSnowflake(meta.id)) return meta.id;
+    if (meta.custom_claims) {
+      if (isSnowflake(meta.custom_claims.id)) return meta.custom_claims.id;
+      if (isSnowflake(meta.custom_claims.sub)) return meta.custom_claims.sub;
+    }
   }
 
-  // 3. Check user.user_metadata.sub (ONLY if numeric Discord snowflake, NOT Supabase UUID)
-  const sub = user.user_metadata?.sub;
-  if (typeof sub === 'string' && /^\d{17,20}$/.test(sub)) {
-    return sub;
+  // 3. Check app_metadata provider
+  const appMeta = user.app_metadata;
+  if (appMeta?.provider === 'discord' && isSnowflake(appMeta.provider_id)) {
+    return appMeta.provider_id;
   }
 
   return null;
@@ -74,11 +85,10 @@ export async function getCurrentSession(token?: string): Promise<SessionUser | n
           user = data.user;
         }
       }
-      if (!user && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        const anonClient = createSupabaseJsClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        );
+      if (!user) {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+        const anonClient = createSupabaseJsClient(url, anonKey);
         const { data, error } = await anonClient.auth.getUser(token);
         if (!error && data?.user) {
           user = data.user;

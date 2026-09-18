@@ -156,7 +156,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               </a>
             ) : !user ? (
               <button
-                onClick={() => login('/admin')}
+                onClick={() => login('/')}
                 className="text-white/10 hover:text-vital-500 transition-colors duration-500"
                 aria-label="Admin Access"
               >

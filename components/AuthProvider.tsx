@@ -98,10 +98,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (clientSession?.user) {
         console.log('[VitalAuth Client] Unverified server session; setting client fallback (isAdmin: false)');
         const meta = clientSession.user.user_metadata || {};
+        const isSnowflake = (val: any): val is string =>
+          typeof val === 'string' && /^\d{17,20}$/.test(val);
+
+        const discordIdentity = clientSession.user.identities?.find((i: any) => i.provider === 'discord');
+        const idData = discordIdentity?.identity_data;
+
         const discordId =
-          meta.provider_id ||
-          meta.sub ||
-          clientSession.user.identities?.find((i: any) => i.provider === 'discord')?.id ||
+          (idData && isSnowflake(idData.id) ? idData.id : null) ||
+          (idData && isSnowflake(idData.provider_id) ? idData.provider_id : null) ||
+          (idData && isSnowflake(idData.sub) ? idData.sub : null) ||
+          (isSnowflake(discordIdentity?.id) ? discordIdentity.id : null) ||
+          (isSnowflake(meta.provider_id) ? meta.provider_id : null) ||
+          (isSnowflake(meta.sub) ? meta.sub : null) ||
+          (isSnowflake(meta.id) ? meta.id : null) ||
           '';
 
         const displayName =
@@ -165,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const targetPath = redirect.startsWith('/') ? redirect : '/' + redirect;
-      const redirectUrl = `${origin}${targetPath}`;
+      const redirectUrl = `${origin}/auth/callback?next=${encodeURIComponent(targetPath)}`;
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('vital_auth_redirect', targetPath);

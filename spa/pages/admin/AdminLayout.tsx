@@ -25,44 +25,9 @@ export const AdminLayout: React.FC = () => {
         );
     }
 
-    // If user is not logged in, redirect to home
-    if (!user) {
+    // If user is not logged in or not an admin, redirect to home
+    if (!user || !isAdmin) {
         return <Navigate to="/" replace />;
-    }
-
-    // If user is logged in but not an admin, show Access Denied
-    if (!isAdmin) {
-        return (
-            <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4">
-                <div className="bg-dark-900 border border-red-500/20 rounded-xl p-8 max-w-md w-full text-center">
-                    <ShieldAlert size={48} className="text-red-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-                    <p className="text-gray-400 mb-6">
-                        You do not have permission to view the Admin Panel.
-                    </p>
-                    <div className="bg-black/30 rounded-lg p-3 mb-6 font-mono text-sm text-gray-300 break-all select-all">
-                        {user.email}
-                    </div>
-                    <p className="text-xs text-gray-500 mb-6">
-                        Please provide the email above to an administrator to request access.
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                        <NavLink
-                            to="/"
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-medium transition-colors"
-                        >
-                            Go Back
-                        </NavLink>
-                        <button
-                            onClick={() => logout()}
-                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
     }
 
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);

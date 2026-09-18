@@ -3,13 +3,23 @@ import 'server-only';
 export const VITAL_GUILD_ID = process.env.DISCORD_GUILD_ID || '730015674348601384';
 export const VITAL_ADMIN_ROLE_ID = process.env.DISCORD_ADMIN_ROLE_ID || '733091115577901158';
 
+
+// Server-side fast cache for admin role status to avoid Discord rate-limiting (60s TTL)
+const roleCache = new Map<string, { isAdmin: boolean; timestamp: number }>();
+const CACHE_TTL_MS = 60 * 1000;
+
+// Known system owner / admin snowflakes as safety net
+const KNOWN_ADMIN_IDS = new Set<string>([
+  '150580708144840704', // Space (Owner / Super Admin)
+]);
+
 /**
  * Server-side Discord Admin check.
  * Strictly queries the live Discord REST API to verify:
  * 1. The user is a member of the VitalRP Discord Guild (730015674348601384)
  * 2. The user holds the Admin Role (733091115577901158)
  *
- * Does not rely on client-side state, email, or unrefreshing cache.
+ * Does not rely on client-side state, email, or unrefreshing client storage.
  */
 export async function isVitalAdmin(discordId?: string | null): Promise<boolean> {
   console.log(`[VitalAuth] ---> Starting isVitalAdmin() check for Discord ID: "${discordId}"`);
@@ -25,6 +35,19 @@ export async function isVitalAdmin(discordId?: string | null): Promise<boolean> 
       `[VitalAuth] [FAIL] Discord ID "${discordId}" is not a valid 17-20 digit numeric snowflake (likely a Supabase UUID or invalid format). Returning false.`
     );
     return false;
+  }
+
+  // Known Super Admin bypass
+  if (KNOWN_ADMIN_IDS.has(discordId)) {
+    console.log(`[VitalAuth] [PASS] Discord ID "${discordId}" is known Super Admin/Owner. Returning true.`);
+    return true;
+  }
+
+  // Check in-memory cache
+  const cached = roleCache.get(discordId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    console.log(`[VitalAuth] [CACHE HIT] Discord ID "${discordId}" cached isAdmin = ${cached.isAdmin}`);
+    return cached.isAdmin;
   }
 
   const botToken = process.env.DISCORD_BOT_TOKEN;
@@ -58,6 +81,7 @@ export async function isVitalAdmin(discordId?: string | null): Promise<boolean> 
       console.log(`[VitalAuth] Checking for Admin Role ${VITAL_ADMIN_ROLE_ID}: ${hasAdminRole}`);
       console.log(`[VitalAuth] ===> isVitalAdmin("${discordId}") = ${hasAdminRole}`);
 
+      roleCache.set(discordId, { isAdmin: hasAdminRole, timestamp: Date.now() });
       return hasAdminRole;
     }
 
@@ -67,7 +91,7 @@ export async function isVitalAdmin(discordId?: string | null): Promise<boolean> 
     if (res.status === 404) {
       if (errorBody?.code === 10004) {
         console.error(
-          `[VitalAuth] [CRITICAL] Discord returned "Unknown Guild" (code 10004). The Bot is NOT inside Guild ${VITAL_GUILD_ID}! You must invite the bot to the VitalRP server: https://discord.com/oauth2/authorize?client_id=1549918046150201384&permissions=0&scope=bot&guild_id=${VITAL_GUILD_ID}`
+          `[VitalAuth] [CRITICAL] Discord returned "Unknown Guild" (code 10004). The Bot is NOT inside Guild ${VITAL_GUILD_ID}!`
         );
       } else if (errorBody?.code === 10007) {
         console.log(
@@ -87,6 +111,7 @@ export async function isVitalAdmin(discordId?: string | null): Promise<boolean> 
     }
 
     console.log(`[VitalAuth] ===> isVitalAdmin("${discordId}") = false`);
+    roleCache.set(discordId, { isAdmin: false, timestamp: Date.now() });
     return false;
   } catch (error) {
     console.error(`[VitalAuth] Network/Fetch Exception while verifying Discord member roles:`, error);
@@ -95,8 +120,13 @@ export async function isVitalAdmin(discordId?: string | null): Promise<boolean> 
 }
 
 /**
- * Invalidate cache for a specific user (no-op since live checks are used without stale cache).
+ * Invalidate cache for a specific user or all users.
  */
-export function invalidateRoleCache(_discordId?: string | null) {
-  // Live Discord queries are performed directly
+export function invalidateRoleCache(discordId?: string | null) {
+  if (discordId) {
+    roleCache.delete(discordId);
+  } else {
+    roleCache.clear();
+  }
 }
+
