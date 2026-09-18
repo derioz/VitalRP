@@ -126,7 +126,11 @@ export const ProfileDropdown: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 mt-3 w-72 sm:w-80 rounded-2xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-4 z-50 divide-y divide-white/5"
+            className="absolute right-0 mt-3 w-72 sm:w-80 rounded-2xl bg-dark-950/85 backdrop-blur-2xl border border-white/10 sm:border-vital-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-4 z-50 divide-y divide-white/5"
+            style={{
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+            }}
           >
             {/* User Details Header */}
             <div className="pb-3.5">

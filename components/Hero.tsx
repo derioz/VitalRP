@@ -293,8 +293,8 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
               className="inline-flex items-center gap-3 mb-4 sm:mb-5"
             >
-              <span className="w-7 sm:w-9 h-[2px] bg-[#faa200]" />
-              <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-[#faa200] drop-shadow-[0_0_12px_rgba(250,162,0,0.4)]">
+              <span className="w-7 sm:w-9 h-[2px] bg-[#F97316]" />
+              <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-[#F97316] drop-shadow-[0_0_12px_rgba(249,115,22,0.4)]">
                 WELCOME TO LOS SANTOS
               </span>
             </motion.div>
@@ -312,7 +312,7 @@ export const Hero: React.FC = () => {
                 </span>
                 <span className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.75rem] font-display font-black text-white uppercase leading-[0.88] tracking-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.85)]">
                   VITAL{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#faa200] via-[#faa200] to-orange-500 drop-shadow-[0_0_35px_rgba(250,162,0,0.4)]">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#F97316] via-[#F97316] to-orange-500 drop-shadow-[0_0_35px_rgba(249,115,22,0.4)]">
                     RP
                   </span>
                 </span>
@@ -362,8 +362,8 @@ export const Hero: React.FC = () => {
               {/* Live CFX Population */}
               <div className="inline-flex items-center gap-2 text-white font-medium">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#faa200] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#faa200]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F97316] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F97316]" />
                 </span>
                 <span>
                   {serverStats.online
@@ -390,7 +390,7 @@ export const Hero: React.FC = () => {
               {/* Primary Action: Enter Los Santos */}
               <button
                 onClick={handleEnterLosSantos}
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-[#faa200] hover:bg-[#ffb020] text-dark-950 font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(250,162,0,0.3)] hover:shadow-[0_0_35px_rgba(250,162,0,0.55)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-[#F97316] hover:bg-[#ea580c] text-dark-950 font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(249,115,22,0.35)] hover:shadow-[0_0_35px_rgba(249,115,22,0.55)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 <span>Enter Los Santos</span>
                 <ArrowRight
@@ -438,7 +438,7 @@ export const Hero: React.FC = () => {
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            className="w-full h-1/2 bg-[#faa200] rounded-full shadow-[0_0_8px_#faa200]"
+            className="w-full h-1/2 bg-[#F97316] rounded-full shadow-[0_0_8px_#F97316]"
           />
         </div>
       </motion.div>

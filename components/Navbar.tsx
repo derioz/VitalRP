@@ -9,7 +9,6 @@ import {
   Gamepad2,
   ShoppingCart,
   MessageSquare,
-  Shirt,
   LogIn,
   Shield,
   LogOut,
@@ -102,33 +101,43 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-3 sm:px-6 pt-3 sm:pt-4 pointer-events-none">
-      <div className="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">
-        {/* Floating Glassmorphic Navigation Bar inspired by 21st.dev Navigation Menu */}
-        <div
-          className={`w-full flex items-center justify-between px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border transition-all duration-300 shadow-2xl ${
+    <motion.header
+      initial={false}
+      animate={{
+        paddingTop: isScrolled ? 14 : 0,
+        paddingLeft: isScrolled ? 16 : 0,
+        paddingRight: isScrolled ? 16 : 0,
+      }}
+      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+      className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
+    >
+      <div className="w-full flex justify-center">
+        {/* Navigation Bar: Fixed top-flush when at top, animated floating pill with true blur when scrolled */}
+        <motion.div
+          layout
+          animate={{
+            maxWidth: isScrolled ? '80rem' : '100%',
+            borderRadius: isScrolled ? '9999px' : '0px',
+          }}
+          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          className={`w-full flex items-center justify-between pointer-events-auto transition-colors duration-300 ${
             isScrolled
-              ? 'bg-dark-950/90 backdrop-blur-2xl border-vital-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(249,115,22,0.15)]'
-              : 'bg-dark-900/80 backdrop-blur-xl border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
+              ? 'px-3 sm:px-6 py-2 sm:py-2.5 bg-dark-950/75 border border-white/10 sm:border-vital-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(249,115,22,0.15)]'
+              : 'px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5 bg-dark-950/40 border-b border-white/5 shadow-none'
           }`}
+          style={{
+            backdropFilter: isScrolled ? 'blur(24px)' : 'blur(12px)',
+            WebkitBackdropFilter: isScrolled ? 'blur(24px)' : 'blur(12px)',
+          }}
         >
-          {/* Brand Logo & Status */}
+          {/* Brand Logo & Clean Title (Vital RP) */}
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="relative">
               <VitalLogo className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.4)] group-hover:scale-105 transition-transform duration-200" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white font-display font-extrabold text-base sm:text-lg tracking-wider leading-none group-hover:text-vital-400 transition-colors">
-                  VITAL
-                </span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-vital-500/15 border border-vital-500/30 text-[8px] font-tech text-vital-400 font-bold uppercase tracking-wider">
-                  <span className="w-1 h-1 rounded-full bg-vital-500 animate-ping" />
-                  2.0
-                </span>
-              </div>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600 font-tech text-[10px] tracking-[0.25em] leading-none font-bold mt-0.5">
-                ROLEPLAY
+            <div className="flex items-center">
+              <span className="text-white font-display font-extrabold text-base sm:text-xl tracking-wider leading-none">
+                Vital <span className="text-[#F97316]">RP</span>
               </span>
             </div>
           </Link>
@@ -192,14 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               </AnimatePresence>
             </div>
 
-            {/* Desktop Merch Link */}
-            <Link
-              href="/merch"
-              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors"
-            >
-              <Shirt size={14} />
-              <span>Merch</span>
-            </Link>
+
 
             {/* Tebex Store */}
             <button
@@ -262,7 +264,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Mobile Glassmorphic Drawer Menu */}
@@ -323,20 +325,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   </a>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/merch"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-300 font-tech font-bold text-xs uppercase tracking-wider border border-white/10 transition-colors"
-                  >
-                    <Shirt size={14} />
-                    <span>Merch</span>
-                  </Link>
-
-                  <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-dark-800/50 text-gray-500 font-tech font-bold text-xs uppercase tracking-wider border border-white/5">
-                    <MessageSquare size={14} />
-                    <span>Forums (Soon)</span>
-                  </div>
+                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-dark-800/50 text-gray-400 font-tech font-bold text-xs uppercase tracking-wider border border-white/5">
+                  <MessageSquare size={14} />
+                  <span>Forums (Coming Soon)</span>
                 </div>
               </div>
 
@@ -462,6 +453,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 };
