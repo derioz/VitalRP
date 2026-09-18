@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase/client';
 import { useAuth } from '../../components/AuthProvider';
@@ -8,6 +8,7 @@ export const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { refresh } = useAuth();
   const [status, setStatus] = useState('Connecting to Los Santos...');
+  const hasExecutedRef = useRef(false);
 
   useEffect(() => {
     // Immediately remove static splash screen if present
@@ -16,16 +17,44 @@ export const AuthCallback: React.FC = () => {
       shell.remove();
     }
 
-    let isMounted = true;
+    if (hasExecutedRef.current) {
+      return;
+    }
+    hasExecutedRef.current = true;
+
+    // Determine redirect destination
+    const paramNext =
+      searchParams.get('next') ||
+      searchParams.get('redirect') ||
+      (typeof window !== 'undefined' ? localStorage.getItem('vital_auth_redirect') : null) ||
+      '/';
+
+    const rawDestination = paramNext.startsWith('/') ? paramNext : '/' + paramNext;
+    // Guard against redirect loops
+    const destination =
+      rawDestination === '/auth/callback' || rawDestination.startsWith('/auth/callback')
+        ? '/'
+        : rawDestination;
+
+    // Safety fallback: if anything stalls after 2 seconds, force redirect
+    const safetyTimer = setTimeout(() => {
+      if (typeof window !== 'undefined' && window.location.pathname.includes('/auth/callback')) {
+        console.warn('[VitalAuth Callback] Safety timeout reached, navigating to:', destination);
+        window.location.replace(destination);
+      }
+    }, 2000);
 
     const handleCallback = async () => {
       try {
+        const error = searchParams.get('error') || searchParams.get('error_description');
+        if (error) {
+          console.warn('[VitalAuth Callback] OAuth error returned:', error);
+          setStatus('Authentication cancelled. Returning home...');
+          navigate('/', { replace: true });
+          return;
+        }
+
         const code = searchParams.get('code');
-        const nextParam =
-          searchParams.get('next') ||
-          searchParams.get('redirect') ||
-          (typeof window !== 'undefined' ? localStorage.getItem('vital_auth_redirect') : null) ||
-          '/';
 
         if (code) {
           setStatus('Verifying authentication credentials...');
@@ -36,37 +65,48 @@ export const AuthCallback: React.FC = () => {
           }
         }
 
-        // Check if hash has implicit access token
-        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
-          setStatus('Establishing active session...');
-        }
-
-        setStatus('Synchronizing user profile...');
-        // Refresh session in AuthProvider to load user data and admin status
-        await refresh();
-
+        // Clean up temporary stored redirect
         if (typeof window !== 'undefined') {
           localStorage.removeItem('vital_auth_redirect');
         }
 
-        const destination = nextParam.startsWith('/') ? nextParam : '/' + nextParam;
-        if (isMounted) {
-          navigate(destination, { replace: true });
+        setStatus('Synchronizing user profile...');
+
+        // Non-blocking profile synchronization: wait at most 500ms for initial load, then redirect immediately
+        try {
+          await Promise.race([
+            refresh(),
+            new Promise((resolve) => setTimeout(resolve, 500)),
+          ]);
+        } catch (refreshErr) {
+          console.warn('[VitalAuth Callback] Non-blocking refresh notice:', refreshErr);
         }
+
+        setStatus('Welcome to Los Santos!');
+
+        // Transition immediately to destination
+        navigate(destination, { replace: true });
+
+        // Secondary fallback in case React Router navigation didn't update window location
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location.pathname.includes('/auth/callback')) {
+            window.location.replace(destination);
+          }
+        }, 300);
       } catch (err) {
-        console.error('[VitalAuth Callback] Error handling auth callback:', err);
-        if (isMounted) {
-          navigate('/', { replace: true });
-        }
+        console.error('[VitalAuth Callback] Error handling callback:', err);
+        navigate('/', { replace: true });
+      } finally {
+        clearTimeout(safetyTimer);
       }
     };
 
     handleCallback();
 
     return () => {
-      isMounted = false;
+      clearTimeout(safetyTimer);
     };
-  }, [searchParams, navigate, refresh]);
+  }, []); // Run strictly once on mount
 
   return (
     <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-6 text-white selection:bg-vital-500 selection:text-white">

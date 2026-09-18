@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
-  const fetchSession = async () => {
+  const fetchSession = React.useCallback(async () => {
     try {
       // 1. Retrieve client-side session from Supabase
       const { data: { session: clientSession } } = await supabase.auth.getSession();
@@ -137,6 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 3. Authoritative server-side verification via /api/auth/me (when hosted on Next.js/Vercel)
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1000);
         const headers: Record<string, string> = {};
         if (clientSession.access_token) {
           headers['Authorization'] = `Bearer ${clientSession.access_token}`;
@@ -144,7 +146,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const res = await fetch('/api/auth/me', {
           headers,
           cache: 'no-store',
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated && data.user) {
@@ -155,8 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         }
-      } catch (apiErr) {
-        // Expected on static hosting like GitHub Pages
+      } catch {
+        // Expected on static hosting like GitHub Pages or when aborted
       }
 
       const authUserData: AuthUser = {
@@ -187,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSession();
@@ -203,9 +207,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignored if offline
     }
-  }, []);
+  }, [fetchSession]);
 
-  const login = async (redirect: string = '/') => {
+  const login = React.useCallback(async (redirect: string = '/') => {
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const targetPath = redirect.startsWith('/') ? redirect : '/' + redirect;
@@ -229,9 +233,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Login error:', err);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = React.useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } catch {
@@ -246,9 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAdmin(false);
     setEditMode(false);
     window.location.href = '/';
-  };
+  }, []);
 
-  const updateDisplayName = async (name: string): Promise<boolean> => {
+  const updateDisplayName = React.useCallback(async (name: string): Promise<boolean> => {
     const trimmed = name.trim();
     if (!trimmed) return false;
     try {
@@ -274,30 +278,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to update display name:', err);
       return false;
     }
-  };
+  }, [user?.id, fetchSession]);
 
-  const toggleEditMode = () => {
+  const toggleEditMode = React.useCallback(() => {
     if (isAdmin) {
       setEditMode((prev) => !prev);
     }
-  };
+  }, [isAdmin]);
+
+  const contextValue = React.useMemo(
+    () => ({
+      user,
+      isAdmin,
+      loading,
+      editMode,
+      toggleEditMode,
+      login,
+      logout,
+      refresh: fetchSession,
+      updateDisplayName,
+    }),
+    [user, isAdmin, loading, editMode, toggleEditMode, login, logout, fetchSession, updateDisplayName]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAdmin,
-        loading,
-        editMode,
-        toggleEditMode,
-        login,
-        logout,
-        refresh: fetchSession,
-        updateDisplayName,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
-
 };
