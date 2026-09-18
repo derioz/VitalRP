@@ -24,6 +24,14 @@ export const ProfileDropdown: React.FC = () => {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (user) {
+      console.log(
+        `[VitalAuth Client] ProfileDropdown -> user="${user.displayName || user.username}", discordId="${user.discordId}", isAdmin=${isAdmin}`
+      );
+    }
+  }, [user, isAdmin]);
+
   // Close on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
@@ -152,25 +160,28 @@ export const ProfileDropdown: React.FC = () => {
               </div>
 
               {/* Display Name Edit Feature */}
-              <div className="mt-3 pt-2.5 border-t border-white/5">
-                {!isEditingName ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-tech text-gray-400 uppercase tracking-wider">
-                      Website Name
-                    </span>
+              <div className="mt-3 pt-2.5 border-t border-white/5 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-tech text-gray-400 uppercase tracking-wider font-semibold">
+                    Display Name
+                  </span>
+                  {!isEditingName && (
                     <button
                       onClick={handleStartEditing}
-                      className="inline-flex items-center gap-1.5 text-xs text-vital-400 hover:text-vital-300 font-medium transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-vital-400 hover:text-vital-300 font-tech font-bold uppercase tracking-wider transition-colors"
                     >
-                      <Edit2 size={12} />
-                      <span>Edit</span>
+                      <Edit2 size={11} />
+                      <span>Rename</span>
                     </button>
+                  )}
+                </div>
+
+                {!isEditingName ? (
+                  <div className="text-xs text-gray-200 font-medium bg-dark-950/70 border border-white/5 rounded-lg px-2.5 py-1.5 truncate">
+                    {user.displayName}
                   </div>
                 ) : (
-                  <form onSubmit={handleSaveDisplayName} className="space-y-2 mt-1">
-                    <label className="text-[10px] font-tech text-gray-400 uppercase tracking-wider block">
-                      Change Display Name
-                    </label>
+                  <form onSubmit={handleSaveDisplayName} className="space-y-1.5">
                     <div className="flex items-center gap-1.5">
                       <input
                         type="text"
@@ -185,17 +196,21 @@ export const ProfileDropdown: React.FC = () => {
                       <button
                         type="submit"
                         disabled={isSavingName}
-                        aria-label="Save name"
-                        className="p-1.5 rounded-lg bg-vital-500 hover:bg-vital-400 text-white transition-colors disabled:opacity-50"
+                        aria-label="Rename"
+                        className="px-2.5 py-1.5 rounded-lg bg-vital-500 hover:bg-vital-400 text-white text-xs font-tech font-bold uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
                       >
-                        {isSavingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        {isSavingName ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <span>Rename</span>
+                        )}
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsEditingName(false)}
                         disabled={isSavingName}
                         aria-label="Cancel editing"
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors shrink-0"
                       >
                         <X size={14} />
                       </button>
@@ -204,7 +219,7 @@ export const ProfileDropdown: React.FC = () => {
                 )}
 
                 {feedbackMsg && (
-                  <p className="text-[10px] text-emerald-400 font-tech mt-1.5">
+                  <p className="text-[10px] text-emerald-400 font-tech mt-1">
                     {feedbackMsg}
                   </p>
                 )}

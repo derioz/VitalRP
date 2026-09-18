@@ -61,11 +61,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchSession = async () => {
     try {
-      // 1. Authoritative server-side verification via /api/auth/me (validates Discord Guild + Admin Role)
+      // 1. Retrieve client-side session from Supabase (to obtain JWT access token)
+      const { data: { session: clientSession } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {};
+      if (clientSession?.access_token) {
+        headers['Authorization'] = `Bearer ${clientSession.access_token}`;
+      }
+
+      // 2. Authoritative server-side verification via /api/auth/me (validates Discord Guild + Admin Role)
       try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        const res = await fetch('/api/auth/me', {
+          headers,
+          cache: 'no-store',
+        });
         if (res.ok) {
           const data = await res.json();
+          console.log(
+            `[VitalAuth Client] /api/auth/me response -> authenticated: ${data.authenticated}, isAdmin: ${data.isAdmin}, user: "${data.user?.displayName || data.user?.username}"`
+          );
           if (data.authenticated && data.user) {
             setUser({
               ...data.user,
@@ -76,19 +90,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
         }
-      } catch {
-        // Fallback for static environments without Next.js API routes
+      } catch (apiErr) {
+        console.warn('[VitalAuth Client] /api/auth/me fetch failed:', apiErr);
       }
 
-      // 2. Client-side fallback check (never grants admin status without server verification)
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        const meta = session.user.user_metadata || {};
+      // 3. Fallback: client session if server check is unreachable (never grants admin status without server)
+      if (clientSession?.user) {
+        console.log('[VitalAuth Client] Unverified server session; setting client fallback (isAdmin: false)');
+        const meta = clientSession.user.user_metadata || {};
         const discordId =
           meta.provider_id ||
           meta.sub ||
-          session.user.identities?.find((i: any) => i.provider === 'discord')?.id ||
+          clientSession.user.identities?.find((i: any) => i.provider === 'discord')?.id ||
           '';
 
         const displayName =
@@ -96,18 +109,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           meta.full_name ||
           meta.name ||
           meta.user_name ||
-          session.user.email ||
+          clientSession.user.email ||
           'User';
         const username = meta.user_name || displayName;
         const avatar = meta.avatar_url || meta.picture || '';
 
         const authUserData: AuthUser = {
-          id: session.user.id,
+          id: clientSession.user.id,
           discordId,
           username,
           displayName,
           avatar,
-          email: session.user.email,
+          email: clientSession.user.email,
           role: 'user',
           permissions: defaultPermissions,
           isAdmin: false,
@@ -123,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAdmin(false);
       setEditMode(false);
     } catch (err) {
-      console.warn('Could not retrieve active session:', err);
+      console.warn('[VitalAuth Client] Could not retrieve active session:', err);
       setUser(null);
       setIsAdmin(false);
       setEditMode(false);

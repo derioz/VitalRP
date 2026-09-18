@@ -17,8 +17,15 @@ export default async function AdminRootLayout({
     redirect('/api/auth/discord/login?redirect=/admin');
   }
 
+  console.log(
+    `[VitalAuth] /admin layout check -> User: "${session.displayName}", Discord ID: "${session.discordId}", isAdmin: ${session.isAdmin}`
+  );
+
   // Server-side authorization check (Strict Discord Guild Membership + Role 733091115577901158)
   if (!session.isAdmin) {
+    console.log(
+      `[VitalAuth] /admin ACCESS DENIED -> User "${session.displayName}" (${session.discordId}) does not have Admin Role.`
+    );
     return (
       <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4">
         <div className="bg-dark-900 border border-red-500/20 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
