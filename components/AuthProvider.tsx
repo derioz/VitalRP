@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (redirect: string = '/admin') => {
+  const login = async (redirect: string = '/') => {
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const targetPath = redirect.startsWith('/') ? redirect : '/' + redirect;
@@ -175,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         provider: 'discord',
         options: {
           redirectTo: redirectUrl,
-          scopes: 'identify email guilds.members.read',
+          scopes: 'identify email',
         },
       });
 
