@@ -23,9 +23,9 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://vitalrp.net'),
-  title: 'Vital RP | Story-first FiveM Roleplay Community',
+  title: 'We Are Vital RP | Serious FiveM Roleplay',
   description:
-    'Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today.',
+    'Vital RP is a serious FiveM roleplay community built around characters, stories, and meaningful player-driven roleplay in Los Santos.',
   keywords: [
     'VitalRP',
     'Vital RP',
@@ -39,9 +39,10 @@ export const metadata: Metadata = {
     'GTA FiveM RP',
     'Los Santos roleplay',
     'FiveM whitelist server',
-    'semi-serious roleplay fivem',
+    'serious roleplay fivem',
     'best fivem rp server',
     'story-first roleplay',
+    'player-driven stories',
   ],
   icons: {
     icon: [
@@ -53,30 +54,32 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: 'https://vitalrp.net/',
-    title: 'Vital RP | Story-first FiveM Roleplay Community',
-    description:
-      'Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today.',
+    title: 'We Are Vital RP',
     siteName: 'Vital RP',
+    description:
+      'Serious roleplay built around characters, stories, and the choices that shape Los Santos. Create a character. Build a story. Leave your mark.',
     images: [
       {
-        url: 'https://r2.fivemanage.com/image/nABguUthLZVW.png',
+        url: 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png',
+        secureUrl: 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png',
         width: 1200,
         height: 630,
-        alt: 'Vital RP — FiveM Roleplay Community',
+        alt: 'Vital RP - Serious FiveM Roleplay',
+        type: 'image/png',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vital RP | Story-first FiveM Roleplay Community',
+    title: 'We Are Vital RP',
     description:
-      'Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and immersive high-quality interactions in Los Santos. Join today.',
-    images: ['https://r2.fivemanage.com/image/nABguUthLZVW.png'],
+      'Serious roleplay built around characters, stories, and the choices that shape Los Santos.',
+    images: ['https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png'],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#f97316',
+  themeColor: '#faa200',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,

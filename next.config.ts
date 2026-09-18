@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
     remotePatterns: [
-      { protocol: 'https', hostname: 'r2.fivemanage.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'r2.fivemanage.com', pathname: '/image/**' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'cdn.discordapp.com' },
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
