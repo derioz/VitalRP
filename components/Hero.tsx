@@ -1,398 +1,288 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Copy, Check, Users, Wifi, ArrowRight, Zap, Globe, Shield, Activity, Clock, Briefcase, AlertTriangle } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { Button } from './Button';
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 
+// Brand & Server Constants
+const HERO_IMAGE = 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png';
+const DISCORD_URL = 'https://discord.gg/vitalrp';
 
-
-// -----------------------------------------------------------------------
-// CONFIGURATION
-// -----------------------------------------------------------------------
-const SERVER_IP = "cfx.re/join/ogpvmv";
-const CONNECT_URL = "https://cfx.re/join/ogpvmv";
-const CFX_SERVER_ID = 'ogpvmv';
+const DiscordIcon = ({ className }: { className?: string }) => (
+  <svg
+    role="img"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" />
+  </svg>
+);
 
 export const Hero: React.FC = () => {
-  const [copied, setCopied] = useState(false);
-  const [serverStats, setServerStats] = useState({ online: false, players: 0, max: 2048 });
-  const [easterEggActive, setEasterEggActive] = useState(false);
-  const [serverTime, setServerTime] = useState('08:00 AM');
-  
-  const { scrollY } = useScroll();
+  const containerRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
-  // Simulate RP Time
+  const [serverStats, setServerStats] = useState<{
+    online: boolean;
+    players: number;
+  }>({
+    online: false,
+    players: 0,
+  });
+
+  // Query live CFX server population
   useEffect(() => {
-    const interval = setInterval(() => {
-      const date = new Date();
-      // Fast forward time slightly for the "RP" feel
-      let hours = (date.getHours() * 2) % 24;
-      let minutes = date.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
-      const strMinutes = minutes < 10 ? '0' + minutes : minutes;
-      setServerTime(`${hours}:${strMinutes} ${ampm}`);
-    }, 60000); // update every minute
-    return () => clearInterval(interval);
-  }, []);
-
-  const triggerEasterEgg = () => {
-    setEasterEggActive(true);
-    
-    const duration = 3000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#f97316', '#10b981', '#3b82f6']
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#f97316', '#10b981', '#3b82f6']
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-    frame();
-
-    setTimeout(() => {
-      setEasterEggActive(false);
-    }, 4000);
-  };
-
-  // Parallax effects for Hero specifically
-  const yText = useTransform(scrollY, [0, 300], [0, 100]);
-  const yImage = useTransform(scrollY, [0, 300], [0, -50]);
-  const opacityHero = useTransform(scrollY, [0, 400], [1, 0]);
-
-  const copyIp = () => {
-    navigator.clipboard.writeText(SERVER_IP);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  useEffect(() => {
+    let isMounted = true;
     const fetchStats = async () => {
       try {
         const response = await fetch('/api/cfx/population');
-        if (!response.ok) throw new Error('Unreachable');
+        if (!response.ok) return;
         const data = await response.json();
-        if (data && data.online) {
-          setServerStats({ online: true, players: data.players, max: data.max || 2048 });
-        } else {
-          setServerStats({ online: false, players: 0, max: 2048 });
+        if (isMounted && data) {
+          setServerStats({
+            online: Boolean(data.online),
+            players: Number(data.players) || 0,
+          });
         }
-      } catch (e) {
-        // Server unreachable — show offline state
-        setServerStats({ online: false, players: 0, max: 2048 });
+      } catch {
+        // CFX unreachable or offline - maintain default state
       }
     };
+
     fetchStats();
+    const interval = setInterval(fetchStats, 45000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  // Simulated Stats
-  const queueCount = serverStats.players > 1800 ? Math.floor(Math.random() * 20) + 5 : 0;
+  // Scroll Parallax Controls
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end start'],
+  });
+
+  // Background Parallax: moves slightly slower than scroll and scales subtly
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '12%']);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.05]);
+
+  // Foreground Copy Parallax: gentle upward drift and smooth fade between 20% and 60%
+  const textY = useTransform(scrollYProgress, [0, 0.6], [0, -50]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.2, 0.6], [1, 1, 0]);
+  const textScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.98]);
+
+  // Scroll Indicator Fade: quickly fades within the first 12% of scroll
+  const indicatorOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
+
+  // Smooth scroll handler for Enter Los Santos
+  const handleEnterLosSantos = () => {
+    const target =
+      document.getElementById('features-slot') ||
+      document.getElementById('features');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.location.hash = 'features';
+    }
+  };
 
   return (
-    <section id="home" className="relative w-full pt-32 pb-16 lg:pt-48 lg:pb-32 overflow-hidden">
+    <section
+      id="home"
+      ref={containerRef}
+      className="relative w-full h-[100svh] min-h-[100svh] overflow-hidden flex items-center justify-start bg-dark-950"
+    >
+      {/* 1. CINEMATIC BACKGROUND IMAGE WITH PARALLAX */}
+      <motion.div
+        style={{
+          y: prefersReducedMotion ? 0 : bgY,
+          scale: prefersReducedMotion ? 1 : bgScale,
+        }}
+        initial={
+          prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.03 }
+        }
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+      >
+        <Image
+          src={HERO_IMAGE}
+          alt="Vital RP - Los Santos"
+          fill
+          priority
+          quality={90}
+          sizes="100vw"
+          className="object-cover object-[75%_center] lg:object-[80%_center] select-none"
+        />
+      </motion.div>
 
-      {/* Hero-specific localized glow (adds to the global parallax) */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-vital-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2 mix-blend-screen"></div>
+      {/* 2. LAYERED CINEMATIC LIGHTING OVERLAYS */}
+      {/* Left-to-right gradient: ensures maximum text contrast on the left without dulling the right artwork */}
+      <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/70 via-35% md:via-45% to-transparent pointer-events-none z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-dark-950/80 via-transparent to-transparent max-w-2xl pointer-events-none z-[1]" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+      {/* Top gradient: subtle soft shadow for floating navbar readability */}
+      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-dark-950/80 via-dark-950/25 to-transparent pointer-events-none z-[2]" />
 
-          {/* 2. LEFT COLUMN: Content */}
+      {/* Bottom transition gradient: seamless melt into the next homepage section */}
+      <div className="absolute bottom-0 inset-x-0 h-44 bg-gradient-to-t from-dark-950 via-dark-950/60 to-transparent pointer-events-none z-[2]" />
+
+      {/* Optional subtle cinematic vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(5,5,5,0.45)_100%)] pointer-events-none z-[2]" />
+
+      {/* 3. HERO CONTENT - LEFT ALIGNED & VISUALLY DOMINANT */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 xl:px-20 pt-16 sm:pt-20">
+        <motion.div
+          style={{
+            y: prefersReducedMotion ? 0 : textY,
+            opacity: prefersReducedMotion ? 1 : textOpacity,
+            scale: prefersReducedMotion ? 1 : textScale,
+          }}
+          className="max-w-xl lg:max-w-2xl flex flex-col items-start text-left"
+        >
+          {/* Eyebrow Accent */}
           <motion.div
-            style={{ y: yText, opacity: opacityHero }}
-            className={`flex flex-col items-center lg:items-start text-center lg:text-left transition-all duration-300 ${easterEggActive ? 'hue-rotate-180 contrast-125' : ''}`}
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+            className="inline-flex items-center gap-3 mb-4 sm:mb-5"
           >
-
-            {/* Announcement Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-vital-500/25 via-vital-500/10 to-transparent border border-vital-500/40 text-xs font-tech font-bold uppercase tracking-wider mb-6 backdrop-blur-md shadow-[0_0_25px_rgba(249,115,22,0.25)]"
-            >
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vital-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-vital-500"></span>
-              </span>
-              <span className="text-white font-bold tracking-widest">Vital RP 2.0</span>
-              <span className="text-vital-500">&bull;</span>
-              <span className="text-vital-400">Server Live</span>
-              <span className="text-vital-500">&bull;</span>
-              <span className="text-emerald-400">Applications Open</span>
-            </motion.div>
-
-            {/* Heading */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-4 drop-shadow-2xl">
-                VITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 via-vital-500 to-orange-500 pr-3 pb-1 drop-shadow-[0_0_35px_rgba(249,115,22,0.4)]">RP</span>
-              </h1>
-              <p className="text-xl sm:text-2xl text-gray-400 font-light tracking-wide mb-8 lg:max-w-[90%]">
-                Story-first roleplay, with a community that <span className="text-white font-medium underline decoration-vital-500/50 decoration-2 underline-offset-4">actually feels alive.</span>
-              </p>
-            </motion.div>
-
-            {/* Description */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-gray-400 text-base sm:text-lg max-w-xl leading-relaxed mb-8"
-            >
-              Vital RP is built for immersive scenes, fair conflict, and the kind of RP you remember later. Win or lose, the goal is always the story.
-            </motion.div>
-
-            {/* Live Feature Pills */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs font-tech text-gray-400 mb-8">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-emerald-400 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                FiveM v3095 Active
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-vital-400 font-semibold">
-                <Zap size={12} className="text-vital-400" />
-                Custom Economy &amp; Jobs
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-gray-300 font-semibold">
-                <Shield size={12} className="text-blue-400" />
-                Semi-Serious 18+
-              </span>
-            </div>
-
-            {/* Interactive Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto"
-            >
-              {/* Primary Connect Button */}
-              <a href={CONNECT_URL} className="w-full sm:w-auto block">
-                <Button size="lg" className="shadow-2xl shadow-vital-500/20 w-full">
-                  <Zap size={20} className="mr-2 fill-current" />
-                  Connect Now
-                </Button>
-              </a>
-
-              {/* IP Copy Component */}
-              <div className="relative group flex items-center">
-                <div className="absolute inset-0 bg-white/5 rounded-lg blur-sm group-hover:bg-white/10 transition-all"></div>
-                <div className="relative flex items-center bg-dark-800/80 backdrop-blur-md border border-white/10 rounded-lg p-1 pr-4 pl-4 h-[54px]">
-                  <div className="flex flex-col items-start mr-8">
-                    <span className="text-[10px] text-gray-500 font-tech uppercase tracking-wider">Server IP</span>
-                    <span className="text-white font-tech font-bold">{SERVER_IP}</span>
-                  </div>
-                  <button
-                    onClick={copyIp}
-                    className="ml-auto p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors"
-                  >
-                    {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Stats Row Mobile (Visible only on mobile) */}
-            <div className="lg:hidden mt-8 flex items-center gap-6 border-t border-white/5 pt-6 w-full justify-center">
-              <div className="flex flex-col items-center">
-                <Users size={20} className="text-vital-500 mb-1" />
-                <span className="font-bold text-white">{serverStats.players}</span>
-                <span className="text-xs text-gray-500 font-tech uppercase">Online</span>
-              </div>
-              <div className="w-px h-8 bg-white/10"></div>
-              <div className="flex flex-col items-center">
-                <Wifi size={20} className="text-green-500 mb-1" />
-                <span className="font-bold text-white">12ms</span>
-                <span className="text-xs text-gray-500 font-tech uppercase">Ping</span>
-              </div>
-              <div className="w-px h-8 bg-white/10"></div>
-              <div className="flex flex-col items-center">
-                <Globe size={20} className="text-blue-500 mb-1" />
-                <span className="font-bold text-white">US-East</span>
-                <span className="text-xs text-gray-500 font-tech uppercase">Region</span>
-              </div>
-            </div>
-
-            {/* Mobile Easter Egg Pill */}
-            <div className="lg:hidden mt-6 w-full flex justify-center">
-              <button 
-                onClick={triggerEasterEgg}
-                className="group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1.5 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden"
-              >
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
-                  <motion.img 
-                    animate={easterEggActive ? { rotate: 360 } : {}}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    src="/damon-icon.jpg" 
-                    alt="Damon" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
-                </div>
-                <span className="text-[10px] font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
-                  Made by Damon
-                </span>
-              </button>
-            </div>
-
+            <span className="w-7 sm:w-9 h-[2px] bg-[#faa200]" />
+            <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-[#faa200] drop-shadow-[0_0_12px_rgba(250,162,0,0.4)]">
+              WELCOME TO LOS SANTOS
+            </span>
           </motion.div>
 
-          {/* 3. RIGHT COLUMN: Visual Composition */}
+          {/* Main Headline */}
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            style={{ y: yImage }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="relative hidden lg:block"
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.22, ease: 'easeOut' }}
+            className="mb-5 sm:mb-6"
           >
-            {/* Back Glow */}
-            <div className="absolute inset-0 bg-vital-500/20 blur-[60px] rounded-full transform rotate-12 scale-75"></div>
+            <h1 className="flex flex-col tracking-tight select-none">
+              <span className="text-xl sm:text-2xl md:text-3xl font-display font-medium text-gray-300 uppercase tracking-[0.16em] mb-1 drop-shadow-sm">
+                WE ARE
+              </span>
+              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.75rem] font-display font-black text-white uppercase leading-[0.88] tracking-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.85)]">
+                VITAL{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#faa200] via-[#faa200] to-orange-500 drop-shadow-[0_0_35px_rgba(250,162,0,0.4)]">
+                  RP
+                </span>
+              </span>
+            </h1>
+          </motion.div>
 
-            {/* Main Image Container with Tilt/3D effect */}
-            <div className="relative z-10 w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
-              <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent z-10 opacity-60"></div>
-              <motion.img
-                animate={easterEggActive ? { 
-                  filter: ['hue-rotate(0deg)', 'hue-rotate(90deg)', 'hue-rotate(270deg)', 'hue-rotate(0deg)'],
-                  scale: [1, 1.05, 0.95, 1.1, 1]
-                } : {}}
-                transition={{ duration: 0.5, repeat: easterEggActive ? Infinity : 0 }}
-                src="https://r2.fivemanage.com/image/nABguUthLZVW.png"
-                alt="Vital RP City"
-                className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+          {/* Strong Identity Statement */}
+          <motion.p
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.35, ease: 'easeOut' }}
+            className="text-lg sm:text-xl lg:text-[1.35rem] font-sans font-light text-gray-100 leading-snug tracking-wide mb-3 max-w-xl drop-shadow-md"
+          >
+            More than a server. A city built around stories, characters, and the people who bring them to life.
+          </motion.p>
+
+          {/* Supporting Line */}
+          <motion.p
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45, ease: 'easeOut' }}
+            className="text-sm sm:text-base font-sans text-gray-400 font-normal leading-relaxed mb-7 sm:mb-8 max-w-lg drop-shadow-sm"
+          >
+            Serious roleplay. Player-driven stories. A community where what you do actually matters.
+          </motion.p>
+
+          {/* Elegant Server Information & Live Population Line */}
+          <motion.div
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55, ease: 'easeOut' }}
+            className="flex flex-wrap items-center gap-y-2 gap-x-3 text-xs font-tech tracking-wider text-gray-300 uppercase mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
+          >
+            {/* Live CFX Population */}
+            <div className="inline-flex items-center gap-2 text-white font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#faa200] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#faa200]" />
+              </span>
+              <span>
+                {serverStats.online
+                  ? `${serverStats.players} players in Los Santos`
+                  : 'Los Santos Online'}
+              </span>
+            </div>
+
+            <span className="text-white/25 select-none">•</span>
+            <span className="text-gray-300">Serious RP</span>
+            <span className="text-white/25 select-none">•</span>
+            <span className="text-gray-300">Player Driven</span>
+            <span className="text-white/25 select-none">•</span>
+            <span className="text-gray-300">Custom Experience</span>
+          </motion.div>
+
+          {/* Minimalist CTAs */}
+          <motion.div
+            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.65, ease: 'easeOut' }}
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto"
+          >
+            {/* Primary Action: Enter Los Santos */}
+            <button
+              onClick={handleEnterLosSantos}
+              className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-[#faa200] hover:bg-[#ffb020] text-dark-950 font-display font-black text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_25px_rgba(250,162,0,0.3)] hover:shadow-[0_0_35px_rgba(250,162,0,0.55)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+            >
+              <span>Enter Los Santos</span>
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-200 group-hover:translate-x-1 stroke-[2.5]"
               />
+            </button>
 
-              {/* Easter Egg Trigger Pill (Bottom Left) */}
-              <button 
-                onClick={triggerEasterEgg}
-                className="absolute bottom-6 left-6 z-30 group/pill flex items-center gap-2 bg-dark-900/40 hover:bg-dark-900/80 backdrop-blur-md border border-white/10 p-1.5 pr-4 rounded-full transition-all duration-300 shadow-xl overflow-hidden"
-              >
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-dark-800 flex-shrink-0 relative">
-                  <motion.img 
-                    animate={easterEggActive ? { rotate: 360 } : {}}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    src="/damon-icon.jpg" 
-                    alt="Damon" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-vital-500/0 group-hover/pill:bg-vital-500/20 transition-colors"></div>
-                </div>
-                <span className="text-[10px] font-tech text-gray-400 group-hover/pill:text-white uppercase tracking-widest font-bold transition-colors">
-                  Made by Damon
-                </span>
-              </button>
-
-              {/* Floating HUD Element - Bottom Right */}
-              <div className="absolute bottom-6 right-6 z-20">
-                <div className="bg-dark-900/80 backdrop-blur-md border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-xl">
-                  <div className="bg-green-500/20 p-2 rounded-lg">
-                    <Wifi size={20} className="text-green-500" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-gray-400 font-tech uppercase tracking-wider">Server Status</div>
-                    <div className="text-white font-bold font-display">OPTIMAL PERFORMANCE</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Floating Stats Panel - REDESIGNED */}
-            <motion.div
-              animate={easterEggActive ? { 
-                x: [-10, 10, -10, 10, 0],
-                y: [-10, 10, -10, 10, 0],
-                filter: 'hue-rotate(90deg) contrast(200%)'
-              } : { y: [0, -10, 0] }}
-              transition={{ 
-                repeat: easterEggActive ? Infinity : Infinity, 
-                duration: easterEggActive ? 0.2 : 6, 
-                ease: "easeInOut" 
-              }}
-              className="absolute -top-8 -left-12 z-30 w-80"
+            {/* Secondary Action: Join Discord */}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.09] text-white border border-white/15 hover:border-white/35 backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
             >
-              {/* Glassmorphic Container */}
-              <div className="relative bg-dark-900/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-
-                {/* Decorative Top Line */}
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${easterEggActive ? 'from-red-500 to-purple-500' : 'from-vital-500 to-transparent'}`}></div>
-
-                {/* Header */}
-                <div className="flex justify-between items-center p-4 border-b border-white/5">
-                  <div className="flex items-center gap-2">
-                    <Shield size={14} className={easterEggActive ? 'text-red-500' : 'text-vital-500'} />
-                    <span className={`text-xs font-bold font-tech tracking-widest uppercase ${easterEggActive ? 'text-red-500' : 'text-white'}`}>
-                      {easterEggActive ? 'DAMON OVERRIDE' : 'CITY DASHBOARD'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-gray-400 font-tech px-2 py-1 bg-white/5 rounded-md border border-white/5">
-                    {serverTime}
-                  </span>
-                </div>
-
-                {/* Main Stats */}
-                <div className="px-5 py-4">
-                  
-                  {/* Population */}
-                  <div className="flex justify-between items-end mb-4">
-                    <div>
-                      <span className="text-[10px] text-gray-500 uppercase font-tech block mb-1">Active Population</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-5xl font-display font-black text-white tracking-tighter leading-none">{easterEggActive ? '9999' : serverStats.players}</span>
-                        <span className="text-sm text-gray-600 font-tech font-bold">/{serverStats.max}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${serverStats.online ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${serverStats.online ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                        </span>
-                        <span className="text-[9px] text-emerald-400 font-tech font-bold uppercase tracking-wider">{serverStats.online ? 'Online' : 'Offline'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-
-
-                  {/* Threat Level */}
-                  <div className="bg-gradient-to-r from-red-500/10 to-transparent border-l-2 border-red-500 rounded-r-lg p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle size={16} className={easterEggActive ? 'text-red-500 animate-bounce' : 'text-red-500/80'} />
-                      <div>
-                        <div className="text-[9px] text-gray-400 uppercase font-tech tracking-wider">City Threat Level</div>
-                        <div className={`text-xs font-bold font-tech uppercase ${easterEggActive ? 'text-red-500 animate-pulse' : 'text-red-400'}`}>
-                          {easterEggActive ? 'CRITICAL OVERRIDE' : 'ELEVATED - MODERATE'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
+              <DiscordIcon className="w-4 h-4 fill-current opacity-80 group-hover:opacity-100 transition-opacity" />
+              <span>Join Discord</span>
+            </a>
           </motion.div>
-
-        </div>
+        </motion.div>
       </div>
+
+      {/* 4. REFINED BOTTOM SCROLL INDICATOR */}
+      <motion.div
+        style={{ opacity: prefersReducedMotion ? 1 : indicatorOpacity }}
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.85 }}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none select-none"
+      >
+        <span className="text-[10px] font-tech uppercase tracking-[0.3em] text-gray-400 font-medium">
+          SCROLL
+        </span>
+        <div className="w-[1.5px] h-7 bg-white/15 overflow-hidden relative rounded-full">
+          <motion.div
+            animate={prefersReducedMotion ? {} : { y: ['-100%', '100%'] }}
+            transition={{
+              duration: 2.2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="w-full h-1/2 bg-[#faa200] rounded-full shadow-[0_0_8px_#faa200]"
+          />
+        </div>
+      </motion.div>
     </section>
   );
 };
+export default Hero;
