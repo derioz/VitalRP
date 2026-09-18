@@ -44,7 +44,11 @@ export const metadata: Metadata = {
     'story-first roleplay',
   ],
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: 'https://r2.fivemanage.com/image/qlWrCeXTQdqx.png', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: 'https://r2.fivemanage.com/image/qlWrCeXTQdqx.png',
   },
   openGraph: {
     type: 'website',

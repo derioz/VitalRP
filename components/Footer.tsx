@@ -4,30 +4,7 @@ import React, { useState } from 'react';
 import { Youtube, Instagram, Ghost, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from './AuthProvider';
-
-// Centered vertically in 100x100 box (Y: 15-95)
-// Matches Navbar logo geometry
-const VitalLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <svg
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    preserveAspectRatio="xMidYMid meet"
-  >
-    <defs>
-      <linearGradient id="vitalLogoGradientFooter" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FBBF24" />
-        <stop offset="50%" stopColor="#F97316" />
-        <stop offset="100%" stopColor="#EF4444" />
-      </linearGradient>
-    </defs>
-    <path
-      d="M10 15 L50 95 L90 15 L70 15 L50 55 L30 15 Z"
-      fill="url(#vitalLogoGradientFooter)"
-    />
-  </svg>
-);
+import { VitalLogo } from './VitalLogo';
 
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg
