@@ -22,12 +22,24 @@ const worldFeatures = [
 
 const containerVariants: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } }
+  visible: {
+    transition: {
+      staggerChildren: 0.04,
+      delayChildren: 0.05,
+    },
+  },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] } }
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.65,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
 };
 
 // Reusable sub-section label
@@ -55,8 +67,12 @@ export const Features: React.FC = () => {
 
         {/* ── MAIN HEADER ── */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
-            IMMERSIVE <span className="text-vital-500">FEATURES</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-vital-500/10 border border-vital-500/20 text-vital-400 text-xs font-tech font-bold uppercase tracking-wider mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-vital-500 animate-pulse"></span>
+            Server Features
+          </div>
+          <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-6 uppercase tracking-tight">
+            BUILT FOR <span className="text-vital-500">IMMERSION</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             We've customized every aspect of Vital RP to ensure a unique, lag-free, and engaging experience for every type of roleplayer.
@@ -70,7 +86,7 @@ export const Features: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.08 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-16"
         >
           {offers.map((feature, index) => (
@@ -104,7 +120,7 @@ export const Features: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.08 }}
           className="grid grid-cols-1 md:grid-cols-12 gap-5 mb-16"
         >
           {/* Law & Services */}
@@ -197,7 +213,7 @@ export const Features: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.08 }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         >
           {worldFeatures.map((feature, index) => (

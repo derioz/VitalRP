@@ -51,19 +51,20 @@ const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
     }
   }
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
-      ease: [0.21, 0.47, 0.32, 0.98] as const
+      duration: 0.65,
+      ease: [0.16, 1, 0.3, 1] as const,
     }
   }
 };
@@ -80,10 +81,10 @@ export const Values: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-xl text-center md:text-left"
           >
             <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
@@ -96,10 +97,10 @@ export const Values: React.FC = () => {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
             className="text-gray-400 max-w-sm text-sm text-center md:text-right font-sans leading-relaxed"
           >
             Vital RP isn't just a server; it's a standard. We are dedicated to providing the highest quality roleplay environment on FiveM.
@@ -111,7 +112,7 @@ export const Values: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.08 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[minmax(180px,auto)]"
         >
           {values.map((item) => (

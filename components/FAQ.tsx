@@ -31,19 +31,20 @@ const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.04,
+      delayChildren: 0.05,
     }
   }
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 6 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: [0.21, 0.47, 0.32, 0.98] as const
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1] as const,
     }
   }
 };
@@ -69,7 +70,7 @@ export const FAQ: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, amount: 0.08 }}
           className="space-y-4"
         >
           {faqs.map((faq, index) => (
