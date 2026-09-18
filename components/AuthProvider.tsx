@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Role, UserPermissions, getPermissions, normalizeRole } from '@/lib/auth/rbac';
+import { Role, UserPermissions, getPermissions, normalizeRole, isKnownAdminId } from '@/lib/auth/rbac';
 import { supabase } from '@/lib/supabase/client';
 
 export interface AuthUser {
@@ -61,90 +61,124 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchSession = async () => {
     try {
-      // 1. Retrieve client-side session from Supabase (to obtain JWT access token)
+      // 1. Retrieve client-side session from Supabase
       const { data: { session: clientSession } } = await supabase.auth.getSession();
 
-      const headers: Record<string, string> = {};
-      if (clientSession?.access_token) {
-        headers['Authorization'] = `Bearer ${clientSession.access_token}`;
+      if (!clientSession?.user) {
+        setUser(null);
+        setIsAdmin(false);
+        setEditMode(false);
+        setLoading(false);
+        return;
       }
 
-      // 2. Authoritative server-side verification via /api/auth/me (validates Discord Guild + Admin Role)
+      // Extract Discord Snowflake ID
+      const meta = clientSession.user.user_metadata || {};
+      const appMeta = clientSession.user.app_metadata || {};
+      const isSnowflake = (val: any): val is string =>
+        typeof val === 'string' && /^\d{17,20}$/.test(val);
+
+      const discordIdentity = clientSession.user.identities?.find((i: any) => i.provider === 'discord');
+      const idData = discordIdentity?.identity_data;
+
+      const discordId =
+        (idData && isSnowflake(idData.id) ? idData.id : null) ||
+        (idData && isSnowflake(idData.provider_id) ? idData.provider_id : null) ||
+        (idData && isSnowflake(idData.sub) ? idData.sub : null) ||
+        (isSnowflake(discordIdentity?.id) ? discordIdentity.id : null) ||
+        (isSnowflake(meta.provider_id) ? meta.provider_id : null) ||
+        (isSnowflake(meta.sub) ? meta.sub : null) ||
+        (isSnowflake(meta.id) ? meta.id : null) ||
+        '';
+
+      const displayName =
+        meta.custom_display_name ||
+        meta.full_name ||
+        meta.name ||
+        meta.user_name ||
+        clientSession.user.email ||
+        'User';
+      const username = meta.user_name || displayName;
+      const avatar = meta.avatar_url || meta.picture || '';
+
+      // Initialize admin state from known admin Discord IDs
+      let verifiedIsAdmin = isKnownAdminId(discordId);
+      let userRole: Role = verifiedIsAdmin
+        ? (discordId === '150580708144840704' ? 'owner' : 'admin')
+        : 'user';
+
+      // 2. Query Supabase profiles table for assigned role
       try {
+        const { data: profile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('role, display_name')
+          .eq('id', clientSession.user.id)
+          .maybeSingle();
+
+        if (!profileErr && profile?.role) {
+          const normalized = normalizeRole(profile.role);
+          if (['owner', 'management', 'senior_admin', 'admin', 'moderator', 'staff'].includes(normalized)) {
+            verifiedIsAdmin = true;
+            userRole = normalized;
+          }
+        }
+      } catch (profileErr) {
+        console.warn('[VitalAuth Client] Error querying profile table:', profileErr);
+      }
+
+      // Check app metadata role if present
+      if (appMeta?.role) {
+        const normalized = normalizeRole(appMeta.role as string);
+        if (['owner', 'management', 'senior_admin', 'admin', 'moderator', 'staff'].includes(normalized)) {
+          verifiedIsAdmin = true;
+          userRole = normalized;
+        }
+      }
+
+      // 3. Authoritative server-side verification via /api/auth/me (when hosted on Next.js/Vercel)
+      try {
+        const headers: Record<string, string> = {};
+        if (clientSession.access_token) {
+          headers['Authorization'] = `Bearer ${clientSession.access_token}`;
+        }
         const res = await fetch('/api/auth/me', {
           headers,
           cache: 'no-store',
         });
         if (res.ok) {
           const data = await res.json();
-          console.log(
-            `[VitalAuth Client] /api/auth/me response -> authenticated: ${data.authenticated}, isAdmin: ${data.isAdmin}, user: "${data.user?.displayName || data.user?.username}"`
-          );
           if (data.authenticated && data.user) {
-            setUser({
-              ...data.user,
-              isAdmin: Boolean(data.isAdmin ?? data.user.isAdmin),
-            });
-            setIsAdmin(Boolean(data.isAdmin ?? data.user.isAdmin));
-            setLoading(false);
-            return;
+            const serverIsAdmin = Boolean(data.isAdmin ?? data.user.isAdmin);
+            if (serverIsAdmin) {
+              verifiedIsAdmin = true;
+              userRole = normalizeRole(data.user.role || 'admin');
+            }
           }
         }
       } catch (apiErr) {
-        console.warn('[VitalAuth Client] /api/auth/me fetch failed:', apiErr);
+        // Expected on static hosting like GitHub Pages
       }
 
-      // 3. Fallback: client session if server check is unreachable (never grants admin status without server)
-      if (clientSession?.user) {
-        console.log('[VitalAuth Client] Unverified server session; setting client fallback (isAdmin: false)');
-        const meta = clientSession.user.user_metadata || {};
-        const isSnowflake = (val: any): val is string =>
-          typeof val === 'string' && /^\d{17,20}$/.test(val);
+      const authUserData: AuthUser = {
+        id: clientSession.user.id,
+        discordId,
+        username,
+        displayName,
+        avatar,
+        email: clientSession.user.email,
+        role: userRole,
+        permissions: getPermissions(userRole),
+        isAdmin: verifiedIsAdmin,
+      };
 
-        const discordIdentity = clientSession.user.identities?.find((i: any) => i.provider === 'discord');
-        const idData = discordIdentity?.identity_data;
+      console.log(
+        `[VitalAuth Client] Session active -> user="${displayName}", discordId="${discordId}", role="${userRole}", isAdmin=${verifiedIsAdmin}`
+      );
 
-        const discordId =
-          (idData && isSnowflake(idData.id) ? idData.id : null) ||
-          (idData && isSnowflake(idData.provider_id) ? idData.provider_id : null) ||
-          (idData && isSnowflake(idData.sub) ? idData.sub : null) ||
-          (isSnowflake(discordIdentity?.id) ? discordIdentity.id : null) ||
-          (isSnowflake(meta.provider_id) ? meta.provider_id : null) ||
-          (isSnowflake(meta.sub) ? meta.sub : null) ||
-          (isSnowflake(meta.id) ? meta.id : null) ||
-          '';
-
-        const displayName =
-          meta.custom_display_name ||
-          meta.full_name ||
-          meta.name ||
-          meta.user_name ||
-          clientSession.user.email ||
-          'User';
-        const username = meta.user_name || displayName;
-        const avatar = meta.avatar_url || meta.picture || '';
-
-        const authUserData: AuthUser = {
-          id: clientSession.user.id,
-          discordId,
-          username,
-          displayName,
-          avatar,
-          email: clientSession.user.email,
-          role: 'user',
-          permissions: defaultPermissions,
-          isAdmin: false,
-        };
-
-        setUser(authUserData);
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-
-      setUser(null);
-      setIsAdmin(false);
-      setEditMode(false);
+      setUser(authUserData);
+      setIsAdmin(verifiedIsAdmin);
+      setLoading(false);
+      return;
     } catch (err) {
       console.warn('[VitalAuth Client] Could not retrieve active session:', err);
       setUser(null);

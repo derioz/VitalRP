@@ -185,8 +185,8 @@
       }
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-B44vySfI.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Dyaa4jmH.css">
+  <script type="module" crossorigin src="/assets/index-DKvhDZkx.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index--kELzyMe.css">
 </head>
 
 <body class="bg-dark-950 text-white antialiased overflow-x-hidden selection:bg-vital-500 selection:text-white transition-colors duration-700">
@@ -208,15 +208,23 @@
   <div id="root"></div>
   <script>
     // Hide the splash screen as soon as the React root is populated
+    function dismissSplash() {
+      var shell = document.getElementById('seo-shell');
+      if (shell) shell.remove();
+    }
     var observer = new MutationObserver(function () {
       var root = document.getElementById('root');
       if (root && root.children.length > 0) {
-        var shell = document.getElementById('seo-shell');
-        if (shell) shell.remove();
+        dismissSplash();
         observer.disconnect();
       }
     });
-    observer.observe(document.getElementById('root'), { childList: true });
+    var rootElement = document.getElementById('root');
+    if (rootElement) {
+      observer.observe(rootElement, { childList: true });
+    }
+    // Safety fallback: Never trap users indefinitely on loading splash
+    setTimeout(dismissSplash, 2500);
   </script>
 </body>
 

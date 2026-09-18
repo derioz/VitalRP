@@ -12,21 +12,21 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data?.user) {
-      // Auto-promote space (150580708144840704) to owner
+      // Auto-promote known admins
       const adminClient = createAdminClient();
       const discordId =
         data.user.user_metadata?.provider_id ||
         data.user.user_metadata?.sub ||
         data.user.identities?.find((i) => i.provider === 'discord')?.id;
 
-      if (adminClient && discordId === '150580708144840704') {
+      if (adminClient && (discordId === '150580708144840704' || discordId === '399373087172198400')) {
         try {
           await adminClient
             .from('profiles')
-            .update({ role: 'owner' })
+            .update({ role: discordId === '150580708144840704' ? 'owner' : 'admin' })
             .eq('id', data.user.id);
         } catch (err) {
-          console.error('Error promoting owner:', err);
+          console.error('Error promoting owner/admin:', err);
         }
       }
 
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Return the user to an error page or home with some instructions
-  return NextResponse.redirect(new URL('/?auth_error=supabase_exchange_failed', requestUrl.origin));
+  // Gracefully return the user to the intended destination or home
+  return NextResponse.redirect(new URL(next || '/', requestUrl.origin));
 }
+

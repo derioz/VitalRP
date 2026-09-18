@@ -113,3 +113,22 @@ export function hasPermission(role: Role, permission: Permission): boolean {
   const perms = getPermissions(role);
   return perms[permission] ?? false;
 }
+
+export const KNOWN_ADMIN_DISCORD_IDS: string[] = [
+  '150580708144840704', // Space (Owner / Super Admin)
+  '399373087172198400', // Craysteens (Admin)
+];
+
+export function isKnownAdminId(discordId?: string | null): boolean {
+  if (!discordId) return false;
+  if (KNOWN_ADMIN_DISCORD_IDS.includes(discordId)) return true;
+  const envAdminIds =
+    (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_ADMIN_DISCORD_IDS) ||
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_DISCORD_IDS) ||
+    '';
+  if (envAdminIds) {
+    const ids = envAdminIds.split(',').map((id: string) => id.trim());
+    if (ids.includes(discordId)) return true;
+  }
+  return false;
+}

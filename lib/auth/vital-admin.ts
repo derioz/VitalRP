@@ -11,6 +11,7 @@ const CACHE_TTL_MS = 60 * 1000;
 // Known system owner / admin snowflakes as safety net
 const KNOWN_ADMIN_IDS = new Set<string>([
   '150580708144840704', // Space (Owner / Super Admin)
+  '399373087172198400', // Craysteens (Admin)
 ]);
 
 /**

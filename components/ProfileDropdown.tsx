@@ -232,17 +232,17 @@ export const ProfileDropdown: React.FC = () => {
 
             {/* Actions Section */}
             <div className="py-2 space-y-1">
-              {/* Admin Panel Button — ONLY shown to users verified with Discord Admin Role */}
+              {/* Admin Console Button — ONLY shown to users verified with Admin Role */}
               {isAdmin && (
                 <Link
                   href="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl bg-vital-500/10 hover:bg-vital-500/20 text-vital-400 border border-vital-500/20 hover:border-vital-500/40 transition-all duration-200 group"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/50 transition-all duration-200 group shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                 >
                   <div className="flex items-center gap-2.5">
                     <Shield size={16} className="text-vital-400 group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-tech font-bold uppercase tracking-wider">
-                      Admin Panel
+                      Admin Console
                     </span>
                   </div>
                   <ExternalLink size={12} className="opacity-70 group-hover:opacity-100" />

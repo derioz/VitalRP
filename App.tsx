@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './spa/pages/Home';
 import { Merch } from './spa/pages/Merch';
@@ -7,6 +7,7 @@ import { AdminLayout } from './spa/pages/admin/AdminLayout';
 import { Dashboard } from './spa/pages/admin/Dashboard';
 import { UsersPage } from './spa/pages/admin/Users';
 import { Settings } from './spa/pages/admin/Settings';
+import { AuthCallback } from './spa/pages/AuthCallback';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/merch" element={<Merch />} />
 
           {/* Admin Routes */}
@@ -23,6 +25,9 @@ function App() {
             <Route path="settings" element={<Settings />} />
             {/* Add more admin routes here */}
           </Route>
+
+          {/* Catch-all fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

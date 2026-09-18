@@ -239,10 +239,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               <Link
                 href="/admin"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all text-xs font-tech font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]"
-                title="Access Admin Panel"
+                title="Access Admin Console"
               >
                 <Shield size={13} className="text-vital-400" />
-                <span className="hidden md:inline">Admin Panel</span>
+                <span className="hidden md:inline">Admin Console</span>
               </Link>
             )}
 
@@ -422,7 +422,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       </form>
                     )}
 
-                    {/* Admin Panel button on mobile ONLY if verified admin */}
+                    {/* Admin Console button on mobile ONLY if verified admin */}
                     {isAdmin && (
                       <Link
                         href="/admin"
@@ -431,7 +431,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       >
                         <div className="flex items-center gap-2">
                           <Shield size={14} />
-                          <span>Admin Panel</span>
+                          <span>Admin Console</span>
                         </div>
                         <ExternalLink size={12} />
                       </Link>
