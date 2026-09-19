@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './spa/pages/Home';
 import { Merch } from './spa/pages/Merch';
+import { RulesPage } from './spa/pages/RulesPage';
 import { AdminLayout } from './spa/pages/admin/AdminLayout';
 import { Dashboard } from './spa/pages/admin/Dashboard';
 import { UsersPage } from './spa/pages/admin/Users';
@@ -15,6 +16,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/rules" element={<RulesPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/merch" element={<Merch />} />
 

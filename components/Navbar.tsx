@@ -84,12 +84,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
   // Nav links exclude Gallery and Staff as per redesign phases
   const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'Features', href: '#features' },
-    { name: 'About', href: '#values' },
-    { name: 'Rules', href: '#rules' },
-    { name: 'FAQ', href: '#faq' },
-    { name: 'Join', href: '#join' },
+    { name: 'Home', href: '/' },
+    { name: 'Features', href: '/#features' },
+    { name: 'About', href: '/#values' },
+    { name: 'Rules', href: '/rules' },
+    { name: 'FAQ', href: '/#faq' },
+    { name: 'Join', href: '/#join' },
   ];
 
   const handleStoreClick = () => {

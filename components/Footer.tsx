@@ -75,9 +75,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const links = [
     { label: 'Home', href: '#home' },
     { label: 'Features', href: '#features' },
-    { label: 'About', href: '#values' },
-    { label: 'Rules', href: '#rules' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'About', href: '/#values' },
+    { label: 'Rules', href: '/rules' },
+    { label: 'FAQ', href: '/#faq' },
     { label: 'Join', href: '#join' },
     { label: 'Merch', href: '/merch' },
     { label: 'Forums', href: '#', isComingSoon: true },
