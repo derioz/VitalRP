@@ -16,6 +16,7 @@ import {
   Edit2,
   Check,
   Loader2,
+  Camera,
 } from 'lucide-react';
 import { VitalLogo } from './VitalLogo';
 import { useAuth } from './AuthProvider';
@@ -82,6 +83,79 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
     setIsEditingMobileName(false);
   };
 
+  // Admin tooltip & Photo Contest transition states
+  const [isAdminHovered, setIsAdminHovered] = useState(false);
+  const [isTransitioningToContest, setIsTransitioningToContest] = useState(false);
+
+  const playCameraShutterSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      const playClick = (time: number, freq: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        osc.frequency.exponentialRampToValueAtTime(80, time + duration);
+        gain.gain.setValueAtTime(0.3, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + duration);
+
+        // Burst of mechanical texture noise
+        const bufferSize = Math.floor(ctx.sampleRate * duration);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.5;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = 2200;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.25, time);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start(time);
+        noise.stop(time + duration);
+      };
+
+      const now = ctx.currentTime;
+      playClick(now, 1200, 0.04);
+      playClick(now + 0.07, 750, 0.06);
+    } catch {
+      // AudioContext fails gracefully if restricted
+    }
+  };
+
+  const handleContestClick = (e?: React.MouseEvent) => {
+    if (e) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey) {
+        window.open('https://contest.vitalrp.net', '_blank', 'noopener,noreferrer');
+        return;
+      }
+      e.preventDefault();
+    }
+
+    if (isTransitioningToContest) return;
+
+    setIsTransitioningToContest(true);
+    playCameraShutterSound();
+
+    setTimeout(() => {
+      window.location.href = 'https://contest.vitalrp.net';
+    }, 850);
+  };
+
+
   // Nav links exclude Gallery and Staff as per redesign phases
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -101,7 +175,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   };
 
   return (
-    <motion.header
+    <>
+      <motion.header
       initial={false}
       animate={{
         paddingTop: isScrolled ? 14 : 0,
@@ -203,6 +278,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
 
 
+            {/* Photo Contest Button */}
+            <button
+              onClick={handleContestClick}
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-amber-300 hover:text-white bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 hover:from-amber-500/25 hover:to-orange-500/25 rounded-full border border-amber-500/30 hover:border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all hover:scale-105 active:scale-95 group"
+              title="Vital RP Photo Contest"
+            >
+              <Camera size={14} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+              <span>Contest</span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+            </button>
+
             {/* Tebex Store */}
             <button
               onClick={handleStoreClick}
@@ -234,16 +323,36 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               <span>Play</span>
             </a>
 
-            {/* Special Admin Link: ONLY visible when user holds Discord Admin role */}
+            {/* Special Admin Link: ONLY visible when user holds Discord Admin role - Shield icon with tooltip */}
             {user && isAdmin && (
-              <Link
-                href="/admin"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all text-xs font-tech font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]"
-                title="Access Admin Console"
+              <div
+                className="relative hidden sm:inline-flex items-center justify-center"
+                onMouseEnter={() => setIsAdminHovered(true)}
+                onMouseLeave={() => setIsAdminHovered(false)}
               >
-                <Shield size={13} className="text-vital-400" />
-                <span className="hidden md:inline">Admin Console</span>
-              </Link>
+                <Link
+                  href="/admin"
+                  aria-label="Admin Console"
+                  className="p-2 rounded-full bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] group flex items-center justify-center"
+                >
+                  <Shield size={15} className="text-vital-400 group-hover:text-white transition-colors" />
+                </Link>
+                <AnimatePresence>
+                  {isAdminHovered && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-[11px] font-tech font-bold px-2.5 py-1 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8),0_0_15px_rgba(249,115,22,0.25)] whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
+                    >
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-vital-500/40 rotate-45" />
+                      <Shield size={11} className="text-vital-400" />
+                      <span>Admin Console</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* Profile Button / Discord Login Trigger */}
@@ -306,6 +415,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
               {/* Action Buttons */}
               <div className="pt-4 space-y-2">
+                {/* Photo Contest Mobile Button */}
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleContestClick();
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 font-tech font-bold text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                >
+                  <div className="flex items-center gap-2">
+                    <Camera size={16} className="text-amber-400" />
+                    <span>VitalRP Photo Contest</span>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">
+                    Live <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  </span>
+                </button>
+
                 <a
                   href="https://cfx.re/join/ogpvmv"
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/25"
@@ -466,5 +592,129 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
         )}
       </AnimatePresence>
     </motion.header>
+
+    {/* Fullscreen Cinematic Camera Viewfinder & Flash Transition to Photo Contest */}
+    <AnimatePresence>
+      {isTransitioningToContest && (
+        <motion.div
+          key="contest-transition-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-auto bg-dark-950/95 backdrop-blur-xl overflow-hidden select-none"
+        >
+          {/* Background Radial Glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.18)_0%,transparent_75%)]" />
+
+          {/* Viewfinder HUD Framing */}
+          <motion.div
+            initial={{ scale: 1.15, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute inset-4 sm:inset-10 border border-white/10 rounded-2xl pointer-events-none flex flex-col justify-between p-4 sm:p-8"
+          >
+            {/* Corner Viewfinder Brackets */}
+            <div className="absolute top-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-l-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+            <div className="absolute top-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-r-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-l-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-r-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+
+            {/* Top HUD Stats */}
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-tech tracking-widest text-amber-400 uppercase">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-bold text-white tracking-wider">REC</span>
+                <span className="text-gray-400 hidden sm:inline">4K UHD 60FPS</span>
+              </div>
+              <div className="flex items-center gap-3 sm:gap-6 text-gray-300">
+                <span>ISO 200</span>
+                <span>f/1.4</span>
+                <span>1/1000s</span>
+                <span className="text-amber-400 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                  RAW
+                </span>
+              </div>
+            </div>
+
+            {/* Center Target Crosshair and Focus Box */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <motion.div
+                initial={{ scale: 1.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-center justify-center relative"
+              >
+                {/* Viewfinder Reticle Grid */}
+                <div className="w-40 h-40 sm:w-56 sm:h-56 border border-amber-400/60 rounded-xl flex items-center justify-center relative shadow-[0_0_40px_rgba(245,158,11,0.25)] bg-amber-500/5">
+                  {/* Inner Crosshairs */}
+                  <div className="absolute w-4 h-4 border-t-2 border-l-2 border-amber-400 top-2.5 left-2.5" />
+                  <div className="absolute w-4 h-4 border-t-2 border-r-2 border-amber-400 top-2.5 right-2.5" />
+                  <div className="absolute w-4 h-4 border-b-2 border-l-2 border-amber-400 bottom-2.5 left-2.5" />
+                  <div className="absolute w-4 h-4 border-b-2 border-r-2 border-amber-400 bottom-2.5 right-2.5" />
+
+                  {/* Center Camera Icon with subtle pulse */}
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="p-4 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                  >
+                    <Camera size={44} className="text-amber-400" />
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12, duration: 0.25 }}
+                  className="mt-6 text-center"
+                >
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 text-[10px] sm:text-xs font-tech font-bold uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                    Focus Locked
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-display font-black text-white tracking-wider uppercase mt-2 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
+                    Entering Photo Contest
+                  </h2>
+                  <p className="text-gray-400 text-xs sm:text-sm font-tech tracking-wider mt-1">
+                    contest.vitalrp.net
+                  </p>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Bottom HUD Info */}
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-tech tracking-widest text-gray-400 uppercase">
+              <div className="flex items-center gap-3">
+                <span>[ AF-C TRACKING ]</span>
+                <span className="hidden sm:inline">[ MATRIX 3D ]</span>
+              </div>
+              <div className="text-amber-400 font-bold tracking-wider">
+                VITAL RP PHOTO CONTEST
+              </div>
+              <div className="flex items-center gap-2">
+                <span>BATT 98%</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Mechanical Shutter Blade Clasp */}
+          <motion.div
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: [0, 0, 1, 1] }}
+            transition={{ duration: 0.85, times: [0, 0.45, 0.65, 1], ease: 'easeInOut' }}
+            className="absolute inset-0 bg-black pointer-events-none origin-center"
+          />
+
+          {/* Blinding Camera Flash Strobe */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0, 1, 0.35, 1] }}
+            transition={{ duration: 0.85, times: [0, 0.4, 0.48, 0.68, 0.85], ease: 'easeOut' }}
+            className="absolute inset-0 bg-gradient-to-tr from-amber-100 via-white to-amber-50 pointer-events-none"
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </>
   );
 };

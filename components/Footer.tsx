@@ -80,6 +80,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
     { label: 'FAQ', href: '/#faq' },
     { label: 'Join', href: '#join' },
     { label: 'Merch', href: '/merch' },
+    { label: 'Photo Contest', href: 'https://contest.vitalrp.net', isExternal: true },
     { label: 'Forums', href: '#', isComingSoon: true },
     { label: 'Store', href: 'https://vitalrp.tebex.io/', isExternal: true, isStore: true },
   ];
