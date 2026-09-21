@@ -22,8 +22,8 @@ This skill outlines the standard workflow for building and deploying the VitalRP
    npm run build
    ```
 
-3. **Vite SPA Build (if applicable)**:
-   If static docs / SPA pages were updated:
+3. **Vite SPA Build (Mandatory on every code change)**:
+   The production domain `vitalrp.net` is served directly from the `docs/` folder:
    ```bash
    npm run build:docs
    ```
