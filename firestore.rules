@@ -1,56 +1,182 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // --- Helper Functions ---
+
+    // --- Authentication & Identity Helpers ---
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isOwner(discordId) {
-      return isAuthenticated() && request.auth.uid == discordId;
-    }
-    
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-    
-    function isAdmin() {
+    function isOwner(identifier) {
       return isAuthenticated() && (
-        getUserData().role in ['owner', 'management', 'senior_admin', 'admin']
+        request.auth.uid == identifier
+        || (request.auth.token.email != null && request.auth.token.email.lower() == identifier.lower())
       );
     }
 
-    // --- Collection Rules ---
-
-    // USERS Collection (Document ID is canonical Discord ID)
-    match /users/{discordId} {
-      allow get: if isOwner(discordId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(discordId) && request.resource.data.role == 'user';
-      allow update: if isOwner(discordId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'permissions']));
-      allow write: if isAdmin();
+    function getUserData() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : (request.auth.token.email != null && exists(/databases/$(database)/documents/users/$(request.auth.token.email.lower()))
+            ? get(/databases/$(database)/documents/users/$(request.auth.token.email.lower())).data
+            : {});
     }
 
-    // GALLERY Collection
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().get('role', '') == role;
+    }
+
+    function isSuperAdmin() {
+      return (isAuthenticated() && request.auth.token.email != null && request.auth.token.email.lower() == 'tx.davidj@gmail.com')
+             || hasRole('superadmin')
+             || hasRole('owner');
+    }
+
+    function isAdmin() {
+      return isSuperAdmin()
+             || hasRole('admin')
+             || hasRole('management')
+             || hasRole('senior_admin');
+    }
+
+    function isEditor() {
+      return isAdmin()
+             || hasRole('editor')
+             || hasRole('staff')
+             || hasRole('moderator');
+    }
+
+    // Helper to verify user identity matching Firebase Auth UID or Discord Provider UID
+    function isUser(targetUserId) {
+      return isAuthenticated()
+             && (
+                 request.auth.uid == targetUserId
+                 || (
+                     'identities' in request.auth.token.firebase
+                     && 'oidc.discord' in request.auth.token.firebase.identities
+                     && request.auth.token.firebase.identities['oidc.discord'].size() > 0
+                     && request.auth.token.firebase.identities['oidc.discord'][0] == targetUserId
+                 )
+             );
+    }
+
+    // =========================================================================
+    // GLOBAL WEBSITE COLLECTIONS (VitalRP Website & Shared Ecosystem)
+    // =========================================================================
+
+    // Users collection — profiles, display names, avatars, and admin user records
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Site gallery collection
     match /gallery/{imageId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // STAFF Collection
+    // Staff roster collection
     match /staff/{staffId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // CONFIG Collection
+    // Global site configuration (maintenance mode, announcement banner, etc.)
     match /config/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Default deny for everything else
+    // =========================================================================
+    // VITAL RP PHOTO CONTEST COLLECTIONS
+    // =========================================================================
+
+    // Admins collection — public read to verify admin rights; client writes strictly denied
+    match /admins/{discordId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Contest metadata (active contest, theme, dates)
+    match /contests/{contestId} {
+      allow read, write: if true;
+    }
+
+    // Global contest settings (votingOpen, submissionsOpen, categorySuggestionMode, etc.)
+    match /settings/{doc} {
+      allow read, write: if true;
+    }
+
+    // Secrets collection (encrypted private keys for blind voting)
+    match /secrets/{doc} {
+      allow read, write: if true;
+    }
+
+    // Contest categories
+    match /categories/{doc} {
+      allow read, write: if true;
+    }
+
+    // Photo contest submissions
+    match /photos/{doc} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Photo contest votes
+    match /votes/{doc} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Archive: winners saved at end of contest
+    match /archived_winners/{docId} {
+      allow read, write: if true;
+    }
+
+    // User stats: lifetime cumulative counts (submissions, votes, wins)
+    match /user_stats/{userId} {
+      allow read, write: if true;
+    }
+
+    // General contest submissions
+    match /submissions/{submissionId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Category Suggestions: community proposals
+    match /category_suggestions/{suggestionId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Category Suggestion Votes: Reddit-style community votes
+    match /category_suggestion_votes/{voteId} {
+      allow read, create, update, delete: if true;
+    }
+
+    // Category Suggestion Beta Testers Whitelist
+    match /suggestion_beta_testers/{discordId} {
+      allow read, write: if true;
+    }
+
+    // Flagged alt accounts (blacklist)
+    match /flagged_voters/{docId} {
+      allow read, write: if true;
+    }
+
+    // Archived historical votes
+    match /archived_votes/{docId} {
+      allow read, write: if true;
+    }
+
+    // Bug reports
+    match /bug_reports/{docId} {
+      allow read, write: if true;
+    }
+
+    // Platform changelogs
+    match /changelogs/{docId} {
+      allow read, write: if true;
+    }
+
+    // =========================================================================
+    // DEFAULT DENY FOR ALL OTHER COLLECTIONS
+    // =========================================================================
     match /{document=**} {
       allow read, write: if false;
     }
