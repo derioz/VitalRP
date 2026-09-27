@@ -284,7 +284,7 @@ export async function saveClientRuleDraft(
   });
   if (apiRes) return apiRes;
 
-  // 2. Direct Supabase upsert
+  // 2. Direct Supabase write (handles existing draft without requiring DB unique constraint)
   const row = {
     rule_id: draftData.rule_id,
     category_id: draftData.category_id,
@@ -306,8 +306,29 @@ export async function saveClientRuleDraft(
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from('rules_draft').upsert(row, { onConflict: 'rule_id' });
-  if (error) throw new Error(error.message);
+  const { data: existing, error: selectErr } = await supabase
+    .from('rules_draft')
+    .select('id')
+    .eq('rule_id', draftData.rule_id)
+    .maybeSingle();
+
+  if (selectErr) {
+    console.warn('[client-rules] Error checking existing draft:', selectErr);
+  }
+
+  if (existing?.id) {
+    const { error: updateErr } = await supabase
+      .from('rules_draft')
+      .update(row)
+      .eq('id', existing.id);
+    if (updateErr) throw new Error(updateErr.message);
+  } else {
+    const { error: insertErr } = await supabase
+      .from('rules_draft')
+      .insert(row);
+    if (insertErr) throw new Error(insertErr.message);
+  }
+
   return { success: true };
 }
 
@@ -336,20 +357,35 @@ export async function deleteClientRule(
   });
   if (apiRes) return true;
 
-  const { error } = await supabase.from('rules_draft').upsert(
-    {
-      rule_id: ruleId,
-      category_id: 'general',
-      title: `Deleted rule ${ruleId}`,
-      content: '',
-      action: 'delete',
-      created_by_discord_id: user.discordId,
-      created_by_name: user.displayName,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'rule_id' }
-  );
-  return !error;
+  const row = {
+    rule_id: ruleId,
+    category_id: 'general',
+    title: `Deleted rule ${ruleId}`,
+    content: '',
+    action: 'delete',
+    created_by_discord_id: user.discordId,
+    created_by_name: user.displayName,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await supabase
+    .from('rules_draft')
+    .select('id')
+    .eq('rule_id', ruleId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    const { error: updateErr } = await supabase
+      .from('rules_draft')
+      .update(row)
+      .eq('id', existing.id);
+    return !updateErr;
+  } else {
+    const { error: insertErr } = await supabase
+      .from('rules_draft')
+      .insert(row);
+    return !insertErr;
+  }
 }
 
 /**

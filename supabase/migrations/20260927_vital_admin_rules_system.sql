@@ -130,11 +130,29 @@ CREATE TABLE IF NOT EXISTS public.rules_draft (
   created_by_discord_id TEXT,
   created_by_name TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT uq_rules_draft_rule_id UNIQUE (rule_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_rules_draft_rule_id ON public.rules_draft(rule_id);
 CREATE INDEX IF NOT EXISTS idx_rules_draft_category_id ON public.rules_draft(category_id);
+
+-- Ensure unique constraint on rule_id exists for draft upserts
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_rules_draft_rule_id'
+  ) THEN
+    DELETE FROM public.rules_draft a
+    USING public.rules_draft b
+    WHERE a.ctid < b.ctid AND a.rule_id = b.rule_id;
+
+    ALTER TABLE public.rules_draft ADD CONSTRAINT uq_rules_draft_rule_id UNIQUE (rule_id);
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$
+;
 
 -- =========================================================================
 -- 7. RULE VERSIONS TABLE (Complete snapshot for each published version)

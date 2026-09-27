@@ -496,29 +496,43 @@ export async function saveRuleDraft(
 
   if (supabase) {
     try {
-      await supabase.from('rules_draft').upsert(
-        {
-          rule_id: draft.rule_id,
-          category_id: draft.category_id,
-          rule_number: draft.rule_number,
-          title: draft.title,
-          short_title: draft.short_title,
-          short_description: draft.short_description,
-          content: draft.content,
-          aliases: draft.aliases,
-          featured: draft.featured,
-          core_rule_number: draft.core_rule_number,
-          severity: draft.severity,
-          callouts: draft.callouts,
-          sort_order: draft.sort_order,
-          enabled: draft.enabled,
-          action: draft.action,
-          created_by_discord_id: user.discordId,
-          created_by_name: user.displayName,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'rule_id' }
-      );
+      const payload = {
+        rule_id: draft.rule_id,
+        category_id: draft.category_id,
+        rule_number: draft.rule_number,
+        title: draft.title,
+        short_title: draft.short_title,
+        short_description: draft.short_description,
+        content: draft.content,
+        aliases: draft.aliases,
+        featured: draft.featured,
+        core_rule_number: draft.core_rule_number,
+        severity: draft.severity,
+        callouts: draft.callouts,
+        sort_order: draft.sort_order,
+        enabled: draft.enabled,
+        action: draft.action,
+        created_by_discord_id: user.discordId,
+        created_by_name: user.displayName,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: existing } = await supabase
+        .from('rules_draft')
+        .select('id')
+        .eq('rule_id', draft.rule_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        await supabase
+          .from('rules_draft')
+          .update(payload)
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('rules_draft')
+          .insert(payload);
+      }
     } catch (err) {
       console.warn('[SupabaseRules] Error writing rule draft to DB:', err);
     }
