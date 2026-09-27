@@ -133,6 +133,122 @@ let memVersions: DbRuleVersion[] = [
 let memHistory: any[] = [];
 
 /**
+ * Automated idempotent seed function to import existing website rules into Supabase.
+ * Checks whether Supabase tables have any categories or rules.
+ * If empty, it populates all 9 categories, all 31 rules, and Version 1 snapshot.
+ */
+export async function seedExistingRulesIfEmpty(
+  supabaseClient?: any,
+  force = false
+): Promise<{ success: boolean; message: string; categoriesCount: number; rulesCount: number }> {
+  const supabase = supabaseClient || createAdminClient();
+  if (!supabase) {
+    return { success: false, message: 'Supabase client unavailable', categoriesCount: 0, rulesCount: 0 };
+  }
+
+  try {
+    const { data: existingCats, error: catCheckErr } = await supabase
+      .from('rule_categories')
+      .select('id')
+      .limit(1);
+
+    if (catCheckErr) {
+      return { success: false, message: `Tables not ready: ${catCheckErr.message}`, categoriesCount: 0, rulesCount: 0 };
+    }
+
+    if (force || !existingCats || existingCats.length === 0) {
+      console.log('[SupabaseRules] Populating Supabase with existing website rules...');
+
+      // Upsert all 9 categories
+      const catRows = RULE_CATEGORIES.map((c, idx) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        icon: c.iconName,
+        sort_order: idx + 1,
+        enabled: true,
+        updated_at: new Date().toISOString(),
+      }));
+      const { error: catErr } = await supabase.from('rule_categories').upsert(catRows, { onConflict: 'id' });
+      if (catErr) {
+        console.error('[SupabaseRules] Error upserting categories:', catErr);
+      }
+
+      // Upsert all 31 rules
+      const ruleRows = RULES.map((r, idx) => ({
+        id: r.id,
+        category_id: r.category,
+        rule_number: idx + 1,
+        title: r.title,
+        short_title: r.shortTitle || r.title,
+        short_description: r.summary || '',
+        content: r.content,
+        aliases: r.aliases || [],
+        featured: Boolean(r.featured),
+        core_rule_number: r.coreRuleNumber || null,
+        severity: 'standard',
+        callouts: r.callouts || [],
+        sort_order: idx + 1,
+        enabled: true,
+        updated_at: new Date().toISOString(),
+      }));
+      const { error: rulesErr } = await supabase.from('rules').upsert(ruleRows, { onConflict: 'id' });
+      if (rulesErr) {
+        console.error('[SupabaseRules] Error upserting rules:', rulesErr);
+      }
+
+      // Check if version 1 exists
+      const { data: existingVers } = await supabase
+        .from('rule_versions')
+        .select('id')
+        .eq('version_number', 1)
+        .maybeSingle();
+
+      if (!existingVers) {
+        await supabase.from('rule_versions').insert({
+          version_number: 1,
+          snapshot: {
+            categories: catRows,
+            rules: ruleRows,
+          },
+          published_by_discord_id: '150580708144840704',
+          published_by_display_name: 'Damon',
+          publish_note: 'Initial Rules CMS migration from public website.',
+          changes_summary: [{ type: 'initial_migration', count: ruleRows.length }],
+          published_at: new Date().toISOString(),
+        });
+      }
+
+      await recordAuditEvent({
+        discordUserId: '150580708144840704',
+        displayName: 'System (Migration)',
+        action: 'rules.initial_migration',
+        target: 'rules',
+        details: 'Imported 31 existing website rules across 9 categories into Supabase (Version 1)',
+      });
+
+      console.log('[SupabaseRules] Successfully completed automated initial seed of 31 rules and 9 categories!');
+      return {
+        success: true,
+        message: 'Successfully seeded 31 rules across 9 categories into Supabase',
+        categoriesCount: catRows.length,
+        rulesCount: ruleRows.length,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Supabase rules already exist, skipping duplicate insert',
+      categoriesCount: existingCats.length,
+      rulesCount: 31,
+    };
+  } catch (err: any) {
+    console.error('[SupabaseRules] Error during seeding:', err);
+    return { success: false, message: err.message, categoriesCount: 0, rulesCount: 0 };
+  }
+}
+
+/**
  * Get active published rules and categories for the public Rules page.
  */
 export async function getPublishedRulesAndCategories(): Promise<{
@@ -144,7 +260,7 @@ export async function getPublishedRulesAndCategories(): Promise<{
 
   if (supabase) {
     try {
-      const [catsRes, rulesRes, verRes] = await Promise.all([
+      let [catsRes, rulesRes, verRes] = await Promise.all([
         supabase
           .from('rule_categories')
           .select('*')
@@ -163,6 +279,32 @@ export async function getPublishedRulesAndCategories(): Promise<{
           .limit(1)
           .maybeSingle(),
       ]);
+
+      // If table exists but is empty, automatically seed and re-query
+      if (!catsRes.error && catsRes.data && catsRes.data.length === 0) {
+        const seedResult = await seedExistingRulesIfEmpty(supabase);
+        if (seedResult.success && seedResult.categoriesCount > 0) {
+          [catsRes, rulesRes, verRes] = await Promise.all([
+            supabase
+              .from('rule_categories')
+              .select('*')
+              .eq('enabled', true)
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('rules')
+              .select('*')
+              .is('deleted_at', null)
+              .eq('enabled', true)
+              .order('sort_order', { ascending: true }),
+            supabase
+              .from('rule_versions')
+              .select('version_number')
+              .order('version_number', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+          ]);
+        }
+      }
 
       if (!catsRes.error && catsRes.data && catsRes.data.length > 0 && !rulesRes.error && rulesRes.data && rulesRes.data.length > 0) {
         return {
@@ -207,7 +349,7 @@ export async function getAllRulesForAdmin(): Promise<{
 
   if (supabase) {
     try {
-      const [catsRes, rulesRes, draftsRes, verRes] = await Promise.all([
+      let [catsRes, rulesRes, draftsRes, verRes] = await Promise.all([
         supabase.from('rule_categories').select('*').order('sort_order', { ascending: true }),
         supabase.from('rules').select('*').order('sort_order', { ascending: true }),
         supabase.from('rules_draft').select('*').order('updated_at', { ascending: false }),
@@ -218,6 +360,24 @@ export async function getAllRulesForAdmin(): Promise<{
           .limit(1)
           .maybeSingle(),
       ]);
+
+      // If table exists but is empty, auto-seed
+      if (!catsRes.error && catsRes.data && catsRes.data.length === 0) {
+        const seedResult = await seedExistingRulesIfEmpty(supabase);
+        if (seedResult.success && seedResult.categoriesCount > 0) {
+          [catsRes, rulesRes, draftsRes, verRes] = await Promise.all([
+            supabase.from('rule_categories').select('*').order('sort_order', { ascending: true }),
+            supabase.from('rules').select('*').order('sort_order', { ascending: true }),
+            supabase.from('rules_draft').select('*').order('updated_at', { ascending: false }),
+            supabase
+              .from('rule_versions')
+              .select('*')
+              .order('version_number', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+          ]);
+        }
+      }
 
       if (!catsRes.error && catsRes.data && catsRes.data.length > 0) {
         categories = catsRes.data;

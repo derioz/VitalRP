@@ -37,6 +37,8 @@ import {
   ExternalLink,
   ShieldAlert,
   ChevronDown,
+  ChevronUp,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { DbRule, DbRuleCategory, DbRuleDraft, StagedChangeSummary, DbRuleVersion } from '@/lib/rules/supabase-rules';
@@ -230,6 +232,77 @@ export const RulesCMS: React.FC = () => {
     setSaveStatus('unsaved');
     setHasUnsavedChanges(true);
     setIsEditorOpen(true);
+  };
+
+  // Quick reorder rules inside current category
+  const handleQuickReorder = async (rule: DbRule, direction: 'up' | 'down') => {
+    if (!canEdit) return;
+    const catRules = rules
+      .filter((r) => r.category_id === rule.category_id && !r.deleted_at)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const currentIndex = catRules.findIndex((r) => r.id === rule.id);
+    if (currentIndex < 0) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= catRules.length) return;
+
+    const targetRule = catRules[targetIndex];
+    const currentOrder = rule.sort_order || currentIndex + 1;
+    const targetOrder = targetRule.sort_order || targetIndex + 1;
+
+    try {
+      await Promise.all([
+        fetch('/api/admin/rules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rule_id: rule.id,
+            category_id: rule.category_id,
+            rule_number: rule.rule_number,
+            title: rule.title,
+            content: rule.content,
+            sort_order: targetOrder === currentOrder ? (direction === 'up' ? currentOrder - 1 : currentOrder + 1) : targetOrder,
+            action: 'update',
+          }),
+        }),
+        fetch('/api/admin/rules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rule_id: targetRule.id,
+            category_id: targetRule.category_id,
+            rule_number: targetRule.rule_number,
+            title: targetRule.title,
+            content: targetRule.content,
+            sort_order: currentOrder,
+            action: 'update',
+          }),
+        }),
+      ]);
+      await fetchData();
+    } catch (err: any) {
+      alert(`Reordering failed: ${err.message}`);
+    }
+  };
+
+  // Manually trigger idempotent Supabase seed / sync
+  const [isSyncing, setIsSyncing] = useState(false);
+  const handleSyncRules = async (force = false) => {
+    if (!canEdit) return;
+    if (force && !confirm('Syncing will ensure all 31 existing rules and 9 categories are imported into Supabase. Existing drafts will be preserved. Proceed?')) {
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const res = await fetch(`/api/admin/rules/seed${force ? '?force=true' : ''}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to sync rules');
+      alert(data.message || 'Rules successfully imported/synchronized with Supabase!');
+      await fetchData();
+    } catch (err: any) {
+      alert(`Sync failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Autosave / Manual Save Draft handler
@@ -505,6 +578,18 @@ export const RulesCMS: React.FC = () => {
                     {stats.draftsCount}
                   </span>
                 )}
+              </button>
+            )}
+
+            {canEdit && (
+              <button
+                onClick={() => handleSyncRules(true)}
+                disabled={isSyncing}
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
+                title="Verify and import all existing website rules into Supabase"
+              >
+                <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Supabase'}</span>
               </button>
             )}
 
@@ -789,6 +874,23 @@ export const RulesCMS: React.FC = () => {
 
                       {canEdit && (
                         <>
+                          <div className="flex flex-col gap-0.5 mr-1">
+                            <button
+                              onClick={() => handleQuickReorder(rule, 'up')}
+                              className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                              title="Move Rule Up in Order"
+                            >
+                              <ChevronUp size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleQuickReorder(rule, 'down')}
+                              className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                              title="Move Rule Down in Order"
+                            >
+                              <ChevronDown size={13} />
+                            </button>
+                          </div>
+
                           <button
                             onClick={() => handleDuplicateRule(rule)}
                             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"

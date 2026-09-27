@@ -18,6 +18,7 @@ import {
   LucideIcon,
 } from 'lucide-react';
 import { RULES, RULE_CATEGORIES, Rule, RuleCategory } from '@/data/rules';
+import { supabase } from '@/lib/supabase/client';
 import { RulesHero } from './RulesHero';
 import { SpotlightCard } from './SpotlightCard';
 import { RuleAccordion } from './RuleAccordion';
@@ -52,47 +53,69 @@ export const RulesView: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  // Fetch live published rules from Supabase API
+  // Fetch live published rules from Supabase (via API or direct client)
   useEffect(() => {
     let isMounted = true;
+
+    const applyData = (rawCats: any[], rawRules: any[]) => {
+      if (!isMounted) return;
+      const mappedCategories: RuleCategory[] = rawCats
+        .filter((c: any) => c.enabled !== false)
+        .map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description || '',
+          iconName: c.icon || 'ShieldAlert',
+        }));
+
+      const mappedRules: Rule[] = rawRules
+        .filter((r: any) => r.enabled !== false && !r.deleted_at)
+        .map((r: any) => ({
+          id: r.id,
+          category: r.category_id,
+          title: r.title,
+          shortTitle: r.short_title || r.title,
+          summary: r.short_description || r.summary || '',
+          content: r.content,
+          aliases: r.aliases || [],
+          featured: Boolean(r.featured),
+          coreRuleNumber: r.core_rule_number || r.rule_number,
+          callouts: r.callouts || [],
+        }));
+
+      if (mappedCategories.length > 0 && mappedRules.length > 0) {
+        setCategories(mappedCategories);
+        setRules(mappedRules);
+      }
+    };
+
     async function loadLiveRules() {
+      // 1. Try Next.js API route first
       try {
         const res = await fetch('/api/rules');
         if (res.ok) {
           const data = await res.json();
           if (data && Array.isArray(data.categories) && data.categories.length > 0 && Array.isArray(data.rules) && data.rules.length > 0) {
-            const mappedCategories: RuleCategory[] = data.categories
-              .filter((c: any) => c.enabled !== false)
-              .map((c: any) => ({
-                id: c.id,
-                title: c.title,
-                description: c.description || '',
-                iconName: c.icon || 'ShieldAlert',
-              }));
-
-            const mappedRules: Rule[] = data.rules
-              .filter((r: any) => r.enabled !== false && !r.deleted_at)
-              .map((r: any) => ({
-                id: r.id,
-                category: r.category_id,
-                title: r.title,
-                shortTitle: r.short_title || r.title,
-                summary: r.short_description || r.summary || '',
-                content: r.content,
-                aliases: r.aliases || [],
-                featured: Boolean(r.featured),
-                coreRuleNumber: r.core_rule_number || r.rule_number,
-                callouts: r.callouts || [],
-              }));
-
-            if (isMounted) {
-              setCategories(mappedCategories);
-              setRules(mappedRules);
-            }
+            applyData(data.categories, data.rules);
+            return;
           }
         }
-      } catch (err) {
-        // Fallback to static seed rules
+      } catch {
+        // Continue to direct Supabase client check
+      }
+
+      // 2. Direct Supabase query (useful for SPA static docs bundle)
+      try {
+        const [catsRes, rulesRes] = await Promise.all([
+          supabase.from('rule_categories').select('*').eq('enabled', true).order('sort_order', { ascending: true }),
+          supabase.from('rules').select('*').is('deleted_at', null).eq('enabled', true).order('sort_order', { ascending: true }),
+        ]);
+
+        if (!catsRes.error && catsRes.data && catsRes.data.length > 0 && !rulesRes.error && rulesRes.data && rulesRes.data.length > 0) {
+          applyData(catsRes.data, rulesRes.data);
+        }
+      } catch {
+        // Fallback to static seed
       }
     }
 
