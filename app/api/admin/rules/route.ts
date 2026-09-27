@@ -5,6 +5,7 @@ import {
   getAllRulesForAdmin,
   saveRuleDraft,
   discardRuleDraft,
+  discardAllRuleDrafts,
 } from '@/lib/rules/supabase-rules';
 import { recordAuditEvent } from '@/lib/audit/audit-logger';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -61,6 +62,15 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const ruleId = searchParams.get('ruleId');
     const isDiscard = searchParams.get('discard') === 'true';
+    const isDiscardAll = searchParams.get('all') === 'true' && isDiscard;
+
+    if (isDiscardAll) {
+      await discardAllRuleDrafts({
+        discordId: session.discordId,
+        displayName: session.displayName,
+      });
+      return NextResponse.json({ success: true, message: 'All staged drafts discarded' });
+    }
 
     if (!ruleId) {
       return NextResponse.json({ error: 'Missing ruleId parameter' }, { status: 400 });
@@ -77,21 +87,33 @@ export async function DELETE(request: NextRequest) {
     // Otherwise, stage a delete draft or soft delete
     const supabase = createAdminClient();
     if (supabase) {
-      await supabase
+      const payload = {
+        rule_id: ruleId,
+        category_id: 'general',
+        title: `Deleted rule ${ruleId}`,
+        content: '',
+        action: 'delete',
+        created_by_discord_id: session.discordId,
+        created_by_name: session.displayName,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: existing } = await supabase
         .from('rules_draft')
-        .upsert(
-          {
-            rule_id: ruleId,
-            category_id: 'general',
-            title: `Deleted rule ${ruleId}`,
-            content: '',
-            action: 'delete',
-            created_by_discord_id: session.discordId,
-            created_by_name: session.displayName,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'rule_id' }
-        );
+        .select('id')
+        .eq('rule_id', ruleId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        await supabase
+          .from('rules_draft')
+          .update(payload)
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('rules_draft')
+          .insert(payload);
+      }
     }
 
     await recordAuditEvent({

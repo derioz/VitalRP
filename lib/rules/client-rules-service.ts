@@ -138,6 +138,9 @@ export async function getClientRulesData(): Promise<ClientRulesData> {
       }
     });
 
+    // Ensure all rules are sorted by sort_order (so draft positions are immediately visible)
+    mergedRules.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
     return {
       categories,
       rules: mergedRules,
@@ -346,6 +349,22 @@ export async function discardClientRuleDraft(ruleId: string): Promise<boolean> {
 }
 
 /**
+ * Discard all staged draft changes at once (reverts to live published state).
+ */
+export async function discardAllClientRuleDrafts(): Promise<boolean> {
+  const apiRes = await safeApiCall<{ success: boolean }>('/api/admin/rules?all=true&discard=true', {
+    method: 'DELETE',
+  });
+  if (apiRes) return true;
+
+  const { error } = await supabase
+    .from('rules_draft')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+  return !error;
+}
+
+/**
  * Stage a rule deletion.
  */
 export async function deleteClientRule(
@@ -418,6 +437,7 @@ export async function getClientStagedChanges(): Promise<StagedChangeSummary[]> {
             content: existing.content,
             category_id: existing.category_id,
             enabled: existing.enabled,
+            sort_order: existing.sort_order,
           }
         : null,
       after: {
@@ -426,6 +446,7 @@ export async function getClientStagedChanges(): Promise<StagedChangeSummary[]> {
         content: d.content,
         category_id: d.category_id,
         enabled: d.enabled,
+        sort_order: d.sort_order,
       },
     };
   });

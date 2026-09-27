@@ -31,7 +31,7 @@ export interface DbRule {
   enabled: boolean;
   status?: 'published' | 'draft' | 'modified' | 'archived';
   has_draft?: boolean;
-  draft_action?: 'create' | 'update' | 'delete';
+  draft_action?: 'create' | 'update' | 'delete' | 'reorder';
   deleted_at?: string | null;
   deleted_by?: string | null;
   created_at?: string;
@@ -54,7 +54,7 @@ export interface DbRuleDraft {
   callouts: RuleCallout[];
   sort_order: number;
   enabled: boolean;
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'delete' | 'reorder';
   created_by_discord_id: string;
   created_by_name: string;
   created_at?: string;
@@ -79,7 +79,7 @@ export interface StagedChangeSummary {
   rule_id: string;
   title: string;
   category_id: string;
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'delete' | 'reorder';
   before?: Partial<DbRule> | null;
   after?: Partial<DbRule> | null;
 }
@@ -452,6 +452,9 @@ export async function getAllRulesForAdmin(): Promise<{
     }
   });
 
+  // Ensure all rules are sorted by sort_order (so draft positions are immediately visible)
+  mergedRules.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
   return {
     categories,
     rules: mergedRules,
@@ -584,6 +587,35 @@ export async function discardRuleDraft(
 }
 
 /**
+ * Discard all staged drafts at once.
+ */
+export async function discardAllRuleDrafts(
+  user: { discordId: string; displayName: string }
+): Promise<boolean> {
+  const supabase = createAdminClient();
+
+  if (supabase) {
+    try {
+      await supabase.from('rules_draft').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    } catch (err) {
+      console.warn('[SupabaseRules] Error discarding all drafts from DB:', err);
+    }
+  }
+
+  memDrafts.clear();
+
+  await recordAuditEvent({
+    discordUserId: user.discordId,
+    displayName: user.displayName,
+    action: 'rule.all_drafts_discarded',
+    target: 'rules_draft',
+    details: 'All staged draft changes were discarded.',
+  });
+
+  return true;
+}
+
+/**
  * Inspect staged changes and build a diff summary before publishing.
  */
 export async function getStagedChangesSummary(): Promise<StagedChangeSummary[]> {
@@ -623,6 +655,7 @@ export async function getStagedChangesSummary(): Promise<StagedChangeSummary[]> 
             content: existing.content,
             category_id: existing.category_id,
             enabled: existing.enabled,
+            sort_order: existing.sort_order,
           }
         : null,
       after: {
@@ -631,6 +664,7 @@ export async function getStagedChangesSummary(): Promise<StagedChangeSummary[]> 
         content: draft.content,
         category_id: draft.category_id,
         enabled: draft.enabled,
+        sort_order: draft.sort_order,
       },
     };
   });

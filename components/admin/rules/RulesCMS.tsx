@@ -48,6 +48,7 @@ import {
   syncExistingRulesToSupabase,
   saveClientRuleDraft,
   discardClientRuleDraft,
+  discardAllClientRuleDrafts,
   deleteClientRule,
   getClientStagedChanges,
   publishClientStagedChanges,
@@ -189,7 +190,7 @@ export const RulesCMS: React.FC = () => {
         }
       }
       return true;
-    });
+    }).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   }, [rules, selectedCategoryId, statusFilter, searchQuery]);
 
   // Open Editor for Creating a New Rule
@@ -256,8 +257,41 @@ export const RulesCMS: React.FC = () => {
     if (targetIndex < 0 || targetIndex >= catRules.length) return;
 
     const targetRule = catRules[targetIndex];
-    const currentOrder = rule.sort_order || currentIndex + 1;
-    const targetOrder = targetRule.sort_order || targetIndex + 1;
+    const currentOrder = rule.sort_order ?? (currentIndex + 1);
+    const targetOrder = targetRule.sort_order ?? (targetIndex + 1);
+
+    let newRuleOrder = targetOrder;
+    let newTargetOrder = currentOrder;
+    if (newRuleOrder === newTargetOrder) {
+      newRuleOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1;
+    }
+
+    // 1. Optimistic UI update: Immediately re-sort rules in state so the user sees the rule move instantly
+    setRules((prev) => {
+      return prev
+        .map((r) => {
+          if (r.id === rule.id) {
+            return {
+              ...r,
+              sort_order: newRuleOrder,
+              has_draft: true,
+              draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
+              status: 'modified' as const,
+            };
+          }
+          if (r.id === targetRule.id) {
+            return {
+              ...r,
+              sort_order: newTargetOrder,
+              has_draft: true,
+              draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
+              status: 'modified' as const,
+            };
+          }
+          return r;
+        })
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    });
 
     try {
       await Promise.all([
@@ -267,9 +301,17 @@ export const RulesCMS: React.FC = () => {
             category_id: rule.category_id,
             rule_number: rule.rule_number,
             title: rule.title,
+            short_title: rule.short_title || rule.title,
+            short_description: rule.short_description || '',
             content: rule.content,
-            sort_order: targetOrder === currentOrder ? (direction === 'up' ? currentOrder - 1 : currentOrder + 1) : targetOrder,
-            action: 'update',
+            aliases: rule.aliases || [],
+            featured: Boolean(rule.featured),
+            core_rule_number: rule.core_rule_number,
+            severity: rule.severity || 'standard',
+            callouts: rule.callouts || [],
+            sort_order: newRuleOrder,
+            enabled: rule.enabled ?? true,
+            action: rule.draft_action || 'reorder',
           },
           { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
         ),
@@ -279,9 +321,17 @@ export const RulesCMS: React.FC = () => {
             category_id: targetRule.category_id,
             rule_number: targetRule.rule_number,
             title: targetRule.title,
+            short_title: targetRule.short_title || targetRule.title,
+            short_description: targetRule.short_description || '',
             content: targetRule.content,
-            sort_order: currentOrder,
-            action: 'update',
+            aliases: targetRule.aliases || [],
+            featured: Boolean(targetRule.featured),
+            core_rule_number: targetRule.core_rule_number,
+            severity: targetRule.severity || 'standard',
+            callouts: targetRule.callouts || [],
+            sort_order: newTargetOrder,
+            enabled: targetRule.enabled ?? true,
+            action: targetRule.draft_action || 'reorder',
           },
           { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
         ),
@@ -289,6 +339,7 @@ export const RulesCMS: React.FC = () => {
       await fetchData();
     } catch (err: any) {
       alert(`Reordering failed: ${err.message}`);
+      await fetchData();
     }
   };
 
@@ -363,6 +414,30 @@ export const RulesCMS: React.FC = () => {
       await fetchData();
     } catch (err: any) {
       alert(err.message);
+    }
+  };
+
+  // Discard all unpublished staged drafts
+  const [isDiscardingAll, setIsDiscardingAll] = useState(false);
+  const handleDiscardAllDrafts = async () => {
+    if (!canEdit) return;
+    if (
+      !confirm(
+        `Are you sure you want to discard all ${stats.draftsCount} unpublished changes? All staged drafts and reorderings will be reset to the live published state.`
+      )
+    ) {
+      return;
+    }
+    setIsDiscardingAll(true);
+    try {
+      await discardAllClientRuleDrafts();
+      if (isPublishModalOpen) setIsPublishModalOpen(false);
+      if (isEditorOpen) setIsEditorOpen(false);
+      await fetchData();
+    } catch (err: any) {
+      alert(`Failed to discard changes: ${err.message}`);
+    } finally {
+      setIsDiscardingAll(false);
     }
   };
 
@@ -566,6 +641,18 @@ export const RulesCMS: React.FC = () => {
                     {stats.draftsCount}
                   </span>
                 )}
+              </button>
+            )}
+
+            {canEdit && stats.draftsCount > 0 && (
+              <button
+                onClick={handleDiscardAllDrafts}
+                disabled={isDiscardingAll}
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 hover:text-red-200 transition-all text-xs font-bold disabled:opacity-50"
+                title="Discard all unpublished staged changes and revert to live published state"
+              >
+                <RotateCcw size={14} className={isDiscardingAll ? 'animate-spin' : ''} />
+                <span>Cancel Staged Changes</span>
               </button>
             )}
 
@@ -801,9 +888,29 @@ export const RulesCMS: React.FC = () => {
                               Deleted
                             </span>
                           ) : rule.has_draft ? (
-                            <span className="px-2 py-0.5 rounded-full bg-vital-500/20 text-vital-400 border border-vital-500/30 text-[10px] font-bold uppercase flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-vital-400 animate-pulse" />
-                              {rule.draft_action === 'create' ? 'Draft' : 'Modified'}
+                            <span
+                              className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase flex items-center gap-1 ${
+                                rule.draft_action === 'create'
+                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                  : rule.draft_action === 'reorder'
+                                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                  : 'bg-vital-500/20 text-vital-400 border-vital-500/30'
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                                  rule.draft_action === 'create'
+                                    ? 'bg-emerald-400'
+                                    : rule.draft_action === 'reorder'
+                                    ? 'bg-cyan-400'
+                                    : 'bg-vital-400'
+                                }`}
+                              />
+                              {rule.draft_action === 'create'
+                                ? 'Draft'
+                                : rule.draft_action === 'reorder'
+                                ? 'Reordered'
+                                : 'Modified'}
                             </span>
                           ) : rule.enabled ? (
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">
@@ -964,6 +1071,21 @@ export const RulesCMS: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {editingRule.has_draft && editingRule.id && (
+                    <button
+                      onClick={async () => {
+                        if (confirm('Discard staged draft changes for this rule?')) {
+                          await handleDiscardDraft(editingRule.id!);
+                          setIsEditorOpen(false);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 hover:text-red-200 border border-red-500/30 font-bold text-xs transition-colors"
+                      title="Discard staged draft for this rule"
+                    >
+                      <RotateCcw size={14} />
+                      <span className="hidden sm:inline">Discard Draft</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleSaveDraft}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs shadow-md transition-colors"
@@ -1385,43 +1507,75 @@ export const RulesCMS: React.FC = () => {
                       Staged Modifications ({stagedChanges.length})
                     </span>
 
-                    {stagedChanges.map((change) => (
-                      <div
-                        key={change.rule_id}
-                        className="p-4 rounded-2xl bg-dark-950 border border-white/10 space-y-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-white">{change.title}</span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              change.action === 'create'
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : change.action === 'delete'
-                                ? 'bg-red-500/20 text-red-400'
-                                : 'bg-vital-500/20 text-vital-400'
-                            }`}
-                          >
-                            {change.action}
-                          </span>
-                        </div>
+                    {stagedChanges.map((change) => {
+                      const isCreate = change.action === 'create';
+                      const isDelete = change.action === 'delete';
+                      const textChanged =
+                        (change.before?.content || '').trim() !== (change.after?.content || '').trim() ||
+                        (change.before?.title || '').trim() !== (change.after?.title || '').trim();
+                      const orderChanged =
+                        change.before?.sort_order !== undefined &&
+                        change.after?.sort_order !== undefined &&
+                        change.before?.sort_order !== change.after?.sort_order;
+                      const isReorderOnly = !textChanged && orderChanged;
 
-                        {/* Diff Box: Before vs After */}
-                        {change.action === 'update' && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-gray-400">
-                              <span className="font-bold text-red-400 block mb-1">Before:</span>
-                              <p className="line-clamp-4 font-mono text-[11px]">{change.before?.content || 'Empty'}</p>
+                      return (
+                        <div
+                          key={change.rule_id}
+                          className="p-4 rounded-2xl bg-dark-950 border border-white/10 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-white">{change.title}</span>
+                              {orderChanged && (
+                                <span className="text-xs text-cyan-400 font-mono">
+                                  (Order #{change.before?.sort_order} ➔ #{change.after?.sort_order})
+                                </span>
+                              )}
                             </div>
-                            <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-gray-300">
-                              <span className="font-bold text-emerald-400 block mb-1">After:</span>
-                              <p className="line-clamp-4 font-mono text-[11px] text-emerald-200">
-                                {change.after?.content || 'Empty'}
-                              </p>
-                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                isCreate
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : isDelete
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : isReorderOnly
+                                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                  : 'bg-vital-500/20 text-vital-400'
+                              }`}
+                            >
+                              {isCreate ? 'Create' : isDelete ? 'Delete' : isReorderOnly ? 'Reordered' : 'Modified'}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    ))}
+
+                          {/* Reorder-only Notice: Do NOT show before/after text when text was unchanged */}
+                          {isReorderOnly && (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300">
+                              <ArrowUpDown size={14} className="text-cyan-400 shrink-0" />
+                              <span>
+                                Rule position moved from <strong>#{change.before?.sort_order}</strong> to <strong>#{change.after?.sort_order}</strong>. Content is unchanged.
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Diff Box: Before vs After (ONLY shown when text was actually modified) */}
+                          {change.action === 'update' && textChanged && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                              <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-gray-400">
+                                <span className="font-bold text-red-400 block mb-1">Before:</span>
+                                <p className="line-clamp-4 font-mono text-[11px]">{change.before?.content || 'Empty'}</p>
+                              </div>
+                              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-gray-300">
+                                <span className="font-bold text-emerald-400 block mb-1">After:</span>
+                                <p className="line-clamp-4 font-mono text-[11px] text-emerald-200">
+                                  {change.after?.content || 'Empty'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1440,18 +1594,29 @@ export const RulesCMS: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setIsPublishModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handlePublishLive}
-                  disabled={publishing || stagedChanges.length === 0}
-                  className="px-6 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 disabled:opacity-50 text-white font-bold text-xs shadow-lg flex items-center gap-2"
-                >
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+                {canEdit && stagedChanges.length > 0 && (
+                  <button
+                    onClick={handleDiscardAllDrafts}
+                    disabled={publishing || isDiscardingAll}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  >
+                    <RotateCcw size={14} className={isDiscardingAll ? 'animate-spin' : ''} />
+                    <span>Discard Unpublished Changes</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    onClick={() => setIsPublishModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePublishLive}
+                    disabled={publishing || stagedChanges.length === 0}
+                    className="px-6 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 disabled:opacity-50 text-white font-bold text-xs shadow-lg flex items-center gap-2"
+                  >
                   {publishing ? (
                     <span>Publishing Live...</span>
                   ) : (
@@ -1461,6 +1626,7 @@ export const RulesCMS: React.FC = () => {
                     </>
                   )}
                 </button>
+                </div>
               </div>
             </motion.div>
           </div>
