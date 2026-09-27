@@ -1,125 +1,17 @@
 -- =========================================================================
--- Vital RP - Supabase Database Schema & Auto-Profile Sync
--- Paste and Run this in your Supabase Dashboard -> SQL Editor
--- =========================================================================
-
--- 1. Create a table for public profiles linked to Supabase auth.users
-create table if not exists public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  discord_id text unique,
-  username text,
-  display_name text,
-  avatar_url text,
-  email text,
-  role text not null default 'user' check (role in ('user', 'staff', 'admin', 'owner')),
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- 2. Enable Row Level Security (RLS)
-alter table public.profiles enable row level security;
-
--- Drop existing policies if any
-drop policy if exists "Public profiles are viewable by everyone" on public.profiles;
-drop policy if exists "Users can update own profile" on public.profiles;
-
--- Anyone can read profiles
-create policy "Public profiles are viewable by everyone"
-  on public.profiles for select
-  using ( true );
-
--- Users can only update their own non-sensitive profile fields
-create policy "Users can update own profile"
-  on public.profiles for update
-  using ( auth.uid() = id );
-
--- 3. Automatic Trigger to create or update profile on sign-in
-create or replace function public.handle_new_user()
-returns trigger as $$
-declare
-  raw_discord_id text;
-  raw_username text;
-  raw_display_name text;
-  raw_avatar_url text;
-  user_role text;
-begin
-  -- Extract Discord data from user metadata
-  raw_discord_id := coalesce(
-    new.raw_user_meta_data->>'provider_id',
-    new.raw_user_meta_data->>'sub',
-    ''
-  );
-  raw_username := coalesce(
-    new.raw_user_meta_data->>'user_name',
-    new.raw_user_meta_data->>'name',
-    new.raw_user_meta_data->>'full_name',
-    'User'
-  );
-  raw_display_name := coalesce(
-    new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'name',
-    raw_username
-  );
-  raw_avatar_url := coalesce(
-    new.raw_user_meta_data->>'avatar_url',
-    new.raw_user_meta_data->>'picture',
-    ''
-  );
-
-  -- Automatically assign 'owner' role to space (Discord ID: 150580708144840704)
-  if raw_discord_id = '150580708144840704' then
-    user_role := 'owner';
-  else
-    user_role := 'user';
-  end if;
-
-  insert into public.profiles (
-    id,
-    discord_id,
-    username,
-    display_name,
-    avatar_url,
-    email,
-    role,
-    created_at,
-    updated_at
-  )
-  values (
-    new.id,
-    raw_discord_id,
-    raw_username,
-    raw_display_name,
-    raw_avatar_url,
-    new.email,
-    user_role,
-    now(),
-    now()
-  )
-  on conflict (id) do update set
-    username = excluded.username,
-    display_name = excluded.display_name,
-    avatar_url = excluded.avatar_url,
-    email = excluded.email,
-    updated_at = now();
-
-  return new;
-end;
-$$ language plpgsql security definer;
-
--- Drop trigger if exists and recreate
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
--- =========================================================================
--- Vital RP - Comprehensive Admin & Rules Management System
+-- Vital RP - Comprehensive Admin & Rules Management System Migration
+-- Includes:
+-- 1. Staff Members & Discord Role-Based Permissions
+-- 2. Rules, Categories, Drafts, Snapshots, Change History & Audit Logs
+-- 3. High-performance Indexes & Row Level Security Policies
 -- =========================================================================
 
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- =========================================================================
 -- 1. STAFF MEMBERS TABLE
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.staff_members (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   discord_user_id TEXT UNIQUE NOT NULL,
@@ -137,7 +29,9 @@ CREATE TABLE IF NOT EXISTS public.staff_members (
 CREATE INDEX IF NOT EXISTS idx_staff_members_discord_id ON public.staff_members(discord_user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_members_active ON public.staff_members(active);
 
+-- =========================================================================
 -- 2. DISCORD ROLE MAPPINGS TABLE
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.discord_role_mappings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   discord_role_id TEXT UNIQUE NOT NULL,
@@ -151,7 +45,9 @@ CREATE TABLE IF NOT EXISTS public.discord_role_mappings (
 CREATE INDEX IF NOT EXISTS idx_discord_role_mappings_role_id ON public.discord_role_mappings(discord_role_id);
 CREATE INDEX IF NOT EXISTS idx_discord_role_mappings_enabled ON public.discord_role_mappings(enabled);
 
+-- =========================================================================
 -- 3. DISCORD ROLE PERMISSIONS TABLE
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.discord_role_permissions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   role_mapping_id UUID NOT NULL REFERENCES public.discord_role_mappings(id) ON DELETE CASCADE,
@@ -163,9 +59,11 @@ CREATE TABLE IF NOT EXISTS public.discord_role_permissions (
 CREATE INDEX IF NOT EXISTS idx_discord_role_permissions_role_mapping ON public.discord_role_permissions(role_mapping_id);
 CREATE INDEX IF NOT EXISTS idx_discord_role_permissions_permission ON public.discord_role_permissions(permission);
 
+-- =========================================================================
 -- 4. RULE CATEGORIES TABLE
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.rule_categories (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY, -- e.g. 'general', 'roleplay', 'criminal-rp'
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   icon TEXT DEFAULT 'ShieldAlert',
@@ -178,9 +76,11 @@ CREATE TABLE IF NOT EXISTS public.rule_categories (
 CREATE INDEX IF NOT EXISTS idx_rule_categories_sort_order ON public.rule_categories(sort_order);
 CREATE INDEX IF NOT EXISTS idx_rule_categories_enabled ON public.rule_categories(enabled);
 
--- 5. RULES TABLE
+-- =========================================================================
+-- 5. RULES TABLE (Published production rules)
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.rules (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY, -- e.g. 'server-age-restriction'
   category_id TEXT NOT NULL REFERENCES public.rule_categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   rule_number INTEGER,
   title TEXT NOT NULL,
@@ -207,7 +107,9 @@ CREATE INDEX IF NOT EXISTS idx_rules_deleted_at ON public.rules(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_rules_enabled ON public.rules(enabled);
 CREATE INDEX IF NOT EXISTS idx_rules_featured ON public.rules(featured);
 
--- 6. RULES DRAFT TABLE
+-- =========================================================================
+-- 6. RULES DRAFT TABLE (Unpublished modifications, staging area)
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.rules_draft (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   rule_id TEXT NOT NULL,
@@ -224,7 +126,7 @@ CREATE TABLE IF NOT EXISTS public.rules_draft (
   callouts JSONB DEFAULT '[]'::jsonb,
   sort_order INTEGER DEFAULT 0,
   enabled BOOLEAN DEFAULT true,
-  action TEXT DEFAULT 'update',
+  action TEXT DEFAULT 'update', -- 'create', 'update', 'delete', 'reorder'
   created_by_discord_id TEXT,
   created_by_name TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -234,11 +136,13 @@ CREATE TABLE IF NOT EXISTS public.rules_draft (
 CREATE INDEX IF NOT EXISTS idx_rules_draft_rule_id ON public.rules_draft(rule_id);
 CREATE INDEX IF NOT EXISTS idx_rules_draft_category_id ON public.rules_draft(category_id);
 
--- 7. RULE VERSIONS TABLE
+-- =========================================================================
+-- 7. RULE VERSIONS TABLE (Complete snapshot for each published version)
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.rule_versions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   version_number INTEGER NOT NULL UNIQUE,
-  snapshot JSONB NOT NULL,
+  snapshot JSONB NOT NULL, -- Full snapshot containing { categories: [...], rules: [...] }
   published_by_discord_id TEXT NOT NULL,
   published_by_display_name TEXT NOT NULL,
   publish_note TEXT DEFAULT '',
@@ -249,11 +153,13 @@ CREATE TABLE IF NOT EXISTS public.rule_versions (
 CREATE INDEX IF NOT EXISTS idx_rule_versions_number ON public.rule_versions(version_number DESC);
 CREATE INDEX IF NOT EXISTS idx_rule_versions_published_at ON public.rule_versions(published_at DESC);
 
--- 8. RULE CHANGE HISTORY TABLE
+-- =========================================================================
+-- 8. RULE CHANGE HISTORY TABLE (Granular audit log of individual edits)
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.rule_change_history (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   rule_id TEXT NOT NULL,
-  action TEXT NOT NULL,
+  action TEXT NOT NULL, -- 'created', 'updated', 'deleted', 'restored', 'published', 'reordered'
   before_data JSONB,
   after_data JSONB,
   changed_by_discord_id TEXT NOT NULL,
@@ -264,7 +170,9 @@ CREATE TABLE IF NOT EXISTS public.rule_change_history (
 CREATE INDEX IF NOT EXISTS idx_rule_change_rule_id ON public.rule_change_history(rule_id);
 CREATE INDEX IF NOT EXISTS idx_rule_change_changed_at ON public.rule_change_history(changed_at DESC);
 
+-- =========================================================================
 -- 9. AUDIT LOGS TABLE
+-- =========================================================================
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   discord_user_id TEXT NOT NULL,
@@ -281,7 +189,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_discord_user ON public.audit_logs(discord_user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
 
+-- =========================================================================
 -- 10. ROW LEVEL SECURITY (RLS) POLICIES
+-- =========================================================================
 ALTER TABLE public.staff_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discord_role_mappings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discord_role_permissions ENABLE ROW LEVEL SECURITY;
@@ -292,22 +202,28 @@ ALTER TABLE public.rule_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rule_change_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
+-- Public can read enabled categories
 DROP POLICY IF EXISTS "Public can view active rule categories" ON public.rule_categories;
 CREATE POLICY "Public can view active rule categories"
   ON public.rule_categories FOR SELECT
   USING (enabled = true);
 
+-- Public can read active, non-deleted rules
 DROP POLICY IF EXISTS "Public can view published rules" ON public.rules;
 CREATE POLICY "Public can view published rules"
   ON public.rules FOR SELECT
   USING (deleted_at IS NULL AND enabled = true);
 
+-- Public can read published versions
 DROP POLICY IF EXISTS "Public can view rule versions" ON public.rule_versions;
 CREATE POLICY "Public can view rule versions"
   ON public.rule_versions FOR SELECT
   USING (true);
 
--- 11. DEFAULT SEED ROLE MAPPINGS
+-- =========================================================================
+-- 11. DEFAULT DISCORD ROLE MAPPINGS SEED
+-- =========================================================================
+-- Insert standard Vital RP staff roles
 INSERT INTO public.discord_role_mappings (id, discord_role_id, discord_role_name, discord_role_color, enabled)
 VALUES
   ('a1000000-0000-0000-0000-000000000001', '733090996660863056', 'Senior Administrator', '#ef4444', true),
@@ -319,6 +235,7 @@ ON CONFLICT (discord_role_id) DO UPDATE SET
   discord_role_color = EXCLUDED.discord_role_color,
   enabled = EXCLUDED.enabled;
 
+-- Assign permissions to Senior Administrator (All permissions)
 INSERT INTO public.discord_role_permissions (role_mapping_id, permission)
 SELECT 'a1000000-0000-0000-0000-000000000001', unnest(ARRAY[
   'admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history',
@@ -326,6 +243,7 @@ SELECT 'a1000000-0000-0000-0000-000000000001', unnest(ARRAY[
 ])
 ON CONFLICT (role_mapping_id, permission) DO NOTHING;
 
+-- Assign permissions to Administrator
 INSERT INTO public.discord_role_permissions (role_mapping_id, permission)
 SELECT 'a1000000-0000-0000-0000-000000000002', unnest(ARRAY[
   'admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history',
@@ -333,15 +251,16 @@ SELECT 'a1000000-0000-0000-0000-000000000002', unnest(ARRAY[
 ])
 ON CONFLICT (role_mapping_id, permission) DO NOTHING;
 
+-- Assign permissions to Moderator
 INSERT INTO public.discord_role_permissions (role_mapping_id, permission)
 SELECT 'a1000000-0000-0000-0000-000000000003', unnest(ARRAY[
   'admin.access', 'rules.view', 'rules.history'
 ])
 ON CONFLICT (role_mapping_id, permission) DO NOTHING;
 
+-- Assign permissions to Support Staff
 INSERT INTO public.discord_role_permissions (role_mapping_id, permission)
 SELECT 'a1000000-0000-0000-0000-000000000004', unnest(ARRAY[
   'admin.access', 'rules.view'
 ])
 ON CONFLICT (role_mapping_id, permission) DO NOTHING;
-

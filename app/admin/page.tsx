@@ -171,9 +171,27 @@ const Dashboard: React.FC = () => {
 
   const quickActions = [
     {
-      label: 'User Management & Roles',
+      label: 'Rules CMS & Publishing',
       icon: Shield,
-      path: '/admin/users',
+      path: '/admin/rules',
+      isExternal: false,
+    },
+    {
+      label: 'Staff Management & Roster',
+      icon: Users,
+      path: '/admin/staff',
+      isExternal: false,
+    },
+    {
+      label: 'Discord Role Permissions',
+      icon: ShieldCheck,
+      path: '/admin/permissions',
+      isExternal: false,
+    },
+    {
+      label: 'Audit History Logs',
+      icon: Clock,
+      path: '/admin/audit',
       isExternal: false,
     },
     {
@@ -186,12 +204,6 @@ const Dashboard: React.FC = () => {
       label: 'VitalRP Discord Server',
       icon: DiscordIcon,
       path: 'https://discord.gg/vitalrp',
-      isExternal: true,
-    },
-    {
-      label: 'Tebex Store Dashboard',
-      icon: ExternalLink,
-      path: 'https://vitalrp.tebex.io/',
       isExternal: true,
     },
   ];

@@ -14,12 +14,10 @@ import {
   AlertOctagon,
   Menu,
   Search,
-  ChevronDown,
-  ArrowUp,
-  LucideIcon,
   Sparkles,
+  LucideIcon,
 } from 'lucide-react';
-import { RULES, RULE_CATEGORIES, Rule } from '@/data/rules';
+import { RULES, RULE_CATEGORIES, Rule, RuleCategory } from '@/data/rules';
 import { RulesHero } from './RulesHero';
 import { SpotlightCard } from './SpotlightCard';
 import { RuleAccordion } from './RuleAccordion';
@@ -43,6 +41,10 @@ const coreRuleIcons: Record<string, LucideIcon> = {
 };
 
 export const RulesView: React.FC = () => {
+  // Live dynamic state initialized with default seed data for instantaneous render
+  const [categories, setCategories] = useState<RuleCategory[]>(RULE_CATEGORIES);
+  const [rules, setRules] = useState<Rule[]>(RULES);
+
   const [activeCategoryId, setActiveCategoryId] = useState<string>(RULE_CATEGORIES[0].id);
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [openAccordionValues, setOpenAccordionValues] = useState<string[]>([]);
@@ -50,37 +52,82 @@ export const RulesView: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  // Fetch live published rules from Supabase API
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLiveRules() {
+      try {
+        const res = await fetch('/api/rules');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.categories) && data.categories.length > 0 && Array.isArray(data.rules) && data.rules.length > 0) {
+            const mappedCategories: RuleCategory[] = data.categories
+              .filter((c: any) => c.enabled !== false)
+              .map((c: any) => ({
+                id: c.id,
+                title: c.title,
+                description: c.description || '',
+                iconName: c.icon || 'ShieldAlert',
+              }));
+
+            const mappedRules: Rule[] = data.rules
+              .filter((r: any) => r.enabled !== false && !r.deleted_at)
+              .map((r: any) => ({
+                id: r.id,
+                category: r.category_id,
+                title: r.title,
+                shortTitle: r.short_title || r.title,
+                summary: r.short_description || r.summary || '',
+                content: r.content,
+                aliases: r.aliases || [],
+                featured: Boolean(r.featured),
+                coreRuleNumber: r.core_rule_number || r.rule_number,
+                callouts: r.callouts || [],
+              }));
+
+            if (isMounted) {
+              setCategories(mappedCategories);
+              setRules(mappedRules);
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to static seed rules
+      }
+    }
+
+    loadLiveRules();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Core 10 rules sorted by coreRuleNumber
   const coreRules = React.useMemo(() => {
-    return RULES.filter((r) => r.featured).sort(
+    return rules.filter((r) => r.featured).sort(
       (a, b) => (a.coreRuleNumber || 99) - (b.coreRuleNumber || 99)
     );
-  }, []);
+  }, [rules]);
 
   // Jump to specific rule by ID
   const navigateToRule = useCallback((ruleId: string) => {
-    // Open its accordion if not already open
     setOpenAccordionValues((prev) => (prev.includes(ruleId) ? prev : [...prev, ruleId]));
 
-    // Find rule's category and update active category
-    const targetRule = RULES.find((r) => r.id === ruleId);
+    const targetRule = rules.find((r) => r.id === ruleId);
     if (targetRule) {
       setActiveCategoryId(targetRule.category);
       setActiveRuleId(ruleId);
     }
 
-    // Flash highlight
     setHighlightedRuleId(ruleId);
     setTimeout(() => {
       setHighlightedRuleId(null);
     }, 3000);
 
-    // Update URL hash without forcing full page reload
     if (typeof window !== 'undefined') {
       window.history.pushState(null, '', `#${ruleId}`);
     }
 
-    // Smooth scroll with offset for floating navbar
     requestAnimationFrame(() => {
       const el = document.getElementById(ruleId);
       if (el) {
@@ -93,7 +140,7 @@ export const RulesView: React.FC = () => {
         });
       }
     });
-  }, []);
+  }, [rules]);
 
   // Handle category jump from sidebar or drawer
   const navigateToCategory = useCallback((categoryId: string) => {
@@ -115,7 +162,7 @@ export const RulesView: React.FC = () => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash) {
-        const found = RULES.find((r) => r.id === hash);
+        const found = rules.find((r) => r.id === hash);
         if (found) {
           setTimeout(() => navigateToRule(hash), 150);
         }
@@ -125,11 +172,11 @@ export const RulesView: React.FC = () => {
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, [navigateToRule]);
+  }, [rules, navigateToRule]);
 
   // IntersectionObserver to track visible category and active rule
   useEffect(() => {
-    const categoryElements = RULE_CATEGORIES.map((c) =>
+    const categoryElements = categories.map((c) =>
       document.getElementById(`category-${c.id}`)
     ).filter(Boolean) as HTMLElement[];
 
@@ -137,7 +184,6 @@ export const RulesView: React.FC = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find visible category
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const catId = entry.target.id.replace('category-', '');
@@ -154,36 +200,36 @@ export const RulesView: React.FC = () => {
 
     categoryElements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [categories]);
 
   // Expand all / Collapse all in active category
   const handleExpandAll = (categoryId: string) => {
-    const categoryRuleIds = RULES.filter((r) => r.category === categoryId).map((r) => r.id);
+    const categoryRuleIds = rules.filter((r) => r.category === categoryId).map((r) => r.id);
     setOpenAccordionValues((prev) => Array.from(new Set([...prev, ...categoryRuleIds])));
   };
 
   const handleCollapseAll = (categoryId: string) => {
     const categoryRuleIds = new Set(
-      RULES.filter((r) => r.category === categoryId).map((r) => r.id)
+      rules.filter((r) => r.category === categoryId).map((r) => r.id)
     );
     setOpenAccordionValues((prev) => prev.filter((id) => !categoryRuleIds.has(id)));
   };
 
   return (
     <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white">
-      {/* 21st.dev Command Palette / Search Modal */}
+      {/* Search Modal */}
       <RuleSearchCommand
         isOpen={isSearchOpen}
         onOpenChange={setIsSearchOpen}
         onSelectRule={navigateToRule}
       />
 
-      {/* 21st.dev Mobile Drawer Sheet */}
+      {/* Mobile Drawer */}
       <RuleMobileDrawer
         isOpen={isMobileDrawerOpen}
         onOpenChange={setIsMobileDrawerOpen}
-        categories={RULE_CATEGORIES}
-        rules={RULES}
+        categories={categories}
+        rules={rules}
         activeCategoryId={activeCategoryId}
         onSelectCategory={navigateToCategory}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -207,16 +253,16 @@ export const RulesView: React.FC = () => {
                 KNOW THESE FIRST
               </h2>
               <p className="text-xs sm:text-sm font-sans text-gray-400 mt-1 max-w-xl">
-                The 10 essential rules every citizen must understand before stepping into Los Santos.
+                The {coreRules.length} essential rules every citizen must understand before stepping into Los Santos.
               </p>
             </div>
 
             <span className="text-xs font-tech text-gray-500 self-start sm:self-auto">
-              10 CORE PILLARS
+              {coreRules.length} CORE PILLARS
             </span>
           </div>
 
-          {/* 21st.dev Spotlight Cards Grid */}
+          {/* Spotlight Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {coreRules.map((rule) => {
               const Icon = coreRuleIcons[rule.id] || ShieldAlert;
@@ -263,11 +309,11 @@ export const RulesView: React.FC = () => {
 
         {/* 3-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* LEFT: Sticky Category Sidebar (Hidden on mobile/tablet) */}
+          {/* LEFT: Sticky Category Sidebar */}
           <aside className="hidden lg:block lg:col-span-3">
             <RuleSidebar
-              categories={RULE_CATEGORIES}
-              rules={RULES}
+              categories={categories}
+              rules={rules}
               activeCategoryId={activeCategoryId}
               onSelectCategory={navigateToCategory}
             />
@@ -275,8 +321,8 @@ export const RulesView: React.FC = () => {
 
           {/* CENTER: Full Categorized Rules with Accordions */}
           <main className="lg:col-span-9 xl:col-span-6 space-y-16">
-            {RULE_CATEGORIES.map((category) => {
-              const categoryRules = RULES.filter((r) => r.category === category.id);
+            {categories.map((category) => {
+              const categoryRules = rules.filter((r) => r.category === category.id);
               if (categoryRules.length === 0) return null;
 
               return (
@@ -319,7 +365,7 @@ export const RulesView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 21st.dev Radix UI Accordion for Category */}
+                  {/* Accordion for Category */}
                   <RuleAccordion
                     rules={categoryRules}
                     openValues={openAccordionValues}
@@ -331,11 +377,11 @@ export const RulesView: React.FC = () => {
             })}
           </main>
 
-          {/* RIGHT: Sticky Active Table of Contents (Hidden below XL) */}
+          {/* RIGHT: Sticky Active Table of Contents */}
           <aside className="hidden xl:block xl:col-span-3">
             <RuleTableOfContents
-              categories={RULE_CATEGORIES}
-              rules={RULES}
+              categories={categories}
+              rules={rules}
               activeCategoryId={activeCategoryId}
               activeRuleId={activeRuleId}
               onNavigate={navigateToRule}

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Role, UserPermissions, getPermissions, normalizeRole, isKnownAdminId } from '@/lib/auth/rbac';
+import { Role, UserPermissions, getPermissions, normalizeRole } from '@/lib/auth/rbac';
+import { AppPermission, isSuperAdmin as checkIsSuperAdmin, getAllPermissions } from '@/lib/auth/permissions';
 import { supabase } from '@/lib/supabase/client';
 
 export interface AuthUser {
@@ -14,14 +15,21 @@ export interface AuthUser {
   email?: string;
   role: Role;
   permissions: UserPermissions;
-  isAdmin?: boolean;
+  effectivePermissions: AppPermission[];
+  isSuperAdmin: boolean;
+  isAdmin: boolean;
+  discordRoles: string[];
+  matchedRoleNames: string[];
+  roleBreakdown: Record<string, string[]>;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   editMode: boolean;
+  hasPermission: (perm: AppPermission) => boolean;
   toggleEditMode: () => void;
   login: (redirect?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -29,20 +37,13 @@ interface AuthContextType {
   updateDisplayName: (name: string) => Promise<boolean>;
 }
 
-
-const defaultPermissions: UserPermissions = {
-  canAccessAdmin: false,
-  canManageUsers: false,
-  canManageGallery: false,
-  canManageStaff: false,
-  canManageSettings: false,
-};
-
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
+  isSuperAdmin: false,
   loading: true,
   editMode: false,
+  hasPermission: () => false,
   toggleEditMode: () => {},
   login: async () => {},
   logout: async () => {},
@@ -50,16 +51,16 @@ const AuthContext = createContext<AuthContextType>({
   updateDisplayName: async () => false,
 });
 
-
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
-  const fetchSession = React.useCallback(async () => {
+  const fetchSession = React.useCallback(async (forceRefresh = false) => {
     try {
       // 1. Retrieve client-side session from Supabase
       const { data: { session: clientSession } } = await supabase.auth.getSession();
@@ -67,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!clientSession?.user) {
         setUser(null);
         setIsAdmin(false);
+        setIsSuperAdmin(false);
         setEditMode(false);
         setLoading(false);
         return;
@@ -101,66 +103,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const username = meta.user_name || displayName;
       const avatar = meta.avatar_url || meta.picture || '';
 
-      // Initialize admin state from known admin Discord IDs
-      let verifiedIsAdmin = isKnownAdminId(discordId);
-      let userRole: Role = verifiedIsAdmin
-        ? (discordId === '150580708144840704' ? 'owner' : 'admin')
-        : 'user';
+      const userIsSuperAdmin = checkIsSuperAdmin(discordId);
+      let verifiedIsAdmin = userIsSuperAdmin;
+      let effectivePermissions: AppPermission[] = userIsSuperAdmin ? getAllPermissions() : [];
+      let discordRoles: string[] = [];
+      let matchedRoleNames: string[] = userIsSuperAdmin ? ['Super Admin'] : [];
+      let roleBreakdown: Record<string, string[]> = {};
+      let userRole: Role = userIsSuperAdmin ? 'owner' : 'user';
 
-      // 2. Query Supabase profiles table for assigned role
-      try {
-        const { data: profile, error: profileErr } = await supabase
-          .from('profiles')
-          .select('role, display_name')
-          .eq('id', clientSession.user.id)
-          .maybeSingle();
-
-        if (!profileErr && profile?.role) {
-          const normalized = normalizeRole(profile.role);
-          if (['owner', 'management', 'senior_admin', 'admin', 'moderator', 'staff'].includes(normalized)) {
-            verifiedIsAdmin = true;
-            userRole = normalized;
-          }
-        }
-      } catch (profileErr) {
-        console.warn('[VitalAuth Client] Error querying profile table:', profileErr);
-      }
-
-      // Check app metadata role if present
-      if (appMeta?.role) {
-        const normalized = normalizeRole(appMeta.role as string);
-        if (['owner', 'management', 'senior_admin', 'admin', 'moderator', 'staff'].includes(normalized)) {
-          verifiedIsAdmin = true;
-          userRole = normalized;
-        }
-      }
-
-      // 3. Authoritative server-side verification via /api/auth/me (when hosted on Next.js/Vercel)
+      // 2. Authoritative server-side verification via /api/auth/me
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         const headers: Record<string, string> = {};
         if (clientSession.access_token) {
           headers['Authorization'] = `Bearer ${clientSession.access_token}`;
         }
-        const res = await fetch('/api/auth/me', {
+        const res = await fetch(`/api/auth/me${forceRefresh ? '?refresh=true' : ''}`, {
           headers,
           cache: 'no-store',
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated && data.user) {
-            const serverIsAdmin = Boolean(data.isAdmin ?? data.user.isAdmin);
-            if (serverIsAdmin) {
+            verifiedIsAdmin = Boolean(data.isAdmin);
+            if (data.isSuperAdmin || userIsSuperAdmin) {
               verifiedIsAdmin = true;
-              userRole = normalizeRole(data.user.role || 'admin');
+              userRole = 'owner';
+              effectivePermissions = getAllPermissions();
+              matchedRoleNames = ['Super Admin'];
+            } else {
+              effectivePermissions = Array.isArray(data.permissions) ? data.permissions : [];
+              discordRoles = Array.isArray(data.discordRoles) ? data.discordRoles : [];
+              matchedRoleNames = Array.isArray(data.matchedRoleNames) ? data.matchedRoleNames : [];
+              roleBreakdown = data.roleBreakdown || {};
+              userRole = normalizeRole(data.user.role || (verifiedIsAdmin ? 'admin' : 'user'));
             }
           }
         }
       } catch {
-        // Expected on static hosting like GitHub Pages or when aborted
+        // Fallback for static SPA hosting or offline API
+        if (userIsSuperAdmin) {
+          verifiedIsAdmin = true;
+          userRole = 'owner';
+          effectivePermissions = getAllPermissions();
+        }
       }
 
       const authUserData: AuthUser = {
@@ -169,24 +159,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         username,
         displayName,
         avatar,
+        photoURL: avatar,
         email: clientSession.user.email,
         role: userRole,
         permissions: getPermissions(userRole),
+        effectivePermissions,
+        isSuperAdmin: userIsSuperAdmin,
         isAdmin: verifiedIsAdmin,
+        discordRoles,
+        matchedRoleNames,
+        roleBreakdown,
       };
-
-      console.log(
-        `[VitalAuth Client] Session active -> user="${displayName}", discordId="${discordId}", role="${userRole}", isAdmin=${verifiedIsAdmin}`
-      );
 
       setUser(authUserData);
       setIsAdmin(verifiedIsAdmin);
+      setIsSuperAdmin(userIsSuperAdmin);
       setLoading(false);
       return;
     } catch (err) {
-      console.warn('[VitalAuth Client] Could not retrieve active session:', err);
+      console.warn('[VitalAuth Client] Error retrieving active session:', err);
       setUser(null);
       setIsAdmin(false);
+      setIsSuperAdmin(false);
       setEditMode(false);
     } finally {
       setLoading(false);
@@ -196,10 +190,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchSession();
 
-    // Listen to Supabase client auth state changes
     try {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-        fetchSession();
+        fetchSession(true);
       });
       return () => {
         subscription.unsubscribe();
@@ -208,6 +201,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignored if offline
     }
   }, [fetchSession]);
+
+  const hasPermission = React.useCallback(
+    (permission: AppPermission): boolean => {
+      if (isSuperAdmin || user?.isSuperAdmin) return true;
+      if (!user) return false;
+      return user.effectivePermissions.includes(permission);
+    },
+    [isSuperAdmin, user]
+  );
 
   const login = React.useCallback(async (redirect: string = '/') => {
     try {
@@ -248,37 +250,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     setIsAdmin(false);
+    setIsSuperAdmin(false);
     setEditMode(false);
     window.location.href = '/';
   }, []);
 
-  const updateDisplayName = React.useCallback(async (name: string): Promise<boolean> => {
-    const trimmed = name.trim();
-    if (!trimmed) return false;
-    try {
-      const { error: authErr } = await supabase.auth.updateUser({
-        data: { custom_display_name: trimmed },
-      });
-      if (authErr) throw authErr;
+  const updateDisplayName = React.useCallback(
+    async (name: string): Promise<boolean> => {
+      const trimmed = name.trim();
+      if (!trimmed) return false;
+      try {
+        const { error: authErr } = await supabase.auth.updateUser({
+          data: { custom_display_name: trimmed },
+        });
+        if (authErr) throw authErr;
 
-      if (user?.id) {
-        try {
-          await supabase
-            .from('profiles')
-            .update({ display_name: trimmed })
-            .eq('id', user.id);
-        } catch {
-          // Non-blocking if table is missing or constrained
+        if (user?.id) {
+          try {
+            await supabase.from('profiles').update({ display_name: trimmed }).eq('id', user.id);
+          } catch {
+            // Non-blocking
+          }
         }
-      }
 
-      await fetchSession();
-      return true;
-    } catch (err) {
-      console.error('Failed to update display name:', err);
-      return false;
-    }
-  }, [user?.id, fetchSession]);
+        await fetchSession(true);
+        return true;
+      } catch (err) {
+        console.error('Failed to update display name:', err);
+        return false;
+      }
+    },
+    [user?.id, fetchSession]
+  );
 
   const toggleEditMode = React.useCallback(() => {
     if (isAdmin) {
@@ -290,20 +293,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     () => ({
       user,
       isAdmin,
+      isSuperAdmin,
       loading,
       editMode,
+      hasPermission,
       toggleEditMode,
       login,
       logout,
-      refresh: fetchSession,
+      refresh: () => fetchSession(true),
       updateDisplayName,
     }),
-    [user, isAdmin, loading, editMode, toggleEditMode, login, logout, fetchSession, updateDisplayName]
+    [user, isAdmin, isSuperAdmin, loading, editMode, hasPermission, toggleEditMode, login, logout, fetchSession, updateDisplayName]
   );
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

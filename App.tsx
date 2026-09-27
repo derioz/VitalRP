@@ -8,6 +8,10 @@ import { AdminLayout } from './spa/pages/admin/AdminLayout';
 import { Dashboard } from './spa/pages/admin/Dashboard';
 import { UsersPage } from './spa/pages/admin/Users';
 import { Settings } from './spa/pages/admin/Settings';
+import { RulesManagerPage } from './spa/pages/admin/RulesManager';
+import { StaffManagerPage } from './spa/pages/admin/StaffManager';
+import { RolePermissionsPage } from './spa/pages/admin/RolePermissionsManager';
+import { AuditLogsPage } from './spa/pages/admin/AuditLogs';
 import { AuthCallback } from './spa/pages/AuthCallback';
 
 function App() {
@@ -23,9 +27,12 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="rules" element={<RulesManagerPage />} />
+            <Route path="staff" element={<StaffManagerPage />} />
+            <Route path="permissions" element={<RolePermissionsPage />} />
+            <Route path="audit" element={<AuditLogsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="settings" element={<Settings />} />
-            {/* Add more admin routes here */}
           </Route>
 
           {/* Catch-all fallback */}

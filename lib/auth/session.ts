@@ -3,9 +3,11 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient as createSupabaseJsClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase/client';
 import { Role, UserPermissions, getPermissions } from './rbac';
-import { isVitalAdmin } from './vital-admin';
+import { getEffectiveAuth } from './vital-admin';
+import { AppPermission, isSuperAdmin } from './permissions';
 
 export interface SessionUser {
+  id?: string;
   discordId: string;
   username: string;
   displayName: string;
@@ -13,7 +15,12 @@ export interface SessionUser {
   email?: string;
   role: Role;
   permissions: UserPermissions;
+  effectivePermissions: AppPermission[];
+  isSuperAdmin: boolean;
   isAdmin: boolean;
+  discordRoles: string[];
+  matchedRoleNames: string[];
+  roleBreakdown: Record<string, string[]>;
   expiresAt: number;
 }
 
@@ -25,7 +32,6 @@ export interface SessionUser {
 export function extractDiscordId(user: any): string | null {
   if (!user) return null;
 
-  // Helper validator
   const isSnowflake = (val: any): val is string =>
     typeof val === 'string' && /^\d{17,20}$/.test(val);
 
@@ -67,12 +73,12 @@ export function extractDiscordId(user: any): string | null {
 }
 
 /**
- * Get current Supabase session and authoritative Discord Admin status in server components and routes.
+ * Get current Supabase session and authoritative Discord Role Permissions in server components and routes.
  * Supports both:
  * - Bearer token header (passed from client fetch calls)
  * - Server cookie session (passed on direct navigation / SSR)
  */
-export async function getCurrentSession(token?: string): Promise<SessionUser | null> {
+export async function getCurrentSession(token?: string, forceRefresh = false): Promise<SessionUser | null> {
   try {
     let user: any = null;
 
@@ -110,23 +116,21 @@ export async function getCurrentSession(token?: string): Promise<SessionUser | n
     }
 
     if (!user) {
-      console.log('[VitalAuth] getCurrentSession: No authenticated Supabase session found.');
       return null;
     }
 
-    console.log(`[VitalAuth] Supabase User Authenticated: User ID = ${user.id}, Email = ${user.email || 'N/A'}`);
-
     // Extract Discord Snowflake ID
     const discordId = extractDiscordId(user) || '';
-    console.log(`[VitalAuth] Extracted Discord User ID: "${discordId}" for Supabase User ${user.id}`);
 
-    // Authoritative Server-Side Discord Admin Check
-    const isAdmin = await isVitalAdmin(discordId);
-    console.log(
-      `[VitalAuth] Authorization Result for User "${user.user_metadata?.full_name || user.user_metadata?.name || user.id}" (Discord ID: ${discordId}): isAdmin = ${isAdmin}`
-    );
+    // Authoritative Server-Side Discord Role & Permissions Check
+    const authResult = await getEffectiveAuth(discordId, forceRefresh);
+    const userIsSuperAdmin = authResult.isSuperAdmin || isSuperAdmin(discordId);
 
-    const role: Role = isAdmin ? 'admin' : 'user';
+    const role: Role = userIsSuperAdmin
+      ? 'owner'
+      : authResult.isAdmin
+      ? 'admin'
+      : 'user';
 
     const displayName =
       user.user_metadata?.custom_display_name ||
@@ -140,6 +144,7 @@ export async function getCurrentSession(token?: string): Promise<SessionUser | n
     const permissions = getPermissions(role);
 
     return {
+      id: user.id,
       discordId,
       username,
       displayName,
@@ -147,7 +152,12 @@ export async function getCurrentSession(token?: string): Promise<SessionUser | n
       email: user.email,
       role,
       permissions,
-      isAdmin,
+      effectivePermissions: authResult.permissions,
+      isSuperAdmin: userIsSuperAdmin,
+      isAdmin: authResult.isAdmin,
+      discordRoles: authResult.discordRoles,
+      matchedRoleNames: authResult.matchedRoleNames,
+      roleBreakdown: authResult.roleBreakdown,
       expiresAt: Date.now() + 60 * 60 * 1000,
     };
   } catch (err) {
