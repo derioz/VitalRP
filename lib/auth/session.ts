@@ -21,6 +21,8 @@ export interface SessionUser {
   discordRoles: string[];
   matchedRoleNames: string[];
   roleBreakdown: Record<string, string[]>;
+  primaryRole?: string;
+  recognizedRoles?: string[];
   expiresAt: number;
 }
 
@@ -158,6 +160,8 @@ export async function getCurrentSession(token?: string, forceRefresh = false): P
       discordRoles: authResult.discordRoles,
       matchedRoleNames: authResult.matchedRoleNames,
       roleBreakdown: authResult.roleBreakdown,
+      primaryRole: authResult.primaryRole,
+      recognizedRoles: authResult.recognizedRoles,
       expiresAt: Date.now() + 60 * 60 * 1000,
     };
   } catch (err) {

@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS public.staff_members (
   discord_username TEXT,
   discord_display_name TEXT,
   discord_avatar TEXT,
+  primary_role TEXT,
+  recognized_roles JSONB DEFAULT '[]'::jsonb,
   last_known_roles JSONB DEFAULT '[]'::jsonb,
   first_admin_login TIMESTAMPTZ DEFAULT now(),
   last_admin_login TIMESTAMPTZ DEFAULT now(),
@@ -136,6 +138,26 @@ CREATE TABLE IF NOT EXISTS public.staff_members (
 
 CREATE INDEX IF NOT EXISTS idx_staff_members_discord_id ON public.staff_members(discord_user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_members_active ON public.staff_members(active);
+CREATE INDEX IF NOT EXISTS idx_staff_members_primary_role ON public.staff_members(primary_role);
+
+-- Safe migration block for staff_members columns
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'staff_members' AND column_name = 'primary_role'
+  ) THEN
+    ALTER TABLE public.staff_members ADD COLUMN primary_role TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'staff_members' AND column_name = 'recognized_roles'
+  ) THEN
+    ALTER TABLE public.staff_members ADD COLUMN recognized_roles JSONB DEFAULT '[]'::jsonb;
+  END IF;
+END $;
+
 
 -- 2. DISCORD ROLE MAPPINGS TABLE
 CREATE TABLE IF NOT EXISTS public.discord_role_mappings (
@@ -399,6 +421,38 @@ SELECT 'a1000000-0000-0000-0000-000000000004', unnest(ARRAY[
   'admin.access', 'rules.view'
 ])
 ON CONFLICT (role_mapping_id, permission) DO NOTHING;
+
+-- Seed Super Admin Damon into staff_members
+INSERT INTO public.staff_members (
+  id,
+  discord_user_id,
+  discord_username,
+  discord_display_name,
+  discord_avatar,
+  primary_role,
+  recognized_roles,
+  last_known_roles,
+  first_admin_login,
+  last_admin_login,
+  active
+)
+VALUES (
+  'b1000000-0000-0000-0000-000000000001',
+  '150580708144840704',
+  'damon',
+  'Damon',
+  'https://cdn.discordapp.com/avatars/150580708144840704/bedf3166ac36aa21047fee8c77d94c26.png',
+  'Super Admin',
+  '["Super Admin"]'::jsonb,
+  '["Super Admin"]'::jsonb,
+  '2026-09-01 00:00:00+00',
+  now(),
+  true
+)
+ON CONFLICT (discord_user_id) DO UPDATE SET
+  primary_role = 'Super Admin',
+  active = true;
+
 
 -- =========================================================================
 -- 12. INITIAL SEED: ACTUAL VITAL RP RULES & CATEGORIES MIGRATION (VERSION 1)

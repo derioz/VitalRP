@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
 import { hasPermission, SUPER_ADMIN_DISCORD_ID } from '@/lib/auth/permissions';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getEffectiveAuth } from '@/lib/auth/vital-admin';
+import { getEffectiveAuth, resolveStaffRoles } from '@/lib/auth/vital-admin';
 import { recordAuditEvent } from '@/lib/audit/audit-logger';
 
 export async function GET(request: NextRequest) {
@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
       discord_username: 'damon',
       discord_display_name: 'Damon',
       discord_avatar: 'https://cdn.discordapp.com/avatars/150580708144840704/bedf3166ac36aa21047fee8c77d94c26.png',
+      primary_role: 'Super Admin',
+      recognized_roles: ['Super Admin'],
       last_known_roles: ['Super Admin'],
       first_admin_login: new Date('2026-09-01T00:00:00Z').toISOString(),
       last_admin_login: new Date().toISOString(),
@@ -48,24 +50,55 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Calculate live effective permissions and role breakdowns for each staff member
+  // Calculate live effective permissions and hierarchical role breakdowns for each staff member
   const enrichedStaff = await Promise.all(
     staffList.map(async (member) => {
       const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
+      if (isSuper) {
+        const auth = await getEffectiveAuth(SUPER_ADMIN_DISCORD_ID);
+        return {
+          ...member,
+          isSuperAdmin: true,
+          primary_role: 'Super Admin',
+          recognized_roles: ['Super Admin'],
+          other_roles: [],
+          active: true,
+          effectivePermissions: auth.permissions,
+          roleBreakdown: auth.roleBreakdown,
+          matchedRoleNames: ['Super Admin'],
+          discordRoles: [],
+        };
+      }
+
       const auth = await getEffectiveAuth(member.discord_user_id);
+      const roleRes = resolveStaffRoles(auth.discordRoles, member.discord_user_id);
+
+      // If user holds no recognized roles in Discord, they are former/inactive staff
+      const isCurrentlyActive = member.active && roleRes.isStaff;
 
       return {
         ...member,
-        isSuperAdmin: isSuper,
+        isSuperAdmin: false,
+        primary_role: roleRes.primaryRole || member.primary_role || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
+        recognized_roles: roleRes.recognizedRoles || member.recognized_roles || [],
+        other_roles: roleRes.otherRoles || [],
+        active: isCurrentlyActive,
         effectivePermissions: auth.permissions,
         roleBreakdown: auth.roleBreakdown,
-        matchedRoleNames: isSuper ? ['Super Admin'] : auth.matchedRoleNames,
+        matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : auth.matchedRoleNames,
         discordRoles: auth.discordRoles,
       };
     })
   );
 
-  return NextResponse.json({ staff: enrichedStaff });
+  return NextResponse.json({
+    staff: enrichedStaff,
+    counts: {
+      total: enrichedStaff.length,
+      active: enrichedStaff.filter((s) => s.active).length,
+      inactive: enrichedStaff.filter((s) => !s.active).length,
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
