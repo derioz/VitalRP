@@ -307,6 +307,43 @@ CREATE POLICY "Public can view rule versions"
   ON public.rule_versions FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Allow manage rule categories" ON public.rule_categories;
+CREATE POLICY "Allow manage rule categories"
+  ON public.rule_categories FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow manage rules" ON public.rules;
+CREATE POLICY "Allow manage rules"
+  ON public.rules FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow manage rules draft" ON public.rules_draft;
+CREATE POLICY "Allow manage rules draft"
+  ON public.rules_draft FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow manage rule versions" ON public.rule_versions;
+CREATE POLICY "Allow manage rule versions"
+  ON public.rule_versions FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow manage rule change history" ON public.rule_change_history;
+CREATE POLICY "Allow manage rule change history"
+  ON public.rule_change_history FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow manage audit logs" ON public.audit_logs;
+CREATE POLICY "Allow manage audit logs"
+  ON public.audit_logs FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+
 -- 11. DEFAULT SEED ROLE MAPPINGS
 INSERT INTO public.discord_role_mappings (id, discord_role_id, discord_role_name, discord_role_color, enabled)
 VALUES

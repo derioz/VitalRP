@@ -43,6 +43,18 @@ import {
 import { useAuth } from '@/components/AuthProvider';
 import { DbRule, DbRuleCategory, DbRuleDraft, StagedChangeSummary, DbRuleVersion } from '@/lib/rules/supabase-rules';
 import { RuleCallout } from '@/data/rules';
+import {
+  getClientRulesData,
+  syncExistingRulesToSupabase,
+  saveClientRuleDraft,
+  discardClientRuleDraft,
+  deleteClientRule,
+  getClientStagedChanges,
+  publishClientStagedChanges,
+  getClientVersions,
+  rollbackClientToVersion,
+  saveClientCategory,
+} from '@/lib/rules/client-rules-service';
 
 export const RulesCMS: React.FC = () => {
   const { user, isSuperAdmin, hasPermission } = useAuth();
@@ -107,9 +119,7 @@ export const RulesCMS: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/rules');
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load rules`);
-      const data = await res.json();
+      const data = await getClientRulesData();
       setCategories(data.categories || []);
       setRules(data.rules || []);
       setStats({
@@ -251,10 +261,8 @@ export const RulesCMS: React.FC = () => {
 
     try {
       await Promise.all([
-        fetch('/api/admin/rules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        saveClientRuleDraft(
+          {
             rule_id: rule.id,
             category_id: rule.category_id,
             rule_number: rule.rule_number,
@@ -262,12 +270,11 @@ export const RulesCMS: React.FC = () => {
             content: rule.content,
             sort_order: targetOrder === currentOrder ? (direction === 'up' ? currentOrder - 1 : currentOrder + 1) : targetOrder,
             action: 'update',
-          }),
-        }),
-        fetch('/api/admin/rules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          },
+          { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
+        ),
+        saveClientRuleDraft(
+          {
             rule_id: targetRule.id,
             category_id: targetRule.category_id,
             rule_number: targetRule.rule_number,
@@ -275,8 +282,9 @@ export const RulesCMS: React.FC = () => {
             content: targetRule.content,
             sort_order: currentOrder,
             action: 'update',
-          }),
-        }),
+          },
+          { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
+        ),
       ]);
       await fetchData();
     } catch (err: any) {
@@ -288,15 +296,16 @@ export const RulesCMS: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const handleSyncRules = async (force = false) => {
     if (!canEdit) return;
-    if (force && !confirm('Syncing will ensure all 31 existing rules and 9 categories are imported into Supabase. Existing drafts will be preserved. Proceed?')) {
+    if (force && !confirm('Syncing will import all 31 website rules and 9 categories into Supabase. Existing drafts will be preserved. Proceed?')) {
       return;
     }
     setIsSyncing(true);
     try {
-      const res = await fetch(`/api/admin/rules/seed${force ? '?force=true' : ''}`, { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to sync rules');
-      alert(data.message || 'Rules successfully imported/synchronized with Supabase!');
+      const res = await syncExistingRulesToSupabase(
+        { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' },
+        force
+      );
+      alert(res.message || 'Rules successfully imported/synchronized with Supabase!');
       await fetchData();
     } catch (err: any) {
       alert(`Sync failed: ${err.message}`);
@@ -313,12 +322,10 @@ export const RulesCMS: React.FC = () => {
     }
     setSaveStatus('saving');
     try {
-      const res = await fetch('/api/admin/rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rule_id: editingRule.id,
-          category_id: editingRule.category_id,
+      await saveClientRuleDraft(
+        {
+          rule_id: editingRule.id || `rule-${Date.now()}`,
+          category_id: editingRule.category_id || 'general',
           rule_number: editingRule.rule_number,
           title: editingRule.title,
           short_title: editingRule.short_title || editingRule.title,
@@ -332,10 +339,10 @@ export const RulesCMS: React.FC = () => {
           sort_order: editingRule.sort_order || 0,
           enabled: editingRule.enabled ?? true,
           action: editingRule.draft_action || 'update',
-        }),
-      });
+        },
+        { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
+      );
 
-      if (!res.ok) throw new Error('Failed to save draft');
       setSaveStatus('saved');
       setHasUnsavedChanges(false);
       await fetchData();
@@ -349,8 +356,7 @@ export const RulesCMS: React.FC = () => {
   const handleDiscardDraft = async (ruleId: string) => {
     if (!confirm('Are you sure you want to discard unstaged changes for this rule?')) return;
     try {
-      const res = await fetch(`/api/admin/rules?ruleId=${ruleId}&discard=true`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to discard draft');
+      await discardClientRuleDraft(ruleId);
       if (isEditorOpen && editingRule?.id === ruleId) {
         setIsEditorOpen(false);
       }
@@ -364,8 +370,10 @@ export const RulesCMS: React.FC = () => {
   const handleDeleteRule = async (ruleId: string) => {
     if (!confirm('Are you sure you want to mark this rule for deletion upon publishing?')) return;
     try {
-      const res = await fetch(`/api/admin/rules?ruleId=${ruleId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to mark rule for deletion');
+      await deleteClientRule(ruleId, {
+        discordId: user?.discordId || '150580708144840704',
+        displayName: user?.displayName || 'Damon',
+      });
       await fetchData();
     } catch (err: any) {
       alert(err.message);
@@ -375,13 +383,10 @@ export const RulesCMS: React.FC = () => {
   // Open Publish Changes Center
   const handleOpenPublishCenter = async () => {
     try {
-      const res = await fetch('/api/admin/rules/publish');
-      if (res.ok) {
-        const data = await res.json();
-        setStagedChanges(data.summary || []);
-      }
+      const summary = await getClientStagedChanges();
+      setStagedChanges(summary);
     } catch {
-      // ignore
+      setStagedChanges([]);
     }
     setPublishNote('');
     setIsPublishModalOpen(true);
@@ -395,19 +400,13 @@ export const RulesCMS: React.FC = () => {
     }
     setPublishing(true);
     try {
-      const res = await fetch('/api/admin/rules/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publishNote }),
+      const res = await publishClientStagedChanges(publishNote, {
+        discordId: user?.discordId || '150580708144840704',
+        displayName: user?.displayName || 'Damon',
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Publishing failed');
-      }
-      const data = await res.json();
       setIsPublishModalOpen(false);
       await fetchData();
-      alert(`Version ${data.versionNumber} successfully published to production!`);
+      alert(`Version ${res.versionNumber} successfully published to production!`);
     } catch (err: any) {
       alert(`Publish error: ${err.message}`);
     } finally {
@@ -418,13 +417,10 @@ export const RulesCMS: React.FC = () => {
   // Open Version History Modal
   const handleOpenVersionHistory = async () => {
     try {
-      const res = await fetch('/api/admin/rules/versions');
-      if (res.ok) {
-        const data = await res.json();
-        setVersions(data.versions || []);
-      }
+      const versions = await getClientVersions();
+      setVersions(versions);
     } catch {
-      // ignore
+      setVersions([]);
     }
     setIsHistoryModalOpen(true);
   };
@@ -436,19 +432,13 @@ export const RulesCMS: React.FC = () => {
     }
     setRollingBack(true);
     try {
-      const res = await fetch('/api/admin/rules/rollback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versionNumber }),
+      const res = await rollbackClientToVersion(versionNumber, {
+        discordId: user?.discordId || '150580708144840704',
+        displayName: user?.displayName || 'Damon',
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Rollback failed');
-      }
-      const data = await res.json();
       setIsHistoryModalOpen(false);
       await fetchData();
-      alert(`Successfully restored Version ${versionNumber}! Created new active Version ${data.newVersionNumber}.`);
+      alert(`Successfully restored Version ${versionNumber}! Created new active Version ${res.newVersionNumber}.`);
     } catch (err: any) {
       alert(`Rollback error: ${err.message}`);
     } finally {
@@ -461,9 +451,12 @@ export const RulesCMS: React.FC = () => {
     setInspectingRuleId(ruleId);
     try {
       const res = await fetch(`/api/admin/rules/history?ruleId=${ruleId}`);
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         setRuleChangelog(data.history || []);
+      } else {
+        setRuleChangelog([]);
       }
     } catch {
       setRuleChangelog([]);
@@ -479,17 +472,12 @@ export const RulesCMS: React.FC = () => {
     }
     const catId = categoryForm.id || categoryForm.title.toLowerCase().replace(/[^a-z0-9]/g, '-');
     try {
-      const res = await fetch('/api/admin/rules/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: catId,
-          title: categoryForm.title,
-          description: categoryForm.description,
-          icon: categoryForm.icon,
-        }),
+      await saveClientCategory({
+        id: catId,
+        title: categoryForm.title,
+        description: categoryForm.description,
+        icon: categoryForm.icon,
       });
-      if (!res.ok) throw new Error('Failed to save category');
       setIsCategoryModalOpen(false);
       await fetchData();
     } catch (err: any) {
