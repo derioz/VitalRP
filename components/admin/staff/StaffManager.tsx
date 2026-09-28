@@ -49,8 +49,10 @@ interface StaffMember {
 type StatusFilter = 'active' | 'inactive' | 'all';
 type RoleFilter =
   | 'all'
+  | 'Head Administrator'
   | 'Senior Administrator'
   | 'Administrator'
+  | 'Senior Moderator'
   | 'Moderator'
   | 'Support Staff';
 
@@ -86,6 +88,14 @@ function getRoleBadgeConfig(primaryRole?: string, isSuper?: boolean) {
   }
 
   switch (primaryRole) {
+    case 'Head Administrator':
+      return {
+        name: 'Head Administrator',
+        badgeClass: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
+        borderClass: 'border-cyan-500/50',
+        cardBorder: 'border-white/5 hover:border-cyan-500/30',
+        dotClass: 'bg-cyan-400',
+      };
     case 'Senior Administrator':
       return {
         name: 'Senior Administrator',
@@ -101,6 +111,14 @@ function getRoleBadgeConfig(primaryRole?: string, isSuper?: boolean) {
         borderClass: 'border-orange-500/50',
         cardBorder: 'border-white/5 hover:border-orange-500/30',
         dotClass: 'bg-orange-400',
+      };
+    case 'Senior Moderator':
+      return {
+        name: 'Senior Moderator',
+        badgeClass: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
+        borderClass: 'border-purple-500/50',
+        cardBorder: 'border-white/5 hover:border-purple-500/30',
+        dotClass: 'bg-purple-400',
       };
     case 'Moderator':
       return {
@@ -138,6 +156,7 @@ export const StaffManager: React.FC = () => {
   const [counts, setCounts] = useState({ total: 0, active: 0, inactive: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
@@ -168,6 +187,49 @@ export const StaffManager: React.FC = () => {
       console.error('Failed to load staff roster:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleSyncRoster = async () => {
+    setRefreshing(true);
+    setSyncStatus(null);
+
+    try {
+      const res = await fetch('/api/admin/staff/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to sync staff roster from Discord');
+      }
+
+      if (data.staff) {
+        setStaff(data.staff);
+      }
+      if (data.counts) {
+        setCounts(data.counts);
+      }
+
+      setSyncStatus({
+        message:
+          data.message ||
+          `Successfully synced ${data.seniorAdminsAndAdmins || 0} Senior Admins & Admins (${
+            data.totalStaff || data.staff?.length || 0
+          } total staff) from Discord!`,
+        type: 'success',
+      });
+      setTimeout(() => setSyncStatus(null), 6000);
+    } catch (err: any) {
+      console.error('Error syncing staff roster:', err);
+      setSyncStatus({
+        message: err.message || 'Error syncing roster from Discord. Refreshing local roster...',
+        type: 'error',
+      });
+      await fetchStaff(true);
+      setTimeout(() => setSyncStatus(null), 6000);
+    } finally {
       setRefreshing(false);
     }
   };
@@ -275,15 +337,15 @@ export const StaffManager: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => fetchStaff(true)}
+              onClick={handleSyncRoster}
               disabled={refreshing}
-              className={`p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all border border-white/10 flex items-center gap-2 text-xs font-bold ${
+              className={`px-3 py-2.5 rounded-xl bg-vital-500/10 hover:bg-vital-500/20 text-vital-400 hover:text-vital-300 transition-all border border-vital-500/30 flex items-center gap-2 text-xs font-bold shadow-[0_0_15px_rgba(249,115,22,0.15)] ${
                 refreshing ? 'opacity-60 cursor-not-allowed' : ''
               }`}
-              title="Refresh Roster & Re-verify Discord Roles"
+              title="Pull Senior Admins & Admins directly from Discord Guild to grant admin console permissions"
             >
               <RefreshCw size={15} className={refreshing ? 'animate-spin text-vital-400' : ''} />
-              <span className="hidden md:inline">Sync Roster</span>
+              <span>{refreshing ? 'Syncing from Discord...' : 'Sync Roster'}</span>
             </button>
 
             {canManagePermissions && (
@@ -298,6 +360,37 @@ export const StaffManager: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Sync Status Feedback Banner */}
+      <AnimatePresence>
+        {syncStatus && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs ${
+              syncStatus.type === 'success'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+                : 'bg-red-500/10 border-red-500/30 text-red-300 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {syncStatus.type === 'success' ? (
+                <Check size={16} className="text-emerald-400 shrink-0" />
+              ) : (
+                <AlertCircle size={16} className="text-red-400 shrink-0" />
+              )}
+              <span className="font-medium">{syncStatus.message}</span>
+            </div>
+            <button
+              onClick={() => setSyncStatus(null)}
+              className="text-gray-400 hover:text-white text-xs font-bold px-2 py-0.5"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filter and Search Bar */}
       <div className="space-y-4">
@@ -403,6 +496,18 @@ export const StaffManager: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setRoleFilter('Head Administrator')}
+            className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              roleFilter === 'Head Administrator'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
+                : 'bg-dark-900 text-gray-400 hover:text-cyan-400 border border-white/5'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+            <span>Head Administrator</span>
+          </button>
+
+          <button
             onClick={() => setRoleFilter('Senior Administrator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Senior Administrator'
@@ -424,6 +529,18 @@ export const StaffManager: React.FC = () => {
           >
             <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
             <span>Administrator</span>
+          </button>
+
+          <button
+            onClick={() => setRoleFilter('Senior Moderator')}
+            className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              roleFilter === 'Senior Moderator'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+                : 'bg-dark-900 text-gray-400 hover:text-purple-400 border border-white/5'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+            <span>Senior Moderator</span>
           </button>
 
           <button

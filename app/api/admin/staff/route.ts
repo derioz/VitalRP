@@ -71,16 +71,22 @@ export async function GET(request: NextRequest) {
       }
 
       const auth = await getEffectiveAuth(member.discord_user_id);
-      const roleRes = resolveStaffRoles(auth.discordRoles, member.discord_user_id);
+      const rolesToCheck =
+        auth.discordRoles && auth.discordRoles.length > 0
+          ? auth.discordRoles
+          : Array.isArray(member.last_known_roles)
+          ? member.last_known_roles
+          : [];
+      const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
 
-      // If user holds no recognized roles in Discord, they are former/inactive staff
-      const isCurrentlyActive = member.active && roleRes.isStaff;
+      // If user holds no recognized roles, they are former/inactive staff
+      const isCurrentlyActive = Boolean(member.active) && roleRes.isStaff;
 
       return {
         ...member,
         isSuperAdmin: false,
-        primary_role: roleRes.primaryRole || member.primary_role || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
-        recognized_roles: roleRes.recognizedRoles || member.recognized_roles || [],
+        primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
+        recognized_roles: roleRes.recognizedRoles,
         other_roles: roleRes.otherRoles || [],
         active: isCurrentlyActive,
         effectivePermissions: auth.permissions,
@@ -112,10 +118,107 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    // 1. Full Discord Roster Sync Action
+    if (body.action === 'sync' || body.sync === true) {
+      const { syncDiscordStaffRoster } = await import('@/lib/auth/vital-admin');
+      const syncResult = await syncDiscordStaffRoster();
+
+      if (!syncResult.success) {
+        return NextResponse.json(
+          { error: syncResult.error || 'Failed to sync staff roster from Discord' },
+          { status: 500 }
+        );
+      }
+
+      await recordAuditEvent({
+        discordUserId: session.discordId,
+        displayName: session.displayName,
+        action: 'staff.roster_synced',
+        target: 'Vital RP Discord Guild',
+        details: `Synced ${syncResult.seniorAdminsAndAdmins} Senior Admins/Admins (${syncResult.totalStaff} total staff) from Discord`,
+        afterData: {
+          totalStaff: syncResult.totalStaff,
+          seniorAdminsAndAdmins: syncResult.seniorAdminsAndAdmins,
+          totalScanned: syncResult.totalScanned,
+        },
+      });
+
+      // Fetch the updated roster to return immediately to caller
+      const supabase = createAdminClient();
+      let staffList: any[] = [];
+      if (supabase) {
+        const { data } = await supabase
+          .from('staff_members')
+          .select('*')
+          .order('last_admin_login', { ascending: false });
+        if (data) staffList = data;
+      }
+
+      const enrichedStaff = await Promise.all(
+        staffList.map(async (member) => {
+          const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
+          if (isSuper) {
+            const auth = await getEffectiveAuth(SUPER_ADMIN_DISCORD_ID);
+            return {
+              ...member,
+              isSuperAdmin: true,
+              primary_role: 'Super Admin',
+              recognized_roles: ['Super Admin'],
+              other_roles: [],
+              active: true,
+              effectivePermissions: auth.permissions,
+              roleBreakdown: auth.roleBreakdown,
+              matchedRoleNames: ['Super Admin'],
+              discordRoles: [],
+            };
+          }
+
+          const auth = await getEffectiveAuth(member.discord_user_id);
+          const rolesToCheck =
+            auth.discordRoles && auth.discordRoles.length > 0
+              ? auth.discordRoles
+              : Array.isArray(member.last_known_roles)
+              ? member.last_known_roles
+              : [];
+          const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
+          const isCurrentlyActive = Boolean(member.active) && roleRes.isStaff;
+
+          return {
+            ...member,
+            isSuperAdmin: false,
+            primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
+            recognized_roles: roleRes.recognizedRoles,
+            other_roles: roleRes.otherRoles || [],
+            active: isCurrentlyActive,
+            effectivePermissions: auth.permissions,
+            roleBreakdown: auth.roleBreakdown,
+            matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : auth.matchedRoleNames,
+            discordRoles: auth.discordRoles,
+          };
+        })
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: `Successfully synced ${syncResult.seniorAdminsAndAdmins} Senior Admins/Admins (${syncResult.totalStaff} total staff) from Discord!`,
+        totalScanned: syncResult.totalScanned,
+        totalStaff: syncResult.totalStaff,
+        seniorAdminsAndAdmins: syncResult.seniorAdminsAndAdmins,
+        staff: enrichedStaff,
+        counts: {
+          total: enrichedStaff.length,
+          active: enrichedStaff.filter((s) => s.active).length,
+          inactive: enrichedStaff.filter((s) => !s.active).length,
+        },
+      });
+    }
+
+    // 2. Individual Staff Member Status Update
     const { discord_user_id, active } = body;
 
     if (!discord_user_id) {
-      return NextResponse.json({ error: 'Missing discord_user_id' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing discord_user_id or action' }, { status: 400 });
     }
 
     // CRITICAL PROTECTION: Damon can never be disabled or modified by staff management
@@ -144,6 +247,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update staff member' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to process staff action' }, { status: 500 });
   }
 }

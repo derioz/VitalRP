@@ -46,9 +46,17 @@ export interface RecognizedStaffRoleDef {
  */
 export const RECOGNIZED_STAFF_ROLES: readonly RecognizedStaffRoleDef[] = [
   {
+    id: '1251959011872342057',
+    name: 'Head Administrator',
+    priority: 1,
+    color: '#038388',
+    badgeClass: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
+    borderClass: 'border-cyan-500/40',
+  },
+  {
     id: '733090996660863056',
     name: 'Senior Administrator',
-    priority: 1,
+    priority: 2,
     color: '#ef4444',
     badgeClass: 'bg-red-500/10 border-red-500/30 text-red-400',
     borderClass: 'border-red-500/40',
@@ -56,15 +64,23 @@ export const RECOGNIZED_STAFF_ROLES: readonly RecognizedStaffRoleDef[] = [
   {
     id: '733091115577901158',
     name: 'Administrator',
-    priority: 2,
+    priority: 3,
     color: '#f97316',
     badgeClass: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
     borderClass: 'border-orange-500/40',
   },
   {
+    id: '1256346822914347170',
+    name: 'Senior Moderator',
+    priority: 4,
+    color: '#8b5cf6',
+    badgeClass: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
+    borderClass: 'border-purple-500/40',
+  },
+  {
     id: '733091376832708689',
     name: 'Moderator',
-    priority: 3,
+    priority: 5,
     color: '#3b82f6',
     badgeClass: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
     borderClass: 'border-blue-500/40',
@@ -72,7 +88,7 @@ export const RECOGNIZED_STAFF_ROLES: readonly RecognizedStaffRoleDef[] = [
   {
     id: '733091380540473384',
     name: 'Support Staff',
-    priority: 4,
+    priority: 6,
     color: '#10b981',
     badgeClass: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
     borderClass: 'border-emerald-500/40',
@@ -85,9 +101,9 @@ export const RECOGNIZED_STAFF_ROLE_IDS = new Set<string>(
 
 /**
  * Resolves a member's primary staff role and all held recognized staff roles
- * using strict priority ordering (Senior Admin -> Admin -> Moderator -> Support Staff).
+ * using strict priority ordering (Head Admin -> Senior Admin -> Admin -> Senior Mod -> Moderator -> Support Staff).
  */
-export function resolveStaffRoles(roleIds: string[], discordId?: string | null): {
+export function resolveStaffRoles(roleIdsOrNames: string[], discordId?: string | null): {
   primaryRole: string;
   recognizedRoles: string[];
   otherRoles: string[];
@@ -102,7 +118,9 @@ export function resolveStaffRoles(roleIds: string[], discordId?: string | null):
     };
   }
 
-  const matched = RECOGNIZED_STAFF_ROLES.filter((r) => roleIds.includes(r.id));
+  const matched = RECOGNIZED_STAFF_ROLES.filter(
+    (r) => roleIdsOrNames.includes(r.id) || roleIdsOrNames.includes(r.name)
+  );
   if (matched.length === 0) {
     return {
       primaryRole: '',
@@ -112,7 +130,7 @@ export function resolveStaffRoles(roleIds: string[], discordId?: string | null):
     };
   }
 
-  // Sort ascending by priority number: 1 = Senior Admin, 2 = Admin, 3 = Mod, 4 = Support
+  // Sort ascending by priority number: 1 = Head Admin, 2 = Senior Admin, 3 = Admin, 4 = Senior Mod, 5 = Mod, 6 = Support
   matched.sort((a, b) => a.priority - b.priority);
 
   const primaryRole = matched[0].name;
@@ -283,11 +301,35 @@ export async function getEffectiveAuth(
     memberRoles.push(VITAL_ADMIN_ROLE_ID);
   }
 
-  // Calculate staff role priority (Senior Admin -> Admin -> Moderator -> Support Staff)
+  const supabase = createAdminClient();
+
+  // Fallback if live Discord member fetch returned empty (e.g. rate limit):
+  // Check if user has an active staff_members record in Supabase with last_known_roles
+  if (memberRoles.length === 0 && supabase) {
+    try {
+      const { data: staffRec } = await supabase
+        .from('staff_members')
+        .select('last_known_roles, active')
+        .eq('discord_user_id', discordId)
+        .maybeSingle();
+
+      if (staffRec && staffRec.active && Array.isArray(staffRec.last_known_roles)) {
+        for (const roleName of staffRec.last_known_roles) {
+          const foundDef = RECOGNIZED_STAFF_ROLES.find((r) => r.name === roleName);
+          if (foundDef && !memberRoles.includes(foundDef.id)) {
+            memberRoles.push(foundDef.id);
+          }
+        }
+      }
+    } catch {
+      // Ignore fallback read errors
+    }
+  }
+
+  // Calculate staff role priority (Head Admin -> Senior Admin -> Admin -> Senior Mod -> Moderator -> Support Staff)
   const staffRoleRes = resolveStaffRoles(memberRoles, discordId);
 
   // 3. Fetch role mappings and permissions from Supabase
-  const supabase = createAdminClient();
   const permissionsSet = new Set<AppPermission>();
   const roleBreakdown: Record<string, string[]> = {};
   const matchedRoleNames: string[] = [];
@@ -374,18 +416,32 @@ function applyFallbackRoleMappings(
   roleBreakdown: Record<string, string[]>,
   matchedRoleNames: string[]
 ) {
+  // Head Admin (1251959011872342057)
+  if (memberRoles.includes('1251959011872342057') || memberRoles.includes('Head Administrator')) {
+    matchedRoleNames.push('Head Administrator');
+    for (const p of getAllPermissions()) {
+      permissionsSet.add(p);
+      roleBreakdown[p] = roleBreakdown[p] || [];
+      if (!roleBreakdown[p].includes('Head Administrator')) {
+        roleBreakdown[p].push('Head Administrator');
+      }
+    }
+  }
+
   // Senior Admin (733090996660863056)
-  if (memberRoles.includes('733090996660863056')) {
+  if (memberRoles.includes('733090996660863056') || memberRoles.includes('Senior Administrator')) {
     matchedRoleNames.push('Senior Administrator');
     for (const p of getAllPermissions()) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
-      roleBreakdown[p].push('Senior Administrator');
+      if (!roleBreakdown[p].includes('Senior Administrator')) {
+        roleBreakdown[p].push('Senior Administrator');
+      }
     }
   }
 
   // Administrator (733091115577901158)
-  if (memberRoles.includes('733091115577901158')) {
+  if (memberRoles.includes('733091115577901158') || memberRoles.includes('Administrator')) {
     matchedRoleNames.push('Administrator');
     const adminPerms: AppPermission[] = [
       'admin.access',
@@ -394,35 +450,55 @@ function applyFallbackRoleMappings(
       'rules.publish',
       'rules.history',
       'staff.view',
+      'staff.manage',
       'audit.view',
       'settings.manage',
     ];
     for (const p of adminPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
-      roleBreakdown[p].push('Administrator');
+      if (!roleBreakdown[p].includes('Administrator')) {
+        roleBreakdown[p].push('Administrator');
+      }
+    }
+  }
+
+  // Senior Moderator (1256346822914347170)
+  if (memberRoles.includes('1256346822914347170') || memberRoles.includes('Senior Moderator')) {
+    matchedRoleNames.push('Senior Moderator');
+    const srModPerms: AppPermission[] = ['admin.access', 'rules.view', 'rules.history', 'staff.view'];
+    for (const p of srModPerms) {
+      permissionsSet.add(p);
+      roleBreakdown[p] = roleBreakdown[p] || [];
+      if (!roleBreakdown[p].includes('Senior Moderator')) {
+        roleBreakdown[p].push('Senior Moderator');
+      }
     }
   }
 
   // Moderator (733091376832708689)
-  if (memberRoles.includes('733091376832708689')) {
+  if (memberRoles.includes('733091376832708689') || memberRoles.includes('Moderator')) {
     matchedRoleNames.push('Moderator');
     const modPerms: AppPermission[] = ['admin.access', 'rules.view', 'rules.history'];
     for (const p of modPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
-      roleBreakdown[p].push('Moderator');
+      if (!roleBreakdown[p].includes('Moderator')) {
+        roleBreakdown[p].push('Moderator');
+      }
     }
   }
 
   // Support Staff (733091380540473384)
-  if (memberRoles.includes('733091380540473384')) {
+  if (memberRoles.includes('733091380540473384') || memberRoles.includes('Support Staff')) {
     matchedRoleNames.push('Support Staff');
     const supPerms: AppPermission[] = ['admin.access', 'rules.view'];
     for (const p of supPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
-      roleBreakdown[p].push('Support Staff');
+      if (!roleBreakdown[p].includes('Support Staff')) {
+        roleBreakdown[p].push('Support Staff');
+      }
     }
   }
 }
@@ -489,9 +565,7 @@ export async function syncStaffMemberOnLogin(
             discord_username: username,
             discord_display_name: displayName,
             discord_avatar: avatarUrl,
-            primary_role: 'Super Admin',
-            recognized_roles: ['Super Admin'],
-            last_known_roles: ['Super Admin'],
+            last_known_roles: ['Super Admin', 'Senior Administrator', 'Administrator'],
             last_admin_login: new Date().toISOString(),
             active: true,
             updated_at: new Date().toISOString(),
@@ -505,9 +579,7 @@ export async function syncStaffMemberOnLogin(
             discord_username: username,
             discord_display_name: displayName,
             discord_avatar: avatarUrl,
-            primary_role: 'Super Admin',
-            recognized_roles: ['Super Admin'],
-            last_known_roles: ['Super Admin'],
+            last_known_roles: ['Super Admin', 'Senior Administrator', 'Administrator'],
             first_admin_login: new Date().toISOString(),
             last_admin_login: new Date().toISOString(),
             active: true,
@@ -515,6 +587,12 @@ export async function syncStaffMemberOnLogin(
             updated_at: new Date().toISOString(),
           });
       }
+
+      // Ensure profile role is owner
+      await supabase
+        .from('profiles')
+        .update({ role: 'owner', updated_at: new Date().toISOString() })
+        .eq('discord_id', discordId);
 
       return { isStaff: true, primaryRole: 'Super Admin', active: true };
     }
@@ -541,7 +619,9 @@ export async function syncStaffMemberOnLogin(
       userMetadata?.name;
     let username = member?.user?.username || userMetadata?.user_name;
     let avatarUrl = member?.user?.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordId}/${member.user.avatar}.png`
+      ? `https://cdn.discordapp.com/avatars/${discordId}/${member.user.avatar}${
+          member.user.avatar.startsWith('a_') ? '.gif' : '.png'
+        }`
       : userMetadata?.avatar_url || userMetadata?.picture || '';
 
     // Check profiles table if still missing
@@ -565,7 +645,7 @@ export async function syncStaffMemberOnLogin(
     // 4. Check if a record already exists in staff_members
     const { data: existingRecord } = await supabase
       .from('staff_members')
-      .select('id, first_admin_login, active, primary_role, recognized_roles, discord_username, discord_display_name, discord_avatar')
+      .select('id, first_admin_login, active, discord_username, discord_display_name, discord_avatar')
       .eq('discord_user_id', discordId)
       .maybeSingle();
 
@@ -579,8 +659,6 @@ export async function syncStaffMemberOnLogin(
             discord_username: username,
             discord_display_name: displayName,
             discord_avatar: avatarUrl || existingRecord.discord_avatar || '',
-            primary_role: primaryRole,
-            recognized_roles: recognizedRoles,
             last_known_roles: recognizedRoles,
             last_admin_login: new Date().toISOString(),
             active: true,
@@ -596,8 +674,6 @@ export async function syncStaffMemberOnLogin(
             discord_username: username,
             discord_display_name: displayName,
             discord_avatar: avatarUrl || '',
-            primary_role: primaryRole,
-            recognized_roles: recognizedRoles,
             last_known_roles: recognizedRoles,
             first_admin_login: new Date().toISOString(),
             last_admin_login: new Date().toISOString(),
@@ -605,6 +681,15 @@ export async function syncStaffMemberOnLogin(
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
+      }
+
+      // Auto-promote in profiles table to admin for console access
+      const isAdminTier = ['Head Administrator', 'Senior Administrator', 'Administrator'].includes(primaryRole);
+      if (isAdminTier) {
+        await supabase
+          .from('profiles')
+          .update({ role: 'admin', updated_at: new Date().toISOString() })
+          .eq('discord_id', discordId);
       }
 
       return { isStaff: true, primaryRole, active: true };
@@ -619,8 +704,6 @@ export async function syncStaffMemberOnLogin(
             discord_username: username || existingRecord.discord_username || 'Unknown',
             discord_display_name: displayName || existingRecord.discord_display_name || 'Former Staff',
             discord_avatar: avatarUrl || existingRecord.discord_avatar || '',
-            primary_role: 'Former Staff',
-            recognized_roles: [],
             last_known_roles: [],
             last_admin_login: new Date().toISOString(),
             active: false,
@@ -637,6 +720,215 @@ export async function syncStaffMemberOnLogin(
   } catch (err) {
     console.error(`[VitalAuth] Error syncing staff member "${discordId}":`, err);
     return { isStaff: false, primaryRole: '', active: false };
+  }
+}
+
+export interface SyncedStaffSummary {
+  discordId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  primaryRole: string;
+  recognizedRoles: string[];
+  isAdmin: boolean;
+}
+
+export interface SyncRosterResult {
+  success: boolean;
+  totalScanned: number;
+  totalStaff: number;
+  seniorAdminsAndAdmins: number;
+  syncedStaff: SyncedStaffSummary[];
+  error?: string;
+}
+
+/**
+ * Authoritative Discord Staff Roster Pull & Perms Synchronization.
+ * Scans the entire Vital RP Discord Guild, pulls all members holding staff roles
+ * (prioritizing Senior Admins, Admins, and Head Admins), grants them console access perms,
+ * syncs their records in Supabase staff_members and profiles, and deactivates former staff.
+ */
+export async function syncDiscordStaffRoster(): Promise<SyncRosterResult> {
+  const botToken = process.env.DISCORD_BOT_TOKEN;
+  if (!botToken) {
+    return {
+      success: false,
+      totalScanned: 0,
+      totalStaff: 0,
+      seniorAdminsAndAdmins: 0,
+      syncedStaff: [],
+      error: 'DISCORD_BOT_TOKEN is missing or not configured.',
+    };
+  }
+
+  const supabase = createAdminClient();
+  const staffRoleIds = RECOGNIZED_STAFF_ROLES.map((r) => r.id);
+  const allFoundMembers: DiscordMemberInfo[] = [];
+  let after = '0';
+  let totalScanned = 0;
+
+  try {
+    while (true) {
+      const url = `https://discord.com/api/v10/guilds/${VITAL_GUILD_ID}/members?limit=1000${
+        after !== '0' ? `&after=${after}` : ''
+      }`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bot ${botToken}` },
+        cache: 'no-store',
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.error(`[VitalAuth] Error fetching Discord guild members: ${res.status} ${errText}`);
+        break;
+      }
+
+      const batch: DiscordMemberInfo[] = await res.json();
+      if (!batch || batch.length === 0) break;
+
+      totalScanned += batch.length;
+      for (const m of batch) {
+        const hasStaffRole = (m.roles || []).some((r) => staffRoleIds.includes(r));
+        const isSuper = m.user?.id === SUPER_ADMIN_DISCORD_ID;
+        if (hasStaffRole || isSuper) {
+          allFoundMembers.push(m);
+        }
+      }
+
+      after = batch[batch.length - 1].user?.id || '';
+      if (batch.length < 1000 || !after) break;
+    }
+
+    // Always guarantee Damon is present in the staff pool
+    const hasDamon = allFoundMembers.some((m) => m.user?.id === SUPER_ADMIN_DISCORD_ID);
+    if (!hasDamon) {
+      allFoundMembers.unshift({
+        roles: ['733090996660863056', '733091115577901158'],
+        user: {
+          id: SUPER_ADMIN_DISCORD_ID,
+          username: 'damon',
+          discriminator: '0',
+          avatar: 'bedf3166ac36aa21047fee8c77d94c26',
+          global_name: 'Damon',
+        },
+        nick: 'damon',
+      });
+    }
+
+    const syncedStaffList: SyncedStaffSummary[] = [];
+    const activeStaffIds = new Set<string>();
+    let seniorAdminsAndAdminsCount = 0;
+
+    for (const m of allFoundMembers) {
+      const discordId = m.user?.id;
+      if (!discordId) continue;
+
+      activeStaffIds.add(discordId);
+      const isSuper = isSuperAdmin(discordId);
+      const { primaryRole, recognizedRoles } = resolveStaffRoles(m.roles || [], discordId);
+
+      const displayName =
+        m.nick || m.user?.global_name || m.user?.username || 'Staff Member';
+      const username = m.user?.username || 'staff';
+      const avatarUrl = m.user?.avatar
+        ? `https://cdn.discordapp.com/avatars/${discordId}/${m.user.avatar}${
+            m.user.avatar.startsWith('a_') ? '.gif' : '.png'
+          }`
+        : '';
+
+      const isAdminTier =
+        isSuper ||
+        ['Head Administrator', 'Senior Administrator', 'Administrator'].includes(primaryRole);
+
+      if (isAdminTier) {
+        seniorAdminsAndAdminsCount++;
+      }
+
+      syncedStaffList.push({
+        discordId,
+        username,
+        displayName,
+        avatar: avatarUrl,
+        primaryRole,
+        recognizedRoles,
+        isAdmin: isAdminTier,
+      });
+
+      if (supabase) {
+        // Upsert into staff_members table
+        await supabase
+          .from('staff_members')
+          .upsert(
+            {
+              discord_user_id: discordId,
+              discord_username: username,
+              discord_display_name: displayName,
+              discord_avatar: avatarUrl,
+              last_known_roles: recognizedRoles,
+              active: true,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'discord_user_id' }
+          );
+
+        // Auto-promote in profiles table to admin for console access
+        if (isAdminTier) {
+          await supabase
+            .from('profiles')
+            .update({
+              role: isSuper ? 'owner' : 'admin',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('discord_id', discordId);
+        }
+      }
+    }
+
+    // Former staff cleanup: Any previously active staff member in DB no longer in guild staff roles
+    if (supabase) {
+      const { data: dbStaff } = await supabase
+        .from('staff_members')
+        .select('discord_user_id, active')
+        .eq('active', true);
+
+      if (dbStaff) {
+        for (const existing of dbStaff) {
+          if (
+            existing.discord_user_id !== SUPER_ADMIN_DISCORD_ID &&
+            !activeStaffIds.has(existing.discord_user_id)
+          ) {
+            await supabase
+              .from('staff_members')
+              .update({
+                active: false,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('discord_user_id', existing.discord_user_id);
+          }
+        }
+      }
+    }
+
+    // Invalidate role cache so all active sessions update immediately
+    invalidateRoleCache();
+
+    return {
+      success: true,
+      totalScanned,
+      totalStaff: syncedStaffList.length,
+      seniorAdminsAndAdmins: seniorAdminsAndAdminsCount,
+      syncedStaff: syncedStaffList,
+    };
+  } catch (error: any) {
+    console.error('[VitalAuth] Error in syncDiscordStaffRoster:', error);
+    return {
+      success: false,
+      totalScanned,
+      totalStaff: 0,
+      seniorAdminsAndAdmins: 0,
+      syncedStaff: [],
+      error: error.message || 'Failed to sync staff roster',
+    };
   }
 }
 

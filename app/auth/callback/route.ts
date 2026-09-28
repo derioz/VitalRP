@@ -26,14 +26,36 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Auto-promote known admins in profiles if applicable
+      // Auto-promote staff and admins in profiles
       const adminClient = createAdminClient();
-      if (adminClient && (discordId === '150580708144840704' || discordId === '399373087172198400')) {
+      if (adminClient && discordId) {
         try {
-          await adminClient
-            .from('profiles')
-            .update({ role: discordId === '150580708144840704' ? 'owner' : 'admin' })
-            .eq('id', data.user.id);
+          if (discordId === '150580708144840704') {
+            await adminClient
+              .from('profiles')
+              .update({ role: 'owner' })
+              .eq('id', data.user.id);
+          } else {
+            // Check if member is recognized admin or senior admin in staff_members
+            const { data: staffMember } = await adminClient
+              .from('staff_members')
+              .select('last_known_roles, active')
+              .eq('discord_user_id', discordId)
+              .maybeSingle();
+
+            const isStaffAdmin =
+              staffMember &&
+              staffMember.active &&
+              Array.isArray(staffMember.last_known_roles) &&
+              staffMember.last_known_roles.some((r: string) => r.includes('Admin'));
+
+            if (isStaffAdmin || discordId === '399373087172198400') {
+              await adminClient
+                .from('profiles')
+                .update({ role: 'admin' })
+                .eq('id', data.user.id);
+            }
+          }
         } catch (err) {
           console.error('Error promoting owner/admin:', err);
         }
