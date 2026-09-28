@@ -39,6 +39,9 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  Pencil,
+  LayoutTemplate,
+  Sliders,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { DbRule, DbRuleCategory, DbRuleDraft, StagedChangeSummary, DbRuleVersion } from '@/lib/rules/supabase-rules';
@@ -55,6 +58,10 @@ import {
   getClientVersions,
   rollbackClientToVersion,
   saveClientCategory,
+  deleteClientCategory,
+  getRulesHeroConfig,
+  saveRulesHeroConfig,
+  RulesHeroConfig,
 } from '@/lib/rules/client-rules-service';
 
 export const RulesCMS: React.FC = () => {
@@ -108,11 +115,32 @@ export const RulesCMS: React.FC = () => {
   const [ruleChangelog, setRuleChangelog] = useState<any[]>([]);
 
   // Category Edit state
-  const [categoryForm, setCategoryForm] = useState<{ id: string; title: string; description: string; icon: string }>({
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState(false);
+  const [categoryForm, setCategoryForm] = useState<{ id: string; title: string; description: string; icon: string; sort_order?: number }>({
     id: '',
     title: '',
     description: '',
     icon: 'ShieldAlert',
+    sort_order: 99,
+  });
+
+  // Hero Section Customization state
+  const [isHeroModalOpen, setIsHeroModalOpen] = useState(false);
+  const [savingHero, setSavingHero] = useState(false);
+  const [heroForm, setHeroForm] = useState<RulesHeroConfig>({
+    eyebrow: 'VITAL ROLEPLAY CONSTITUTION',
+    title: 'SERVER RULES',
+    subtitle: '“Serious roleplay works when everyone understands the expectations.”',
+    description: 'Vital RP is built on player-driven storytelling, deep immersion, common sense, and putting roleplay over ruleplay. Familiarize yourself with our server legislation to keep Los Santos authentic and engaging for everyone.',
+    pillars: [
+      'Storytelling First',
+      'Quality RP',
+      'Deep Immersion',
+      'Common Sense Expected',
+      'Roleplay Over Ruleplay',
+    ],
+    updatedDateOverride: '',
   });
 
   // Fetch initial data
@@ -347,16 +375,26 @@ export const RulesCMS: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const handleSyncRules = async (force = false) => {
     if (!canEdit) return;
-    if (force && !confirm('Syncing will import all 31 website rules and 9 categories into Supabase. Existing drafts will be preserved. Proceed?')) {
+    if (
+      force &&
+      !confirm(
+        `Syncing will force save all current ${rules.length} rules and ${categories.length} categories on this website directly into the Supabase database. Existing drafts will be preserved. Proceed?`
+      )
+    ) {
       return;
     }
     setIsSyncing(true);
     try {
       const res = await syncExistingRulesToSupabase(
         { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' },
-        force
+        force,
+        categories,
+        rules
       );
-      alert(res.message || 'Rules successfully imported/synchronized with Supabase!');
+      alert(
+        res.message ||
+          `Successfully force saved all ${rules.length} rules across ${categories.length} categories to Supabase database!`
+      );
       await fetchData();
     } catch (err: any) {
       alert(`Sync failed: ${err.message}`);
@@ -539,7 +577,32 @@ export const RulesCMS: React.FC = () => {
     setIsRuleHistoryModalOpen(true);
   };
 
-  // Category save
+  // Category Handlers
+  const handleOpenEditCategory = (cat: DbRuleCategory, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setCategoryForm({
+      id: cat.id,
+      title: cat.title,
+      description: cat.description || '',
+      icon: cat.icon || 'ShieldAlert',
+      sort_order: cat.sort_order || 1,
+    });
+    setIsEditingCategory(true);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleOpenNewCategory = () => {
+    setCategoryForm({
+      id: '',
+      title: '',
+      description: '',
+      icon: 'ShieldAlert',
+      sort_order: categories.length + 1,
+    });
+    setIsEditingCategory(false);
+    setIsCategoryModalOpen(true);
+  };
+
   const handleSaveCategory = async () => {
     if (!categoryForm.title) {
       alert('Please enter a category title.');
@@ -552,11 +615,65 @@ export const RulesCMS: React.FC = () => {
         title: categoryForm.title,
         description: categoryForm.description,
         icon: categoryForm.icon,
+        sort_order: categoryForm.sort_order,
       });
       setIsCategoryModalOpen(false);
       await fetchData();
     } catch (err: any) {
       alert(err.message);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!categoryForm.id) return;
+    const rulesInCat = rules.filter((r) => r.category_id === categoryForm.id && !r.deleted_at);
+    if (rulesInCat.length > 0) {
+      alert(
+        `Cannot delete category "${categoryForm.title}" because it contains ${rulesInCat.length} rule(s). Move or delete those rules first.`
+      );
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete category "${categoryForm.title}"?`)) {
+      return;
+    }
+    setDeletingCategory(true);
+    try {
+      const res = await deleteClientCategory(categoryForm.id);
+      if (res.success) {
+        setIsCategoryModalOpen(false);
+        if (selectedCategoryId === categoryForm.id) setSelectedCategoryId('all');
+        await fetchData();
+      } else {
+        alert(res.message || 'Failed to delete category');
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  // Hero Section Handlers
+  const handleOpenHeroModal = async () => {
+    const config = await getRulesHeroConfig();
+    setHeroForm(config);
+    setIsHeroModalOpen(true);
+  };
+
+  const handleSaveHeroConfig = async () => {
+    setSavingHero(true);
+    try {
+      const ok = await saveRulesHeroConfig(heroForm);
+      if (ok) {
+        setIsHeroModalOpen(false);
+        alert('Rules Hero Section customization saved successfully! Changes are live on /rules.');
+      } else {
+        alert('Failed to save Hero section configuration.');
+      }
+    } catch (err: any) {
+      alert(`Error saving hero section: ${err.message}`);
+    } finally {
+      setSavingHero(false);
     }
   };
 
@@ -658,10 +775,21 @@ export const RulesCMS: React.FC = () => {
 
             {canEdit && (
               <button
+                onClick={handleOpenHeroModal}
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-vital-500/10 hover:bg-vital-500/20 border border-vital-500/30 text-vital-300 hover:text-vital-200 transition-all text-xs font-bold"
+                title="Customize the Title, Subtitle, Description, and Badges of the Rules page Hero section"
+              >
+                <LayoutTemplate size={14} />
+                <span>Hero Section</span>
+              </button>
+            )}
+
+            {canEdit && (
+              <button
                 onClick={() => handleSyncRules(true)}
                 disabled={isSyncing}
                 className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
-                title="Verify and import all existing website rules into Supabase"
+                title="Force save all current rules and categories from this website into Supabase"
               >
                 <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
                 <span>{isSyncing ? 'Syncing...' : 'Sync Supabase'}</span>
@@ -756,11 +884,9 @@ export const RulesCMS: React.FC = () => {
               </span>
               {canEdit && (
                 <button
-                  onClick={() => {
-                    setCategoryForm({ id: '', title: '', description: '', icon: 'ShieldAlert' });
-                    setIsCategoryModalOpen(true);
-                  }}
-                  className="text-xs text-vital-400 hover:text-vital-300 font-bold flex items-center gap-1"
+                  onClick={handleOpenNewCategory}
+                  className="text-xs text-vital-400 hover:text-vital-300 font-bold flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-vital-500/10 transition-colors"
+                  title="Add new category"
                 >
                   <Plus size={12} />
                   <span>Add</span>
@@ -790,20 +916,38 @@ export const RulesCMS: React.FC = () => {
                 const count = rules.filter((r) => r.category_id === cat.id && !r.deleted_at).length;
                 const isSelected = selectedCategoryId === cat.id;
                 return (
-                  <button
+                  <div
                     key={cat.id}
-                    onClick={() => setSelectedCategoryId(cat.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                    className={`group/cat w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                       isSelected
                         ? 'bg-vital-500/15 border border-vital-500/30 text-white font-bold'
                         : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                     }`}
                   >
-                    <span className="truncate">{cat.title}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 ml-2">
-                      {count}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      className="flex-1 text-left truncate flex items-center gap-2 py-1"
+                    >
+                      <span className="truncate">{cat.title}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1.5 ml-2">
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenEditCategory(cat, e)}
+                          className="opacity-0 group-hover/cat:opacity-100 p-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-vital-400 transition-all"
+                          title={`Edit Category: ${cat.title}`}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      )}
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400">
+                        {count}
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -1734,7 +1878,16 @@ export const RulesCMS: React.FC = () => {
               className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
             >
               <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-                <h3 className="text-base font-bold text-white">Create Rule Category</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white">
+                    {isEditingCategory ? 'Edit Rule Category' : 'Create Rule Category'}
+                  </h3>
+                  {isEditingCategory && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-300">
+                      {categoryForm.id}
+                    </span>
+                  )}
+                </div>
                 <button onClick={() => setIsCategoryModalOpen(false)} className="text-gray-400 hover:text-white">
                   <X size={16} />
                 </button>
@@ -1751,6 +1904,22 @@ export const RulesCMS: React.FC = () => {
                     className="w-full bg-dark-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
                   />
                 </div>
+
+                {!isEditingCategory && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                      Slug / ID (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryForm.id}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '') })}
+                      placeholder="e.g. criminal-operations (auto-generated if empty)"
+                      className="w-full bg-dark-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-gray-300 uppercase mb-1">Description</label>
                   <input
@@ -1761,6 +1930,7 @@ export const RulesCMS: React.FC = () => {
                     className="w-full bg-dark-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-gray-300 uppercase mb-1">Icon Name</label>
                   <input
@@ -1770,20 +1940,237 @@ export const RulesCMS: React.FC = () => {
                     placeholder="Lucide Icon (e.g. ShieldAlert, Crosshair, Users)"
                     className="w-full bg-dark-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
                   />
+                  {/* Preset Quick Icons */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['ShieldAlert', 'Crosshair', 'Drama', 'Heart', 'Eye', 'Zap', 'Ban', 'LogOut', 'Users', 'Scale', 'Folder'].map((ic) => (
+                      <button
+                        key={ic}
+                        type="button"
+                        onClick={() => setCategoryForm({ ...categoryForm, icon: ic })}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                          categoryForm.icon === ic
+                            ? 'bg-vital-500 text-white border-vital-400 font-bold'
+                            : 'bg-white/5 text-gray-400 border-white/5 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                  {isEditingCategory ? (
+                    <button
+                      type="button"
+                      onClick={handleDeleteCategory}
+                      disabled={deletingCategory}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-bold transition-all disabled:opacity-50"
+                    >
+                      <Trash2 size={13} />
+                      <span>{deletingCategory ? 'Deleting...' : 'Delete'}</span>
+                    </button>
+                  ) : <div />}
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsCategoryModalOpen(false)}
+                      className="px-4 py-2 text-xs text-gray-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveCategory}
+                      className="px-5 py-2 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs"
+                    >
+                      {isEditingCategory ? 'Update Category' : 'Save Category'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* RULES HERO CUSTOMIZATION MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {isHeroModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHeroModalOpen(false)}
+              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-dark-900 border border-white/10 rounded-3xl p-6 lg:p-8 shadow-2xl flex flex-col z-10 text-white max-h-[90vh] overflow-y-auto custom-scrollbar"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-vital-500/10 border border-vital-500/30 text-vital-400">
+                    <LayoutTemplate size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Customize Rules Hero Section</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Personalize the header, slogan, description, and pillars displayed at the top of /rules.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsHeroModalOpen(false)}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Eyebrow Badge */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Eyebrow Badge Text
+                  </label>
+                  <input
+                    type="text"
+                    value={heroForm.eyebrow || ''}
+                    onChange={(e) => setHeroForm({ ...heroForm, eyebrow: e.target.value })}
+                    placeholder="e.g. VITAL ROLEPLAY CONSTITUTION"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+
+                {/* Main Title */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Hero Main Title
+                  </label>
+                  <input
+                    type="text"
+                    value={heroForm.title || ''}
+                    onChange={(e) => setHeroForm({ ...heroForm, title: e.target.value })}
+                    placeholder="e.g. SERVER RULES"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+
+                {/* Lead Quote / Slogan */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Lead Quote / Slogan
+                  </label>
+                  <input
+                    type="text"
+                    value={heroForm.subtitle || ''}
+                    onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
+                    placeholder='e.g. "Serious roleplay works when everyone understands the expectations."'
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Description Paragraph
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={heroForm.description || ''}
+                    onChange={(e) => setHeroForm({ ...heroForm, description: e.target.value })}
+                    placeholder="Detailed explanation of the community expectations..."
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white resize-y"
+                  />
+                </div>
+
+                {/* Pillars Chips */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Pillars / Highlights (comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={(heroForm.pillars || []).join(', ')}
+                    onChange={(e) =>
+                      setHeroForm({
+                        ...heroForm,
+                        pillars: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    placeholder="Storytelling First, Quality RP, Deep Immersion, Common Sense Expected, Roleplay Over Ruleplay"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(heroForm.pillars || []).map((p, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-vital-400 text-xs font-tech"
+                      >
+                        • {p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Updated Date Override */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+                    Custom Updated Date Override (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={heroForm.updatedDateOverride || ''}
+                    onChange={(e) => setHeroForm({ ...heroForm, updatedDateOverride: e.target.value })}
+                    placeholder="Leave empty for automatic live timestamp (e.g. Updated: September 28, 2026)"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    If left blank, the website automatically displays the latest date any rule was updated or published.
+                  </p>
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="p-4 rounded-2xl bg-dark-950 border border-vital-500/20 space-y-2 mt-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-vital-400 font-tech">
+                    Live Preview:
+                  </div>
+                  <div className="text-center py-3">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-vital-500/10 border border-vital-500/30 text-vital-400 text-[10px] font-bold uppercase tracking-wider mb-2">
+                      {heroForm.eyebrow || 'VITAL ROLEPLAY CONSTITUTION'}
+                    </div>
+                    <div className="text-xl font-black text-white uppercase">
+                      {heroForm.title || 'SERVER RULES'}
+                    </div>
+                    <div className="text-xs text-gray-300 italic mt-1 max-w-md mx-auto truncate">
+                      {heroForm.subtitle}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer buttons */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                   <button
-                    onClick={() => setIsCategoryModalOpen(false)}
-                    className="px-4 py-2 text-xs text-gray-400 hover:text-white"
+                    type="button"
+                    onClick={() => setIsHeroModalOpen(false)}
+                    className="px-4 py-2.5 text-xs text-gray-400 hover:text-white"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleSaveCategory}
-                    className="px-5 py-2 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs"
+                    type="button"
+                    onClick={handleSaveHeroConfig}
+                    disabled={savingHero}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-bold text-xs shadow-lg shadow-vital-500/25 transition-all disabled:opacity-50"
                   >
-                    Save Category
+                    <Save size={14} />
+                    <span>{savingHero ? 'Saving...' : 'Save Hero Section'}</span>
                   </button>
                 </div>
               </div>

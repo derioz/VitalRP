@@ -53,13 +53,35 @@ export const RulesView: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
+  const [heroConfig, setHeroConfig] = useState<any>(null);
+
   // Fetch live published rules from Supabase (via API or direct client)
   useEffect(() => {
     let isMounted = true;
 
-    const applyData = (rawCats: any[], rawRules: any[]) => {
+    // Load cached hero config from localStorage if available immediately
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedHero = localStorage.getItem('vital_rules_hero_config');
+        if (cachedHero) setHeroConfig(JSON.parse(cachedHero));
+      } catch {}
+    }
+
+    const applyData = (rawCats: any[], rawRules: any[], updateDate?: string | null, customHero?: any) => {
       if (!isMounted) return;
-      const mappedCategories: RuleCategory[] = rawCats
+      const cleanCats = rawCats.filter((c: any) => c.id !== '__hero_config__');
+      const heroRow = rawCats.find((c: any) => c.id === '__hero_config__');
+      if (heroRow && heroRow.description && !customHero) {
+        try {
+          customHero = JSON.parse(heroRow.description);
+        } catch {}
+      }
+
+      if (customHero) setHeroConfig(customHero);
+      if (updateDate) setLastUpdatedAt(updateDate);
+
+      const mappedCategories: RuleCategory[] = cleanCats
         .filter((c: any) => c.enabled !== false)
         .map((c: any) => ({
           id: c.id,
@@ -96,7 +118,7 @@ export const RulesView: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           if (data && Array.isArray(data.categories) && data.categories.length > 0 && Array.isArray(data.rules) && data.rules.length > 0) {
-            applyData(data.categories, data.rules);
+            applyData(data.categories, data.rules, data.lastUpdatedAt, data.heroConfig);
             return;
           }
         }
@@ -106,13 +128,20 @@ export const RulesView: React.FC = () => {
 
       // 2. Direct Supabase query (useful for SPA static docs bundle)
       try {
-        const [catsRes, rulesRes] = await Promise.all([
-          supabase.from('rule_categories').select('*').eq('enabled', true).order('sort_order', { ascending: true }),
+        const [catsRes, rulesRes, verRes] = await Promise.all([
+          supabase.from('rule_categories').select('*').order('sort_order', { ascending: true }),
           supabase.from('rules').select('*').is('deleted_at', null).eq('enabled', true).order('sort_order', { ascending: true }),
+          supabase.from('rule_versions').select('published_at').order('version_number', { ascending: false }).limit(1).maybeSingle(),
         ]);
 
         if (!catsRes.error && catsRes.data && catsRes.data.length > 0 && !rulesRes.error && rulesRes.data && rulesRes.data.length > 0) {
-          applyData(catsRes.data, rulesRes.data);
+          let latestDate = verRes.data?.published_at;
+          for (const r of rulesRes.data) {
+            if (r.updated_at && (!latestDate || new Date(r.updated_at) > new Date(latestDate))) {
+              latestDate = r.updated_at;
+            }
+          }
+          applyData(catsRes.data, rulesRes.data, latestDate);
         }
       } catch {
         // Fallback to static seed
@@ -259,7 +288,11 @@ export const RulesView: React.FC = () => {
       />
 
       {/* Compact Header / Hero */}
-      <RulesHero onOpenSearch={() => setIsSearchOpen(true)} />
+      <RulesHero
+        onOpenSearch={() => setIsSearchOpen(true)}
+        lastUpdatedAt={lastUpdatedAt}
+        heroConfig={heroConfig}
+      />
 
       {/* ----------------------------------------------------------------- */}
       {/* SECTION 1: "KNOW THESE FIRST" (CORE RULES SPOTLIGHT CARDS)       */}

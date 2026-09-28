@@ -22,6 +22,10 @@ import {
   UserX,
   Calendar,
   AlertCircle,
+  Sliders,
+  Save,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { SUPER_ADMIN_DISCORD_ID, PERMISSION_DEFINITIONS, AppPermission } from '@/lib/auth/permissions';
@@ -351,8 +355,94 @@ export const StaffManager: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<StaffMember | null>(null);
+  const [editingPermissions, setEditingPermissions] = useState<AppPermission[]>([]);
+  const [isAdjustingPerms, setIsAdjustingPerms] = useState(false);
+  const [savingPerms, setSavingPerms] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleOpenMemberPermissions = (member: StaffMember) => {
+    setSelectedMember(member);
+    setEditingPermissions((member.effectivePermissions as AppPermission[]) || []);
+    setIsAdjustingPerms(false);
+  };
+
+  const handleTogglePermission = (permId: AppPermission) => {
+    setEditingPermissions((prev) =>
+      prev.includes(permId) ? prev.filter((p) => p !== permId) : [...prev, permId]
+    );
+  };
+
+  const handleApplyPreset = (presetPerms: AppPermission[]) => {
+    setEditingPermissions(presetPerms);
+  };
+
+  const handleSaveStaffPermissions = async () => {
+    if (!selectedMember) return;
+    if (selectedMember.isSuperAdmin) {
+      alert('The permanent Super Admin (Damon) cannot be modified.');
+      return;
+    }
+
+    setSavingPerms(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action: 'update_permissions',
+          discord_user_id: selectedMember.discord_user_id,
+          permissions: editingPermissions,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to update permissions');
+      }
+
+      const resData = await res.json();
+      const updatedMember = resData.member;
+
+      // Update local staff list
+      setStaff((prev) =>
+        prev.map((s) =>
+          s.discord_user_id === selectedMember.discord_user_id
+            ? {
+                ...s,
+                effectivePermissions: editingPermissions,
+                ...(updatedMember || {}),
+              }
+            : s
+        )
+      );
+
+      setSelectedMember((prev) =>
+        prev
+          ? {
+              ...prev,
+              effectivePermissions: editingPermissions,
+              ...(updatedMember || {}),
+            }
+          : null
+      );
+
+      setIsAdjustingPerms(false);
+      alert(`Permissions updated successfully for ${selectedMember.discord_display_name}!`);
+    } catch (err: any) {
+      alert(`Error updating permissions: ${err.message}`);
+    } finally {
+      setSavingPerms(false);
+    }
+  };
 
   const fetchStaff = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
@@ -994,7 +1084,7 @@ export const StaffManager: React.FC = () => {
                 {/* Footer Controls & Details */}
                 <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between">
                   <button
-                    onClick={() => setSelectedMember(member)}
+                    onClick={() => handleOpenMemberPermissions(member)}
                     className="text-xs font-bold text-vital-400 hover:text-vital-300 flex items-center gap-1 transition-colors"
                   >
                     <span>View Permissions</span>
@@ -1069,12 +1159,28 @@ export const StaffManager: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedMember(null)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                {(canManageStaff || canManagePermissions || isSuperAdmin) && !selectedMember.isSuperAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAdjustingPerms(!isAdjustingPerms)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                      isAdjustingPerms
+                        ? 'bg-vital-500 text-white border-vital-400 shadow-md shadow-vital-500/20'
+                        : 'bg-white/5 hover:bg-white/10 text-vital-400 border-vital-500/30'
+                    }`}
+                  >
+                    <Sliders size={13} />
+                    <span>{isAdjustingPerms ? 'View Mode' : 'Adjust Permissions'}</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 space-y-3 custom-scrollbar">
@@ -1090,30 +1196,129 @@ export const StaffManager: React.FC = () => {
                 </div>
               ) : null}
 
+              {/* Quick Presets for Adjusting Mode */}
+              {isAdjustingPerms && (
+                <div className="p-3.5 rounded-2xl bg-vital-500/10 border border-vital-500/20 space-y-2.5 mb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-vital-400 uppercase tracking-wider font-tech">
+                      Quick Presets:
+                    </span>
+                    <span className="text-[11px] font-mono text-gray-300">
+                      {editingPermissions.length} / {PERMISSION_DEFINITIONS.length} active
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleApplyPreset([
+                          'admin.access',
+                          'rules.view',
+                          'rules.edit',
+                          'rules.publish',
+                          'rules.history',
+                          'staff.view',
+                          'staff.manage',
+                          'permissions.manage',
+                          'audit.view',
+                          'settings.manage',
+                        ])
+                      }
+                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors"
+                    >
+                      Full Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleApplyPreset([
+                          'admin.access',
+                          'rules.view',
+                          'rules.edit',
+                          'rules.publish',
+                          'rules.history',
+                          'staff.view',
+                        ])
+                      }
+                      className="px-2.5 py-1 rounded-lg bg-vital-500/20 hover:bg-vital-500/30 text-vital-300 text-xs font-bold transition-colors"
+                    >
+                      Rules Publisher
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleApplyPreset(['admin.access', 'rules.view', 'rules.edit', 'staff.view'])
+                      }
+                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors"
+                    >
+                      Rules Editor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPreset(['admin.access', 'rules.view', 'staff.view'])}
+                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors"
+                    >
+                      Console Viewer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPreset([])}
+                      className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-colors"
+                    >
+                      Revoke Console
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {PERMISSION_DEFINITIONS.map((def) => {
+                const isSelectedInEdit = editingPermissions.includes(def.id);
                 const hasPerm =
                   selectedMember.isSuperAdmin ||
-                  selectedMember.effectivePermissions?.includes(def.id);
+                  (isAdjustingPerms ? isSelectedInEdit : selectedMember.effectivePermissions?.includes(def.id));
                 const grantedBy = selectedMember.isSuperAdmin
                   ? ['Super Admin Authority']
+                  : isAdjustingPerms && isSelectedInEdit
+                  ? ['Custom Staff Permission']
                   : selectedMember.roleBreakdown?.[def.id] || [];
 
                 return (
                   <div
                     key={def.id}
-                    className={`p-3.5 rounded-2xl border transition-colors ${
+                    onClick={() => {
+                      if (isAdjustingPerms && !selectedMember.isSuperAdmin) {
+                        handleTogglePermission(def.id);
+                      }
+                    }}
+                    className={`p-3.5 rounded-2xl border transition-all ${
+                      isAdjustingPerms && !selectedMember.isSuperAdmin ? 'cursor-pointer hover:border-vital-500/60' : ''
+                    } ${
                       hasPerm
-                        ? 'bg-white/[0.02] border-white/10'
+                        ? isAdjustingPerms
+                          ? 'bg-vital-500/10 border-vital-500/40 shadow-sm'
+                          : 'bg-white/[0.02] border-white/10'
                         : 'opacity-40 border-white/5 bg-transparent'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            hasPerm ? 'bg-emerald-400' : 'bg-gray-600'
-                          }`}
-                        />
+                      <div className="flex items-center gap-2.5">
+                        {isAdjustingPerms && !selectedMember.isSuperAdmin ? (
+                          <div
+                            className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                              isSelectedInEdit
+                                ? 'bg-vital-500 border-vital-400 text-white'
+                                : 'border-white/20 bg-dark-950'
+                            }`}
+                          >
+                            {isSelectedInEdit && <Check size={12} />}
+                          </div>
+                        ) : (
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              hasPerm ? 'bg-emerald-400' : 'bg-gray-600'
+                            }`}
+                          />
+                        )}
                         <span className="text-sm font-bold text-white">{def.name}</span>
                       </div>
                       <span className="text-[10px] font-mono font-bold text-gray-400 uppercase">
@@ -1121,10 +1326,10 @@ export const StaffManager: React.FC = () => {
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-400 mt-1 pl-4">{def.description}</p>
+                    <p className="text-xs text-gray-400 mt-1 pl-6">{def.description}</p>
 
-                    {hasPerm && grantedBy.length > 0 && (
-                      <div className="mt-2.5 pt-2 border-t border-white/5 pl-4 flex items-center gap-1.5 text-[11px] text-vital-400">
+                    {hasPerm && grantedBy.length > 0 && !isAdjustingPerms && (
+                      <div className="mt-2.5 pt-2 border-t border-white/5 pl-6 flex items-center gap-1.5 text-[11px] text-vital-400">
                         <span className="text-gray-500 font-medium">Granted by:</span>
                         <span className="font-bold">{grantedBy.join(', ')}</span>
                       </div>
@@ -1133,6 +1338,31 @@ export const StaffManager: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Adjusting Mode Footer Action Controls */}
+            {isAdjustingPerms && !selectedMember.isSuperAdmin && (
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingPermissions((selectedMember.effectivePermissions as AppPermission[]) || []);
+                    setIsAdjustingPerms(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveStaffPermissions}
+                  disabled={savingPerms}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-bold text-xs shadow-lg shadow-vital-500/25 transition-all disabled:opacity-50"
+                >
+                  <Save size={14} />
+                  <span>{savingPerms ? 'Saving...' : 'Save Permissions'}</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

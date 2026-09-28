@@ -19,6 +19,15 @@ async function safeApiCall<T>(url: string, init?: RequestInit): Promise<T | null
   return null;
 }
 
+export interface RulesHeroConfig {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  pillars?: string[];
+  updatedDateOverride?: string;
+}
+
 export interface ClientRulesData {
   categories: DbRuleCategory[];
   rules: DbRule[];
@@ -27,6 +36,7 @@ export interface ClientRulesData {
   currentVersion: number;
   lastPublishedAt?: string;
   lastPublishedBy?: string;
+  heroConfig?: RulesHeroConfig;
 }
 
 /**
@@ -49,7 +59,15 @@ export async function getClientRulesData(): Promise<ClientRulesData> {
       supabase.from('rule_versions').select('*').order('version_number', { ascending: false }).limit(1).maybeSingle(),
     ]);
 
-    let categories: DbRuleCategory[] = catsRes.data || [];
+    let allRawCategories: any[] = catsRes.data || [];
+    let heroConfig: RulesHeroConfig | undefined;
+    const heroRow = allRawCategories.find((c) => c.id === '__hero_config__');
+    if (heroRow && heroRow.description) {
+      try {
+        heroConfig = JSON.parse(heroRow.description);
+      } catch {}
+    }
+    let categories: DbRuleCategory[] = allRawCategories.filter((c) => c.id !== '__hero_config__');
     let rules: DbRule[] = rulesRes.data || [];
     const drafts: DbRuleDraft[] = draftsRes.data || [];
     const currentVersion = verRes.data?.version_number || 1;
@@ -149,6 +167,7 @@ export async function getClientRulesData(): Promise<ClientRulesData> {
       currentVersion,
       lastPublishedAt,
       lastPublishedBy,
+      heroConfig,
     };
   } catch (err) {
     console.warn('[ClientRules] Error querying Supabase, using initial website dataset:', err);
@@ -194,12 +213,18 @@ export async function getClientRulesData(): Promise<ClientRulesData> {
  */
 export async function syncExistingRulesToSupabase(
   user: { discordId: string; displayName: string },
-  force = false
+  force = false,
+  currentCategories?: DbRuleCategory[],
+  currentRules?: DbRule[]
 ): Promise<{ success: boolean; message: string }> {
-  // 1. Try server endpoint first
+  // 1. Try server endpoint first (with payload if provided)
   const apiRes = await safeApiCall<{ success: boolean; message: string }>(
     `/api/admin/rules/seed${force ? '?force=true' : ''}`,
-    { method: 'POST' }
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories: currentCategories, rules: currentRules }),
+    }
   );
   if (apiRes) return apiRes;
 
@@ -215,35 +240,68 @@ export async function syncExistingRulesToSupabase(
     throw new Error(testErr.message);
   }
 
+  // Use provided categories or default website categories
+  const categoriesToUpsert =
+    currentCategories && currentCategories.length > 0
+      ? currentCategories
+      : RULE_CATEGORIES.map((c, idx) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          icon: c.iconName,
+          sort_order: idx + 1,
+          enabled: true,
+        }));
+
   // Upsert categories
-  const catRows = RULE_CATEGORIES.map((c, idx) => ({
+  const catRows = categoriesToUpsert.map((c, idx) => ({
     id: c.id,
     title: c.title,
     description: c.description,
-    icon: c.iconName,
-    sort_order: idx + 1,
-    enabled: true,
+    icon: c.icon || (c as any).iconName || 'ShieldAlert',
+    sort_order: c.sort_order ?? idx + 1,
+    enabled: c.enabled ?? true,
     updated_at: new Date().toISOString(),
   }));
   const { error: catErr } = await supabase.from('rule_categories').upsert(catRows, { onConflict: 'id' });
   if (catErr) throw new Error(`Category import error: ${catErr.message}`);
 
-  // Upsert all 31 rules
-  const ruleRows = RULES.map((r, idx) => ({
+  // Use provided rules or default website rules
+  const rulesToUpsert =
+    currentRules && currentRules.length > 0
+      ? currentRules
+      : RULES.map((r, idx) => ({
+          id: r.id,
+          category_id: r.category,
+          rule_number: idx + 1,
+          title: r.title,
+          short_title: r.shortTitle || r.title,
+          short_description: r.summary || '',
+          content: r.content,
+          aliases: r.aliases || [],
+          featured: Boolean(r.featured),
+          core_rule_number: r.coreRuleNumber || null,
+          severity: 'standard',
+          callouts: r.callouts || [],
+          sort_order: idx + 1,
+          enabled: true,
+        }));
+
+  const ruleRows = rulesToUpsert.map((r, idx) => ({
     id: r.id,
-    category_id: r.category,
-    rule_number: idx + 1,
+    category_id: r.category_id || (r as any).category,
+    rule_number: r.rule_number ?? idx + 1,
     title: r.title,
-    short_title: r.shortTitle || r.title,
-    short_description: r.summary || '',
+    short_title: r.short_title || (r as any).shortTitle || r.title,
+    short_description: r.short_description || (r as any).summary || '',
     content: r.content,
     aliases: r.aliases || [],
     featured: Boolean(r.featured),
-    core_rule_number: r.coreRuleNumber || null,
-    severity: 'standard',
+    core_rule_number: r.core_rule_number || (r as any).coreRuleNumber || null,
+    severity: r.severity || 'standard',
     callouts: r.callouts || [],
-    sort_order: idx + 1,
-    enabled: true,
+    sort_order: r.sort_order ?? idx + 1,
+    enabled: r.enabled ?? true,
     updated_at: new Date().toISOString(),
   }));
   const { error: ruleErr } = await supabase.from('rules').upsert(ruleRows, { onConflict: 'id' });
@@ -626,4 +684,84 @@ export async function saveClientCategory(categoryData: {
   );
 
   return !error;
+}
+
+/**
+ * Delete category by ID.
+ */
+export async function deleteClientCategory(categoryId: string): Promise<{ success: boolean; message?: string }> {
+  const apiRes = await safeApiCall<{ success: boolean; error?: string }>(`/api/admin/rules/categories?id=${encodeURIComponent(categoryId)}`, {
+    method: 'DELETE',
+  });
+  if (apiRes) return { success: apiRes.success, message: apiRes.error };
+
+  const { error } = await supabase.from('rule_categories').delete().eq('id', categoryId);
+  return { success: !error, message: error?.message };
+}
+
+/**
+ * Fetch Rules Hero customization configuration.
+ */
+export async function getRulesHeroConfig(): Promise<RulesHeroConfig> {
+  try {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('vital_rules_hero_config');
+      if (cached) {
+        try { return JSON.parse(cached); } catch {}
+      }
+    }
+    const { data } = await supabase
+      .from('rule_categories')
+      .select('description')
+      .eq('id', '__hero_config__')
+      .maybeSingle();
+
+    if (data && data.description) {
+      const parsed = JSON.parse(data.description);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('vital_rules_hero_config', JSON.stringify(parsed));
+      }
+      return parsed;
+    }
+  } catch {}
+  return {
+    eyebrow: 'VITAL ROLEPLAY CONSTITUTION',
+    title: 'SERVER RULES',
+    subtitle: 'Serious roleplay works when everyone understands the expectations.',
+    description: 'Vital RP is built on player-driven storytelling, deep immersion, common sense, and putting roleplay over ruleplay. Familiarize yourself with our server legislation to keep Los Santos authentic and engaging for everyone.',
+    pillars: [
+      'Storytelling First',
+      'Quality RP',
+      'Deep Immersion',
+      'Common Sense Expected',
+      'Roleplay Over Ruleplay',
+    ],
+    updatedDateOverride: '',
+  };
+}
+
+/**
+ * Save Rules Hero customization configuration.
+ */
+export async function saveRulesHeroConfig(config: RulesHeroConfig): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('vital_rules_hero_config', JSON.stringify(config));
+  }
+  try {
+    const { error } = await supabase.from('rule_categories').upsert(
+      {
+        id: '__hero_config__',
+        title: 'Hero Configuration',
+        description: JSON.stringify(config),
+        icon: 'LayoutTemplate',
+        sort_order: 9999,
+        enabled: false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+    return !error;
+  } catch {
+    return false;
+  }
 }

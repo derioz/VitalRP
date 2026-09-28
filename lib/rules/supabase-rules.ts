@@ -139,7 +139,9 @@ let memHistory: any[] = [];
  */
 export async function seedExistingRulesIfEmpty(
   supabaseClient?: any,
-  force = false
+  force = false,
+  customCategories?: any[],
+  customRules?: any[]
 ): Promise<{ success: boolean; message: string; categoriesCount: number; rulesCount: number }> {
   const supabase = supabaseClient || createAdminClient();
   if (!supabase) {
@@ -157,16 +159,28 @@ export async function seedExistingRulesIfEmpty(
     }
 
     if (force || !existingCats || existingCats.length === 0) {
-      console.log('[SupabaseRules] Populating Supabase with existing website rules...');
+      console.log('[SupabaseRules] Populating Supabase with website rules...');
 
-      // Upsert all 9 categories
-      const catRows = RULE_CATEGORIES.map((c, idx) => ({
+      // Upsert categories
+      const categoriesToUpsert =
+        customCategories && customCategories.length > 0
+          ? customCategories
+          : RULE_CATEGORIES.map((c, idx) => ({
+              id: c.id,
+              title: c.title,
+              description: c.description,
+              icon: c.iconName,
+              sort_order: idx + 1,
+              enabled: true,
+            }));
+
+      const catRows = categoriesToUpsert.map((c: any, idx: number) => ({
         id: c.id,
         title: c.title,
-        description: c.description,
-        icon: c.iconName,
-        sort_order: idx + 1,
-        enabled: true,
+        description: c.description || '',
+        icon: c.icon || c.iconName || 'ShieldAlert',
+        sort_order: c.sort_order ?? idx + 1,
+        enabled: c.enabled ?? true,
         updated_at: new Date().toISOString(),
       }));
       const { error: catErr } = await supabase.from('rule_categories').upsert(catRows, { onConflict: 'id' });
@@ -174,22 +188,42 @@ export async function seedExistingRulesIfEmpty(
         console.error('[SupabaseRules] Error upserting categories:', catErr);
       }
 
-      // Upsert all 31 rules
-      const ruleRows = RULES.map((r, idx) => ({
+      // Upsert rules
+      const rulesToUpsert =
+        customRules && customRules.length > 0
+          ? customRules
+          : RULES.map((r, idx) => ({
+              id: r.id,
+              category_id: r.category,
+              rule_number: idx + 1,
+              title: r.title,
+              short_title: r.shortTitle || r.title,
+              short_description: r.summary || '',
+              content: r.content,
+              aliases: r.aliases || [],
+              featured: Boolean(r.featured),
+              core_rule_number: r.coreRuleNumber || null,
+              severity: 'standard',
+              callouts: r.callouts || [],
+              sort_order: idx + 1,
+              enabled: true,
+            }));
+
+      const ruleRows = rulesToUpsert.map((r: any, idx: number) => ({
         id: r.id,
-        category_id: r.category,
-        rule_number: idx + 1,
+        category_id: r.category_id || r.category,
+        rule_number: r.rule_number ?? idx + 1,
         title: r.title,
-        short_title: r.shortTitle || r.title,
-        short_description: r.summary || '',
+        short_title: r.short_title || r.shortTitle || r.title,
+        short_description: r.short_description || r.summary || '',
         content: r.content,
         aliases: r.aliases || [],
         featured: Boolean(r.featured),
-        core_rule_number: r.coreRuleNumber || null,
-        severity: 'standard',
+        core_rule_number: r.core_rule_number || r.coreRuleNumber || null,
+        severity: r.severity || 'standard',
         callouts: r.callouts || [],
-        sort_order: idx + 1,
-        enabled: true,
+        sort_order: r.sort_order ?? idx + 1,
+        enabled: r.enabled ?? true,
         updated_at: new Date().toISOString(),
       }));
       const { error: rulesErr } = await supabase.from('rules').upsert(ruleRows, { onConflict: 'id' });
@@ -221,16 +255,16 @@ export async function seedExistingRulesIfEmpty(
 
       await recordAuditEvent({
         discordUserId: '150580708144840704',
-        displayName: 'System (Migration)',
-        action: 'rules.initial_migration',
+        displayName: 'System (Sync)',
+        action: 'rules.force_sync',
         target: 'rules',
-        details: 'Imported 31 existing website rules across 9 categories into Supabase (Version 1)',
+        details: `Saved ${ruleRows.length} rules across ${catRows.length} categories to Supabase`,
       });
 
-      console.log('[SupabaseRules] Successfully completed automated initial seed of 31 rules and 9 categories!');
+      console.log(`[SupabaseRules] Successfully saved ${ruleRows.length} rules and ${catRows.length} categories to Supabase!`);
       return {
         success: true,
-        message: 'Successfully seeded 31 rules across 9 categories into Supabase',
+        message: `Successfully force saved ${ruleRows.length} rules across ${catRows.length} categories into Supabase`,
         categoriesCount: catRows.length,
         rulesCount: ruleRows.length,
       };
@@ -255,6 +289,8 @@ export async function getPublishedRulesAndCategories(): Promise<{
   categories: DbRuleCategory[];
   rules: DbRule[];
   versionNumber: number;
+  lastUpdatedAt?: string;
+  heroConfig?: any;
 }> {
   const supabase = createAdminClient();
 
@@ -264,7 +300,6 @@ export async function getPublishedRulesAndCategories(): Promise<{
         supabase
           .from('rule_categories')
           .select('*')
-          .eq('enabled', true)
           .order('sort_order', { ascending: true }),
         supabase
           .from('rules')
@@ -274,7 +309,7 @@ export async function getPublishedRulesAndCategories(): Promise<{
           .order('sort_order', { ascending: true }),
         supabase
           .from('rule_versions')
-          .select('version_number')
+          .select('version_number, published_at')
           .order('version_number', { ascending: false })
           .limit(1)
           .maybeSingle(),
@@ -288,7 +323,6 @@ export async function getPublishedRulesAndCategories(): Promise<{
             supabase
               .from('rule_categories')
               .select('*')
-              .eq('enabled', true)
               .order('sort_order', { ascending: true }),
             supabase
               .from('rules')
@@ -298,7 +332,7 @@ export async function getPublishedRulesAndCategories(): Promise<{
               .order('sort_order', { ascending: true }),
             supabase
               .from('rule_versions')
-              .select('version_number')
+              .select('version_number, published_at')
               .order('version_number', { ascending: false })
               .limit(1)
               .maybeSingle(),
@@ -307,10 +341,31 @@ export async function getPublishedRulesAndCategories(): Promise<{
       }
 
       if (!catsRes.error && catsRes.data && catsRes.data.length > 0 && !rulesRes.error && rulesRes.data && rulesRes.data.length > 0) {
+        let heroConfig: any = null;
+        const heroRow = catsRes.data.find((c: any) => c.id === '__hero_config__');
+        if (heroRow && heroRow.description) {
+          try {
+            heroConfig = JSON.parse(heroRow.description);
+          } catch {}
+        }
+        const filteredCategories = catsRes.data.filter(
+          (c: any) => c.id !== '__hero_config__' && c.enabled !== false
+        );
+
+        // Find latest updated_at from rules
+        let latestDate = verRes.data?.published_at;
+        for (const r of rulesRes.data) {
+          if (r.updated_at && (!latestDate || new Date(r.updated_at) > new Date(latestDate))) {
+            latestDate = r.updated_at;
+          }
+        }
+
         return {
-          categories: catsRes.data,
+          categories: filteredCategories,
           rules: rulesRes.data,
           versionNumber: verRes.data?.version_number || 1,
+          lastUpdatedAt: latestDate || new Date().toISOString(),
+          heroConfig,
         };
       }
     } catch (err) {

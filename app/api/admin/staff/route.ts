@@ -116,7 +116,119 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. Individual Staff Member Status Update
+    // 2. Adjust Staff Permissions Action
+    if (body.action === 'update_permissions' || Array.isArray(body.permissions)) {
+      const { discord_user_id, permissions } = body;
+
+      if (!discord_user_id) {
+        return NextResponse.json({ error: 'Missing discord_user_id' }, { status: 400 });
+      }
+
+      // CRITICAL PROTECTION: Super Admin (Damon) cannot be downgraded or modified
+      if (discord_user_id === SUPER_ADMIN_DISCORD_ID) {
+        return NextResponse.json(
+          { error: 'Forbidden. The permanent Super Admin (Damon) holds permanent, immutable permissions.' },
+          { status: 403 }
+        );
+      }
+
+      const supabase = createAdminClient();
+      if (!supabase) {
+        return NextResponse.json({ error: 'Supabase client unavailable' }, { status: 500 });
+      }
+
+      const permsArray: string[] = Array.isArray(permissions) ? permissions : [];
+
+      // 1. Get staff record
+      const { data: memberRecord } = await supabase
+        .from('staff_members')
+        .select('*')
+        .eq('discord_user_id', discord_user_id)
+        .maybeSingle();
+
+      const staffDisplayName = memberRecord?.discord_display_name || discord_user_id;
+
+      // 2. Upsert in discord_role_mappings for user:discord_user_id
+      const roleMappingIdKey = `user:${discord_user_id}`;
+      const { data: existingMapping } = await supabase
+        .from('discord_role_mappings')
+        .select('id')
+        .eq('discord_role_id', roleMappingIdKey)
+        .maybeSingle();
+
+      let mappingId = existingMapping?.id;
+      if (!mappingId) {
+        const { data: newMapping } = await supabase
+          .from('discord_role_mappings')
+          .insert({
+            discord_role_id: roleMappingIdKey,
+            discord_role_name: `Staff: ${staffDisplayName}`,
+            discord_role_color: '#f97316',
+            enabled: true,
+          })
+          .select('id')
+          .single();
+        mappingId = newMapping?.id;
+      }
+
+      if (mappingId) {
+        // Clear previous custom permissions for this user
+        await supabase
+          .from('discord_role_permissions')
+          .delete()
+          .eq('role_mapping_id', mappingId);
+
+        // Insert new permissions
+        if (permsArray.length > 0) {
+          const permRows = permsArray.map((p) => ({
+            role_mapping_id: mappingId,
+            permission: p,
+          }));
+          await supabase.from('discord_role_permissions').insert(permRows);
+        }
+      }
+
+      // 3. Update last_known_roles in staff_members with perm: tokens for safety
+      if (memberRecord) {
+        const existingRoles = Array.isArray(memberRecord.last_known_roles)
+          ? memberRecord.last_known_roles.filter((r: any) => typeof r === 'string' && !r.startsWith('perm:'))
+          : [];
+        const newRoles = [...existingRoles, ...permsArray.map((p) => `perm:${p}`)];
+        await supabase
+          .from('staff_members')
+          .update({ last_known_roles: newRoles, updated_at: new Date().toISOString() })
+          .eq('discord_user_id', discord_user_id);
+      }
+
+      // 4. Invalidate role cache
+      const { invalidateRoleCache } = await import('@/lib/auth/vital-admin');
+      invalidateRoleCache(discord_user_id);
+
+      await recordAuditEvent({
+        discordUserId: session.discordId,
+        displayName: session.displayName,
+        action: 'staff.permissions_updated',
+        target: discord_user_id,
+        details: `Updated permissions for ${staffDisplayName}: ${permsArray.join(', ') || 'none'}`,
+        afterData: { permissions: permsArray },
+      });
+
+      // Return updated enriched member
+      const { data: updatedList } = await supabase
+        .from('staff_members')
+        .select('*')
+        .eq('discord_user_id', discord_user_id);
+
+      const enriched = await enrichStaffRoster(updatedList || [], supabase);
+
+      return NextResponse.json({
+        success: true,
+        message: `Updated permissions for ${staffDisplayName}!`,
+        member: enriched[0],
+      });
+    }
+
+    // 3. Individual Staff Member Status Update
     const { discord_user_id, active } = body;
 
     if (!discord_user_id) {

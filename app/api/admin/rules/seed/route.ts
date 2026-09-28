@@ -16,7 +16,19 @@ export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
-    const result = await seedExistingRulesIfEmpty(undefined, force);
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Body is optional
+    }
+
+    const result = await seedExistingRulesIfEmpty(
+      undefined,
+      force,
+      body.categories,
+      body.rules
+    );
     return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json(

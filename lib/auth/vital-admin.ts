@@ -352,7 +352,8 @@ export async function getEffectiveAuth(
 
       if (!error && mappings && mappings.length > 0) {
         for (const mapping of mappings) {
-          if (memberRoles.includes(mapping.discord_role_id)) {
+          const isUserMatch = mapping.discord_role_id === `user:${discordId}` || mapping.discord_role_id === discordId;
+          if (memberRoles.includes(mapping.discord_role_id) || isUserMatch) {
             matchedRoleNames.push(mapping.discord_role_name);
             const perms = (mapping.discord_role_permissions as any[]) || [];
             for (const p of perms) {
@@ -361,8 +362,9 @@ export async function getEffectiveAuth(
               if (!roleBreakdown[permKey]) {
                 roleBreakdown[permKey] = [];
               }
-              if (!roleBreakdown[permKey].includes(mapping.discord_role_name)) {
-                roleBreakdown[permKey].push(mapping.discord_role_name);
+              const sourceLabel = isUserMatch ? 'Custom Staff Override' : mapping.discord_role_name;
+              if (!roleBreakdown[permKey].includes(sourceLabel)) {
+                roleBreakdown[permKey].push(sourceLabel);
               }
             }
           }
@@ -998,13 +1000,15 @@ export async function enrichStaffRoster(staffList: any[], supabase?: any) {
     });
   }
 
-  // Pre-load role permissions map once from Supabase
+  // Pre-load role permissions and user permission overrides map from Supabase
   const rolePermissionsMap = new Map<string, string[]>();
+  const userPermissionsMap = new Map<string, string[]>();
   if (supabase) {
     try {
       const { data: mappings } = await supabase
         .from('discord_role_mappings')
         .select(`
+          discord_role_id,
           discord_role_name,
           discord_role_permissions (
             permission
@@ -1016,6 +1020,10 @@ export async function enrichStaffRoster(staffList: any[], supabase?: any) {
         for (const m of mappings) {
           const perms = (m.discord_role_permissions as any[])?.map((p: any) => p.permission) || [];
           rolePermissionsMap.set(m.discord_role_name, perms);
+          if (m.discord_role_id?.startsWith('user:')) {
+            const uid = m.discord_role_id.replace('user:', '');
+            userPermissionsMap.set(uid, perms);
+          }
         }
       }
     } catch {
@@ -1067,6 +1075,28 @@ export async function enrichStaffRoster(staffList: any[], supabase?: any) {
       permsSet.add('admin.access');
       permsSet.add('staff.view');
       permsSet.add('rules.view');
+    }
+
+    // Custom user permissions from user-specific role mapping
+    const customUserPerms = userPermissionsMap.get(member.discord_user_id) || [];
+    for (const p of customUserPerms) {
+      permsSet.add(p);
+      roleBreakdown[p] = roleBreakdown[p] || [];
+      if (!roleBreakdown[p].includes('Custom Override')) {
+        roleBreakdown[p].push('Custom Override');
+      }
+    }
+
+    // Custom permissions embedded in last_known_roles as perm: tokens
+    for (const item of rolesToCheck) {
+      if (typeof item === 'string' && item.startsWith('perm:')) {
+        const perm = item.replace('perm:', '');
+        permsSet.add(perm);
+        roleBreakdown[perm] = roleBreakdown[perm] || [];
+        if (!roleBreakdown[perm].includes('Staff Override')) {
+          roleBreakdown[perm].push('Staff Override');
+        }
+      }
     }
 
     return {
