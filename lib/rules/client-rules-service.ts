@@ -67,7 +67,7 @@ export async function getClientRulesData(): Promise<ClientRulesData> {
         heroConfig = JSON.parse(heroRow.description);
       } catch {}
     }
-    let categories: DbRuleCategory[] = allRawCategories.filter((c) => c.id !== '__hero_config__');
+    let categories: DbRuleCategory[] = allRawCategories.filter((c) => !c.id.startsWith('__'));
     let rules: DbRule[] = rulesRes.data || [];
     const drafts: DbRuleDraft[] = draftsRes.data || [];
     const currentVersion = verRes.data?.version_number || 1;

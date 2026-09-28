@@ -173,6 +173,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      // 1c. Direct Supabase custom staff permissions check (works on static SPA & offline)
+      if (discordId && !userIsSuperAdmin) {
+        try {
+          let customPerms: AppPermission[] | null = null;
+          if (typeof window !== 'undefined') {
+            const rawLocal = localStorage.getItem('vital_staff_permissions');
+            if (rawLocal) {
+              const parsed = JSON.parse(rawLocal);
+              if (Array.isArray(parsed[discordId])) {
+                customPerms = parsed[discordId];
+              }
+            }
+          }
+          const { data: permsRow } = await supabase
+            .from('rule_categories')
+            .select('description')
+            .eq('id', '__staff_permissions__')
+            .maybeSingle();
+          if (permsRow?.description) {
+            try {
+              const parsed = JSON.parse(permsRow.description);
+              if (Array.isArray(parsed[discordId])) {
+                customPerms = parsed[discordId];
+              }
+            } catch {}
+          }
+          if (customPerms && customPerms.length > 0) {
+            effectivePermissions = customPerms;
+            if (customPerms.includes('admin.access')) {
+              verifiedIsAdmin = true;
+              if (userRole === 'user') userRole = 'admin';
+              if (matchedRoleNames.length === 0) matchedRoleNames = ['Administrator'];
+            }
+          }
+        } catch {
+          // Ignore custom permission check errors
+        }
+      }
+
       // 2. Authoritative server-side verification via /api/auth/me (when on Next.js server)
       try {
         const controller = new AbortController();

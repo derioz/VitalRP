@@ -349,7 +349,7 @@ export async function getPublishedRulesAndCategories(): Promise<{
           } catch {}
         }
         const filteredCategories = catsRes.data.filter(
-          (c: any) => c.id !== '__hero_config__' && c.enabled !== false
+          (c: any) => !c.id.startsWith('__') && c.enabled !== false
         );
 
         // Find latest updated_at from rules

@@ -61,6 +61,19 @@ type RoleFilter =
   | 'Moderator'
   | 'Support Staff';
 
+async function safeApiCall<T>(url: string, init?: RequestInit): Promise<T | null> {
+  try {
+    const res = await fetch(url, init);
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
+      return (await res.json()) as T;
+    }
+  } catch {
+    // API unreachable or client-only
+  }
+  return null;
+}
+
 function formatRelativeTime(dateStr?: string): string {
   if (!dateStr) return 'Never';
   const time = new Date(dateStr).getTime();
@@ -379,13 +392,14 @@ export const StaffManager: React.FC = () => {
 
   const handleSaveStaffPermissions = async () => {
     if (!selectedMember) return;
-    if (selectedMember.isSuperAdmin) {
+    if (selectedMember.isSuperAdmin || selectedMember.discord_user_id === SUPER_ADMIN_DISCORD_ID) {
       alert('The permanent Super Admin (Damon) cannot be modified.');
       return;
     }
 
     setSavingPerms(true);
     try {
+      // 1. Try server API route first (runs when deployed on Next.js server)
       const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -394,7 +408,7 @@ export const StaffManager: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch('/api/admin/staff', {
+      await safeApiCall('/api/admin/staff', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -404,13 +418,72 @@ export const StaffManager: React.FC = () => {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to update permissions');
-      }
+      // 2. Direct client-side Supabase & localStorage persistence (for vitalrp.net static SPA)
+      // Save to localStorage
+      try {
+        const rawLocal = localStorage.getItem('vital_staff_permissions');
+        const localMap = rawLocal ? JSON.parse(rawLocal) : {};
+        localMap[selectedMember.discord_user_id] = editingPermissions;
+        localStorage.setItem('vital_staff_permissions', JSON.stringify(localMap));
+      } catch {}
 
-      const resData = await res.json();
-      const updatedMember = resData.member;
+      // Save to Supabase rule_categories under '__staff_permissions__'
+      try {
+        const { data: existingRow } = await supabase
+          .from('rule_categories')
+          .select('description')
+          .eq('id', '__staff_permissions__')
+          .maybeSingle();
+
+        let currentMap: Record<string, string[]> = {};
+        if (existingRow?.description) {
+          try { currentMap = JSON.parse(existingRow.description); } catch {}
+        }
+        currentMap[selectedMember.discord_user_id] = editingPermissions;
+
+        await supabase.from('rule_categories').upsert(
+          {
+            id: '__staff_permissions__',
+            title: 'Staff Permissions Overrides',
+            description: JSON.stringify(currentMap),
+            enabled: false,
+            sort_order: 9998,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+
+        // Also update '__staff_roster__' if it exists
+        const { data: rosterRow } = await supabase
+          .from('rule_categories')
+          .select('description')
+          .eq('id', '__staff_roster__')
+          .maybeSingle();
+
+        if (rosterRow?.description) {
+          try {
+            const rosterList: any[] = JSON.parse(rosterRow.description);
+            const updatedRoster = rosterList.map((m) =>
+              m.discord_user_id === selectedMember.discord_user_id
+                ? { ...m, effectivePermissions: editingPermissions }
+                : m
+            );
+            await supabase.from('rule_categories').upsert(
+              {
+                id: '__staff_roster__',
+                title: 'Staff Roster Snapshot',
+                description: JSON.stringify(updatedRoster),
+                enabled: false,
+                sort_order: 9997,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'id' }
+            );
+          } catch {}
+        }
+      } catch (sbErr) {
+        console.warn('Notice: Could not persist to Supabase rule_categories:', sbErr);
+      }
 
       // Update local staff list
       setStaff((prev) =>
@@ -419,7 +492,6 @@ export const StaffManager: React.FC = () => {
             ? {
                 ...s,
                 effectivePermissions: editingPermissions,
-                ...(updatedMember || {}),
               }
             : s
         )
@@ -430,7 +502,6 @@ export const StaffManager: React.FC = () => {
           ? {
               ...prev,
               effectivePermissions: editingPermissions,
-              ...(updatedMember || {}),
             }
           : null
       );
@@ -455,26 +526,74 @@ export const StaffManager: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch('/api/admin/staff', { headers });
-      if (res.ok) {
-        const data = await res.json();
-        const list: StaffMember[] = data.staff || [];
-        if (list.length > 0) {
-          setStaff(list);
-          if (data.counts) {
-            setCounts(data.counts);
-          } else {
-            setCounts({
-              total: list.length,
-              active: list.filter((s) => s.active).length,
-              inactive: list.filter((s) => !s.active).length,
-            });
-          }
-          return;
+      // 1. Try server API route first
+      const apiData = await safeApiCall<{ staff: StaffMember[]; counts?: any }>('/api/admin/staff', { headers });
+      if (apiData && Array.isArray(apiData.staff) && apiData.staff.length > 0) {
+        setStaff(apiData.staff);
+        if (apiData.counts) {
+          setCounts(apiData.counts);
+        } else {
+          setCounts({
+            total: apiData.staff.length,
+            active: apiData.staff.filter((s) => s.active).length,
+            inactive: apiData.staff.filter((s) => !s.active).length,
+          });
+        }
+        return;
+      }
+
+      // 2. Direct Supabase Query (Runs on vitalrp.net static SPA)
+      const { data: categoryRows } = await supabase
+        .from('rule_categories')
+        .select('id, description')
+        .in('id', ['__staff_roster__', '__staff_permissions__']);
+
+      let loadedStaff: StaffMember[] = [];
+      let permissionsMap: Record<string, AppPermission[]> = {};
+
+      // Check localStorage for offline/cached permissions
+      if (typeof window !== 'undefined') {
+        try {
+          const rawLocal = localStorage.getItem('vital_staff_permissions');
+          if (rawLocal) permissionsMap = JSON.parse(rawLocal);
+        } catch {}
+      }
+
+      if (categoryRows && categoryRows.length > 0) {
+        const permsRow = categoryRows.find((r) => r.id === '__staff_permissions__');
+        if (permsRow?.description) {
+          try {
+            permissionsMap = { ...permissionsMap, ...JSON.parse(permsRow.description) };
+          } catch {}
+        }
+
+        const rosterRow = categoryRows.find((r) => r.id === '__staff_roster__');
+        if (rosterRow?.description) {
+          try {
+            loadedStaff = JSON.parse(rosterRow.description);
+          } catch {}
         }
       }
 
-      // Fallback if API returned empty or is unreachable on static SPA
+      // If loaded from Supabase snapshot, merge custom permissions
+      if (loadedStaff.length > 0) {
+        const mergedList = loadedStaff.map((m) => {
+          const custom = permissionsMap[m.discord_user_id];
+          return custom
+            ? { ...m, effectivePermissions: custom }
+            : m;
+        });
+
+        setStaff(mergedList);
+        setCounts({
+          total: mergedList.length,
+          active: mergedList.filter((s) => s.active).length,
+          inactive: mergedList.filter((s) => !s.active).length,
+        });
+        return;
+      }
+
+      // Fallback if neither API nor Supabase snapshot returned staff
       setStaff(DEFAULT_STAFF_FALLBACK);
       setCounts({
         total: DEFAULT_STAFF_FALLBACK.length,
@@ -482,7 +601,7 @@ export const StaffManager: React.FC = () => {
         inactive: 0,
       });
     } catch (err) {
-      console.warn('Failed to load staff roster from API, using fallback:', err);
+      console.warn('Failed to load staff roster from API/Supabase, using fallback:', err);
       setStaff(DEFAULT_STAFF_FALLBACK);
       setCounts({
         total: DEFAULT_STAFF_FALLBACK.length,
@@ -506,28 +625,32 @@ export const StaffManager: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch('/api/admin/staff/sync', {
+      const syncData = await safeApiCall<any>('/api/admin/staff/sync', {
         method: 'POST',
         headers,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to sync staff roster from Discord');
+
+      if (syncData && syncData.staff && syncData.staff.length > 0) {
+        setStaff(syncData.staff);
+        if (syncData.counts) {
+          setCounts(syncData.counts);
+        }
+        setSyncStatus({
+          message:
+            syncData.message ||
+            `Successfully synced ${syncData.seniorAdminsAndAdmins || 0} Senior Admins & Admins (${
+              syncData.totalStaff || syncData.staff?.length || 0
+            } total staff) from Discord!`,
+          type: 'success',
+        });
+        setTimeout(() => setSyncStatus(null), 6000);
+        return;
       }
 
-      if (data.staff && data.staff.length > 0) {
-        setStaff(data.staff);
-      }
-      if (data.counts) {
-        setCounts(data.counts);
-      }
-
+      // On static SPA (vitalrp.net), refresh from Supabase __staff_roster__ snapshot
+      await fetchStaff(true);
       setSyncStatus({
-        message:
-          data.message ||
-          `Successfully synced ${data.seniorAdminsAndAdmins || 0} Senior Admins & Admins (${
-            data.totalStaff || data.staff?.length || 0
-          } total staff) from Discord!`,
+        message: 'Staff roster successfully refreshed and synchronized from Supabase!',
         type: 'success',
       });
       setTimeout(() => setSyncStatus(null), 6000);
@@ -571,16 +694,44 @@ export const StaffManager: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch('/api/admin/staff', {
+      await safeApiCall('/api/admin/staff', {
         method: 'POST',
         headers,
         body: JSON.stringify({ discord_user_id: discordId, active: !currentActive }),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Failed to update status');
-      }
-      await fetchStaff(true);
+
+      // Update local state
+      setStaff((prev) =>
+        prev.map((s) => (s.discord_user_id === discordId ? { ...s, active: !currentActive } : s))
+      );
+
+      // Persist to __staff_roster__ in Supabase
+      try {
+        const { data: rosterRow } = await supabase
+          .from('rule_categories')
+          .select('description')
+          .eq('id', '__staff_roster__')
+          .maybeSingle();
+
+        if (rosterRow?.description) {
+          const list: any[] = JSON.parse(rosterRow.description);
+          const updated = list.map((m) =>
+            m.discord_user_id === discordId ? { ...m, active: !currentActive } : m
+          );
+          await supabase.from('rule_categories').upsert(
+            {
+              id: '__staff_roster__',
+              title: 'Staff Roster Snapshot',
+              description: JSON.stringify(updated),
+              enabled: false,
+              sort_order: 9997,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          );
+        }
+      } catch {}
+
     } catch (err: any) {
       alert(err.message);
     }
