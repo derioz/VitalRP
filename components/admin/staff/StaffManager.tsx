@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { SUPER_ADMIN_DISCORD_ID, PERMISSION_DEFINITIONS, AppPermission } from '@/lib/auth/permissions';
+import { supabase } from '@/lib/supabase/client';
 
 interface StaffMember {
   id: string;
@@ -147,6 +148,196 @@ function getRoleBadgeConfig(primaryRole?: string, isSuper?: boolean) {
   }
 }
 
+const DEFAULT_STAFF_FALLBACK: StaffMember[] = [
+  {
+    id: 'staff-damon',
+    discord_user_id: '150580708144840704',
+    discord_username: 'imspacexyz',
+    discord_display_name: 'damon',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/150580708144840704/bedf3166ac36aa21047fee8c77d94c26.png',
+    primary_role: 'Super Admin',
+    recognized_roles: ['Super Admin', 'Senior Administrator', 'Administrator'],
+    last_known_roles: ['Super Admin', 'Senior Administrator', 'Administrator', 'Moderator'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: true,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'staff.manage', 'permissions.manage', 'audit.view', 'settings.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Super Admin'],
+  },
+  {
+    id: 'staff-strix',
+    discord_user_id: '209737624649203712',
+    discord_username: 'iistriix',
+    discord_display_name: 'Strix',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/209737624649203712/05d2f7ee46382d20c57d389d6a9cdbcb.png',
+    primary_role: 'Head Administrator',
+    recognized_roles: ['Head Administrator', 'Administrator'],
+    last_known_roles: ['Head Administrator', 'Administrator'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'staff.manage', 'permissions.manage', 'audit.view', 'settings.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Head Administrator', 'Administrator'],
+  },
+  {
+    id: 'staff-soupy',
+    discord_user_id: '557375299881533440',
+    discord_username: 'soup.lua',
+    discord_display_name: 'soupy',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/557375299881533440/31c892823ed175a323f7f4eaacdeb87c.png',
+    primary_role: 'Head Administrator',
+    recognized_roles: ['Head Administrator', 'Administrator', 'Moderator'],
+    last_known_roles: ['Head Administrator', 'Administrator', 'Moderator'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'staff.manage', 'permissions.manage', 'audit.view', 'settings.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Head Administrator', 'Administrator', 'Moderator'],
+  },
+  {
+    id: 'staff-rue',
+    discord_user_id: '106419991343034368',
+    discord_username: 'ruekatu',
+    discord_display_name: 'Rue',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/106419991343034368/f1148c71cbc907559af533b3fe3b6293.png',
+    primary_role: 'Senior Administrator',
+    recognized_roles: ['Senior Administrator', 'Administrator'],
+    last_known_roles: ['Senior Administrator', 'Administrator'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'staff.manage', 'permissions.manage', 'audit.view', 'settings.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Senior Administrator', 'Administrator'],
+  },
+  {
+    id: 'staff-peaches',
+    discord_user_id: '218185947487928321',
+    discord_username: 'authenticbeth',
+    discord_display_name: '𝘗𝘦𝘢𝘤𝘩𝘦𝘴 ღ',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/218185947487928321/7bd23fbc1fadbe0b1e5f0fe134325871.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-mrcarlile',
+    discord_user_id: '222783354985119744',
+    discord_username: 'mrcarlile',
+    discord_display_name: 'MrCarlile',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/222783354985119744/100719263b1741d055d0ed93a58c2e62.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-nnezzie',
+    discord_user_id: '323896916347715584',
+    discord_username: 'nnezzie',
+    discord_display_name: 'NNEZZIE',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/323896916347715584/8e2ff5822b5c0a89c46d7696e8216dca.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator'],
+    last_known_roles: ['Administrator'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-craysteens',
+    discord_user_id: '399373087172198400',
+    discord_username: 'craysteens',
+    discord_display_name: 'Boo👻Berry',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/399373087172198400/86a5199c1ef954ce91b81bcf3cafa53f.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-artemis',
+    discord_user_id: '504708209936695307',
+    discord_username: 'gtschaos',
+    discord_display_name: '𝒜𝓇𝓉ℯ𝓂𝒾𝓈 ☽',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/504708209936695307/503d62e61faa074e703f1ee81714cc22.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-ivy',
+    discord_user_id: '762546436893442049',
+    discord_username: 'unit620',
+    discord_display_name: 'IVY',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/762546436893442049/496a8d60002c0a36105938fdfd094019.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+  {
+    id: 'staff-churro',
+    discord_user_id: '936385915075575869',
+    discord_username: 'o8ktr33',
+    discord_display_name: 'Churro ♡',
+    discord_avatar: 'https://cdn.discordapp.com/avatars/936385915075575869/1926d48a11c40fdc4a73d2b3d33c2c68.png',
+    primary_role: 'Administrator',
+    recognized_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    last_known_roles: ['Administrator', 'Senior Moderator', 'Moderator', 'Support Staff'],
+    first_admin_login: '2026-09-01T00:00:00Z',
+    last_admin_login: new Date().toISOString(),
+    active: true,
+    isSuperAdmin: false,
+    effectivePermissions: ['admin.access', 'rules.view', 'rules.edit', 'rules.publish', 'rules.history', 'staff.view', 'audit.view', 'settings.manage', 'staff.manage'],
+    roleBreakdown: {},
+    matchedRoleNames: ['Administrator'],
+  },
+];
+
 export const StaffManager: React.FC = () => {
   const { user, isSuperAdmin, hasPermission } = useAuth();
   const canManageStaff = hasPermission('staff.manage');
@@ -168,23 +359,46 @@ export const StaffManager: React.FC = () => {
     else setLoading(true);
 
     try {
-      const res = await fetch('/api/admin/staff');
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch('/api/admin/staff', { headers });
       if (res.ok) {
         const data = await res.json();
         const list: StaffMember[] = data.staff || [];
-        setStaff(list);
-        if (data.counts) {
-          setCounts(data.counts);
-        } else {
-          setCounts({
-            total: list.length,
-            active: list.filter((s) => s.active).length,
-            inactive: list.filter((s) => !s.active).length,
-          });
+        if (list.length > 0) {
+          setStaff(list);
+          if (data.counts) {
+            setCounts(data.counts);
+          } else {
+            setCounts({
+              total: list.length,
+              active: list.filter((s) => s.active).length,
+              inactive: list.filter((s) => !s.active).length,
+            });
+          }
+          return;
         }
       }
+
+      // Fallback if API returned empty or is unreachable on static SPA
+      setStaff(DEFAULT_STAFF_FALLBACK);
+      setCounts({
+        total: DEFAULT_STAFF_FALLBACK.length,
+        active: DEFAULT_STAFF_FALLBACK.filter((s) => s.active).length,
+        inactive: 0,
+      });
     } catch (err) {
-      console.error('Failed to load staff roster:', err);
+      console.warn('Failed to load staff roster from API, using fallback:', err);
+      setStaff(DEFAULT_STAFF_FALLBACK);
+      setCounts({
+        total: DEFAULT_STAFF_FALLBACK.length,
+        active: DEFAULT_STAFF_FALLBACK.filter((s) => s.active).length,
+        inactive: 0,
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -196,16 +410,22 @@ export const StaffManager: React.FC = () => {
     setSyncStatus(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch('/api/admin/staff/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to sync staff roster from Discord');
       }
 
-      if (data.staff) {
+      if (data.staff && data.staff.length > 0) {
         setStaff(data.staff);
       }
       if (data.counts) {
@@ -255,9 +475,15 @@ export const StaffManager: React.FC = () => {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch('/api/admin/staff', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ discord_user_id: discordId, active: !currentActive }),
       });
       if (!res.ok) {

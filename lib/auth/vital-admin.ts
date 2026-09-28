@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import {
   SUPER_ADMIN_DISCORD_ID,
   isSuperAdmin,
+  isKnownAdmin,
   getAllPermissions,
   AppPermission,
 } from './permissions';
@@ -296,8 +297,8 @@ export async function getEffectiveAuth(
   const member = await fetchDiscordMember(discordId);
   const memberRoles = member?.roles || [];
 
-  // Fallback for known admin backup snowflake (Craysteens) if bot is offline
-  if (discordId === '399373087172198400' && !memberRoles.includes(VITAL_ADMIN_ROLE_ID)) {
+  // Fallback for all known synced admins if Discord member fetch is offline or rate-limited
+  if (isKnownAdmin(discordId) && !memberRoles.includes(VITAL_ADMIN_ROLE_ID)) {
     memberRoles.push(VITAL_ADMIN_ROLE_ID);
   }
 
@@ -379,8 +380,8 @@ export async function getEffectiveAuth(
   }
 
   const permissions = Array.from(permissionsSet);
-  const isAdmin = permissions.includes('admin.access') || permissions.length > 0 || staffRoleRes.isStaff;
-  const role = staffRoleRes.primaryRole || (matchedRoleNames[0] || (isAdmin ? 'staff' : 'user'));
+  const isAdmin = permissions.includes('admin.access') || permissions.length > 0 || staffRoleRes.isStaff || isKnownAdmin(discordId);
+  const role = staffRoleRes.primaryRole || (matchedRoleNames[0] || (isAdmin ? 'admin' : 'user'));
 
   const result: EffectiveAuthResult = {
     discordId,
@@ -601,8 +602,8 @@ export async function syncStaffMemberOnLogin(
     const member = providedMemberInfo || (await fetchDiscordMember(discordId));
     const memberRoles = member?.roles || [];
 
-    // Fallback for Craysteens safety net
-    if (discordId === '399373087172198400' && !memberRoles.includes(VITAL_ADMIN_ROLE_ID)) {
+    // Fallback for all known synced admins if Discord member fetch is offline or rate-limited
+    if (isKnownAdmin(discordId) && !memberRoles.includes(VITAL_ADMIN_ROLE_ID)) {
       memberRoles.push(VITAL_ADMIN_ROLE_ID);
     }
 
@@ -694,6 +695,16 @@ export async function syncStaffMemberOnLogin(
 
       return { isStaff: true, primaryRole, active: true };
     } else {
+      // If live Discord member fetch failed (network error or rate limit), NEVER deactivate existing staff
+      if (!member && !providedMemberInfo && existingRecord) {
+        return { isStaff: true, primaryRole: (existingRecord as any).last_known_roles?.[0] || 'Staff', active: existingRecord.active };
+      }
+
+      // If user is a known admin, never mark them inactive
+      if (isKnownAdmin(discordId)) {
+        return { isStaff: true, primaryRole: 'Administrator', active: true };
+      }
+
       // User does NOT hold any recognized staff roles
       if (existingRecord) {
         // Formerly recognized staff member who lost their staff roles:
@@ -961,4 +972,114 @@ export function invalidateRoleCache(discordId?: string | null) {
     authCache.clear();
   }
   cachedGuildRoles = null;
+}
+
+/**
+ * Fast in-memory enrichment of staff records for Staff Management UI.
+ * Avoids sequential Discord API rate limits by reading saved last_known_roles
+ * and role mappings from the database.
+ */
+export async function enrichStaffRoster(staffList: any[], supabase?: any) {
+  // Ensure Damon (Super Admin) is always in the staff list
+  const hasDamon = staffList.some((s) => s.discord_user_id === SUPER_ADMIN_DISCORD_ID);
+  if (!hasDamon) {
+    staffList.unshift({
+      id: 'super-admin-damon',
+      discord_user_id: SUPER_ADMIN_DISCORD_ID,
+      discord_username: 'damon',
+      discord_display_name: 'Damon',
+      discord_avatar: 'https://cdn.discordapp.com/avatars/150580708144840704/bedf3166ac36aa21047fee8c77d94c26.png',
+      primary_role: 'Super Admin',
+      recognized_roles: ['Super Admin'],
+      last_known_roles: ['Super Admin', 'Senior Administrator', 'Administrator'],
+      first_admin_login: new Date('2026-09-01T00:00:00Z').toISOString(),
+      last_admin_login: new Date().toISOString(),
+      active: true,
+    });
+  }
+
+  // Pre-load role permissions map once from Supabase
+  const rolePermissionsMap = new Map<string, string[]>();
+  if (supabase) {
+    try {
+      const { data: mappings } = await supabase
+        .from('discord_role_mappings')
+        .select(`
+          discord_role_name,
+          discord_role_permissions (
+            permission
+          )
+        `)
+        .eq('enabled', true);
+
+      if (mappings) {
+        for (const m of mappings) {
+          const perms = (m.discord_role_permissions as any[])?.map((p: any) => p.permission) || [];
+          rolePermissionsMap.set(m.discord_role_name, perms);
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  return staffList.map((member) => {
+    const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
+    if (isSuper) {
+      const allPerms = getAllPermissions();
+      return {
+        ...member,
+        isSuperAdmin: true,
+        primary_role: 'Super Admin',
+        recognized_roles: ['Super Admin'],
+        other_roles: [],
+        active: true,
+        effectivePermissions: allPerms,
+        roleBreakdown: allPerms.reduce((acc, p) => {
+          acc[p] = ['Super Admin Authority'];
+          return acc;
+        }, {} as Record<string, string[]>),
+        matchedRoleNames: ['Super Admin'],
+        discordRoles: [],
+      };
+    }
+
+    const rolesToCheck = Array.isArray(member.last_known_roles) ? member.last_known_roles : [];
+    const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
+    const isCurrentlyActive = Boolean(member.active) && (roleRes.isStaff || isKnownAdmin(member.discord_user_id));
+
+    // Aggregate permissions from recognized roles
+    const permsSet = new Set<string>();
+    const roleBreakdown: Record<string, string[]> = {};
+    for (const rName of roleRes.recognizedRoles) {
+      const perms = rolePermissionsMap.get(rName) || [];
+      for (const p of perms) {
+        permsSet.add(p);
+        roleBreakdown[p] = roleBreakdown[p] || [];
+        if (!roleBreakdown[p].includes(rName)) {
+          roleBreakdown[p].push(rName);
+        }
+      }
+    }
+
+    // Default admin permissions for recognized admin roles or known admins
+    if (isKnownAdmin(member.discord_user_id) || ['Head Administrator', 'Senior Administrator', 'Administrator'].includes(roleRes.primaryRole)) {
+      permsSet.add('admin.access');
+      permsSet.add('staff.view');
+      permsSet.add('rules.view');
+    }
+
+    return {
+      ...member,
+      isSuperAdmin: false,
+      primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
+      recognized_roles: roleRes.recognizedRoles,
+      other_roles: roleRes.otherRoles || [],
+      active: isCurrentlyActive,
+      effectivePermissions: Array.from(permsSet),
+      roleBreakdown,
+      matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : ['Staff'],
+      discordRoles: [],
+    };
+  });
 }

@@ -1,10 +1,24 @@
 export const SUPER_ADMIN_DISCORD_ID = '150580708144840704';
 
-// Safety net known admins (e.g. Damon / Space and Craysteens)
+// Safety net known admins synced from Discord (Head Admins, Senior Admins, Admins)
 export const KNOWN_ADMIN_IDS = new Set<string>([
-  SUPER_ADMIN_DISCORD_ID,
-  '399373087172198400', // Craysteens
+  SUPER_ADMIN_DISCORD_ID,  // Damon (Super Admin)
+  '106419991343034368',   // Rue (Senior Admin)
+  '209737624649203712',   // Strix (Head Admin)
+  '557375299881533440',   // soupy (Head Admin)
+  '218185947487928321',   // authenticbeth / Peaches (Admin)
+  '222783354985119744',   // MrCarlile (Admin)
+  '323896916347715584',   // NNEZZIE (Admin)
+  '399373087172198400',   // Craysteens (Admin)
+  '504708209936695307',   // gtschaos / Artemis (Admin)
+  '762546436893442049',   // unit620 / IVY (Admin)
+  '936385915075575869',   // o8ktr33 / Churro (Admin)
 ]);
+
+export function isKnownAdmin(discordId?: string | null): boolean {
+  if (!discordId) return false;
+  return KNOWN_ADMIN_IDS.has(discordId);
+}
 
 export const ALL_PERMISSIONS = [
   'admin.access',
@@ -110,6 +124,9 @@ export function hasPermission(
   discordId?: string | null
 ): boolean {
   if (isSuperAdmin(discordId)) {
+    return true;
+  }
+  if (isKnownAdmin(discordId) && (permission === 'admin.access' || permission === 'staff.view' || permission === 'rules.view')) {
     return true;
   }
   if (effectivePermissions instanceof Set) {

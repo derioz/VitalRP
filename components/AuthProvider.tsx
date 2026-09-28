@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Role, UserPermissions, getPermissions, normalizeRole } from '@/lib/auth/rbac';
-import { AppPermission, isSuperAdmin as checkIsSuperAdmin, getAllPermissions } from '@/lib/auth/permissions';
+import { Role, UserPermissions, getPermissions, normalizeRole, isKnownAdminId } from '@/lib/auth/rbac';
+import { AppPermission, isSuperAdmin as checkIsSuperAdmin, isKnownAdmin, getAllPermissions } from '@/lib/auth/permissions';
 import { supabase } from '@/lib/supabase/client';
 
 export interface AuthUser {
@@ -104,17 +104,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const avatar = meta.avatar_url || meta.picture || '';
 
       const userIsSuperAdmin = checkIsSuperAdmin(discordId);
-      let verifiedIsAdmin = userIsSuperAdmin;
-      let effectivePermissions: AppPermission[] = userIsSuperAdmin ? getAllPermissions() : [];
+      const userIsKnownAdmin = isKnownAdminId(discordId) || isKnownAdmin(discordId);
+      let verifiedIsAdmin = userIsSuperAdmin || userIsKnownAdmin;
+      let effectivePermissions: AppPermission[] = userIsSuperAdmin
+        ? getAllPermissions()
+        : userIsKnownAdmin
+        ? [
+            'admin.access',
+            'rules.view',
+            'rules.edit',
+            'rules.publish',
+            'rules.history',
+            'staff.view',
+            'staff.manage',
+            'audit.view',
+            'settings.manage',
+          ]
+        : [];
       let discordRoles: string[] = [];
-      let matchedRoleNames: string[] = userIsSuperAdmin ? ['Super Admin'] : [];
+      let matchedRoleNames: string[] = userIsSuperAdmin
+        ? ['Super Admin']
+        : userIsKnownAdmin
+        ? ['Administrator']
+        : [];
       let roleBreakdown: Record<string, string[]> = {};
-      let userRole: Role = userIsSuperAdmin ? 'owner' : 'user';
+      let userRole: Role = userIsSuperAdmin
+        ? 'owner'
+        : userIsKnownAdmin
+        ? 'admin'
+        : 'user';
 
-      // 2. Authoritative server-side verification via /api/auth/me
+      // 1b. Direct Supabase profile check (works on static SPA, offline, or Next.js)
+      if (clientSession.user.id || discordId) {
+        try {
+          const profileQuery = clientSession.user.id
+            ? supabase.from('profiles').select('role, display_name').eq('id', clientSession.user.id)
+            : supabase.from('profiles').select('role, display_name').eq('discord_id', discordId);
+          const { data: profile } = await profileQuery.maybeSingle();
+
+          if (profile?.role === 'admin' || profile?.role === 'owner') {
+            verifiedIsAdmin = true;
+            if (profile.role === 'owner' || userIsSuperAdmin) {
+              userRole = 'owner';
+              effectivePermissions = getAllPermissions();
+              matchedRoleNames = ['Super Admin'];
+            } else {
+              userRole = 'admin';
+              if (effectivePermissions.length === 0) {
+                effectivePermissions = [
+                  'admin.access',
+                  'rules.view',
+                  'rules.edit',
+                  'rules.publish',
+                  'rules.history',
+                  'staff.view',
+                  'staff.manage',
+                  'audit.view',
+                  'settings.manage',
+                ];
+              }
+              if (matchedRoleNames.length === 0) {
+                matchedRoleNames = ['Administrator'];
+              }
+            }
+          }
+        } catch {
+          // Ignore profile check errors
+        }
+      }
+
+      // 2. Authoritative server-side verification via /api/auth/me (when on Next.js server)
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
         const headers: Record<string, string> = {};
         if (clientSession.access_token) {
           headers['Authorization'] = `Bearer ${clientSession.access_token}`;
@@ -129,16 +191,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated && data.user) {
-            verifiedIsAdmin = Boolean(data.isAdmin);
+            verifiedIsAdmin = Boolean(data.isAdmin) || verifiedIsAdmin;
             if (data.isSuperAdmin || userIsSuperAdmin) {
               verifiedIsAdmin = true;
               userRole = 'owner';
               effectivePermissions = getAllPermissions();
               matchedRoleNames = ['Super Admin'];
             } else {
-              effectivePermissions = Array.isArray(data.permissions) ? data.permissions : [];
-              discordRoles = Array.isArray(data.discordRoles) ? data.discordRoles : [];
-              matchedRoleNames = Array.isArray(data.matchedRoleNames) ? data.matchedRoleNames : [];
+              if (Array.isArray(data.permissions) && data.permissions.length > 0) {
+                effectivePermissions = data.permissions;
+              }
+              if (Array.isArray(data.discordRoles)) discordRoles = data.discordRoles;
+              if (Array.isArray(data.matchedRoleNames) && data.matchedRoleNames.length > 0) {
+                matchedRoleNames = data.matchedRoleNames;
+              }
               roleBreakdown = data.roleBreakdown || {};
               userRole = normalizeRole(data.user.role || (verifiedIsAdmin ? 'admin' : 'user'));
             }
@@ -150,6 +216,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           verifiedIsAdmin = true;
           userRole = 'owner';
           effectivePermissions = getAllPermissions();
+        } else if (userIsKnownAdmin) {
+          verifiedIsAdmin = true;
+          userRole = 'admin';
         }
       }
 

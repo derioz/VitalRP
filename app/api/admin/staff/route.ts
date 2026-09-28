@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
-import { hasPermission, SUPER_ADMIN_DISCORD_ID } from '@/lib/auth/permissions';
+import { hasPermission, SUPER_ADMIN_DISCORD_ID, isKnownAdmin } from '@/lib/auth/permissions';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getEffectiveAuth, resolveStaffRoles } from '@/lib/auth/vital-admin';
+import { enrichStaffRoster } from '@/lib/auth/vital-admin';
 import { recordAuditEvent } from '@/lib/audit/audit-logger';
+
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
   const session = await getCurrentSession(token);
 
-  if (!session || !hasPermission(session.effectivePermissions, 'staff.view', session.discordId)) {
+  const isAuthorized =
+    session &&
+    (session.isAdmin ||
+      isKnownAdmin(session.discordId) ||
+      hasPermission(session.effectivePermissions, 'staff.view', session.discordId));
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized. Requires staff.view permission.' }, { status: 403 });
   }
 
@@ -32,70 +39,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Ensure Damon (Super Admin) is always in the staff list
-  const hasDamon = staffList.some((s) => s.discord_user_id === SUPER_ADMIN_DISCORD_ID);
-  if (!hasDamon) {
-    staffList.unshift({
-      id: 'super-admin-damon',
-      discord_user_id: SUPER_ADMIN_DISCORD_ID,
-      discord_username: 'damon',
-      discord_display_name: 'Damon',
-      discord_avatar: 'https://cdn.discordapp.com/avatars/150580708144840704/bedf3166ac36aa21047fee8c77d94c26.png',
-      primary_role: 'Super Admin',
-      recognized_roles: ['Super Admin'],
-      last_known_roles: ['Super Admin'],
-      first_admin_login: new Date('2026-09-01T00:00:00Z').toISOString(),
-      last_admin_login: new Date().toISOString(),
-      active: true,
-    });
-  }
-
-  // Calculate live effective permissions and hierarchical role breakdowns for each staff member
-  const enrichedStaff = await Promise.all(
-    staffList.map(async (member) => {
-      const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
-      if (isSuper) {
-        const auth = await getEffectiveAuth(SUPER_ADMIN_DISCORD_ID);
-        return {
-          ...member,
-          isSuperAdmin: true,
-          primary_role: 'Super Admin',
-          recognized_roles: ['Super Admin'],
-          other_roles: [],
-          active: true,
-          effectivePermissions: auth.permissions,
-          roleBreakdown: auth.roleBreakdown,
-          matchedRoleNames: ['Super Admin'],
-          discordRoles: [],
-        };
-      }
-
-      const auth = await getEffectiveAuth(member.discord_user_id);
-      const rolesToCheck =
-        auth.discordRoles && auth.discordRoles.length > 0
-          ? auth.discordRoles
-          : Array.isArray(member.last_known_roles)
-          ? member.last_known_roles
-          : [];
-      const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
-
-      // If user holds no recognized roles, they are former/inactive staff
-      const isCurrentlyActive = Boolean(member.active) && roleRes.isStaff;
-
-      return {
-        ...member,
-        isSuperAdmin: false,
-        primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
-        recognized_roles: roleRes.recognizedRoles,
-        other_roles: roleRes.otherRoles || [],
-        active: isCurrentlyActive,
-        effectivePermissions: auth.permissions,
-        roleBreakdown: auth.roleBreakdown,
-        matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : auth.matchedRoleNames,
-        discordRoles: auth.discordRoles,
-      };
-    })
-  );
+  const enrichedStaff = await enrichStaffRoster(staffList, supabase);
 
   return NextResponse.json({
     staff: enrichedStaff,
@@ -155,49 +99,7 @@ export async function POST(request: NextRequest) {
         if (data) staffList = data;
       }
 
-      const enrichedStaff = await Promise.all(
-        staffList.map(async (member) => {
-          const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
-          if (isSuper) {
-            const auth = await getEffectiveAuth(SUPER_ADMIN_DISCORD_ID);
-            return {
-              ...member,
-              isSuperAdmin: true,
-              primary_role: 'Super Admin',
-              recognized_roles: ['Super Admin'],
-              other_roles: [],
-              active: true,
-              effectivePermissions: auth.permissions,
-              roleBreakdown: auth.roleBreakdown,
-              matchedRoleNames: ['Super Admin'],
-              discordRoles: [],
-            };
-          }
-
-          const auth = await getEffectiveAuth(member.discord_user_id);
-          const rolesToCheck =
-            auth.discordRoles && auth.discordRoles.length > 0
-              ? auth.discordRoles
-              : Array.isArray(member.last_known_roles)
-              ? member.last_known_roles
-              : [];
-          const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
-          const isCurrentlyActive = Boolean(member.active) && roleRes.isStaff;
-
-          return {
-            ...member,
-            isSuperAdmin: false,
-            primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
-            recognized_roles: roleRes.recognizedRoles,
-            other_roles: roleRes.otherRoles || [],
-            active: isCurrentlyActive,
-            effectivePermissions: auth.permissions,
-            roleBreakdown: auth.roleBreakdown,
-            matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : auth.matchedRoleNames,
-            discordRoles: auth.discordRoles,
-          };
-        })
-      );
+      const enrichedStaff = await enrichStaffRoster(staffList, supabase);
 
       return NextResponse.json({
         success: true,

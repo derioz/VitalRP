@@ -115,8 +115,17 @@ export function hasPermission(role: Role, permission: Permission): boolean {
 }
 
 export const KNOWN_ADMIN_DISCORD_IDS: string[] = [
-  '150580708144840704', // Space (Owner / Super Admin)
-  '399373087172198400', // Craysteens (Admin)
+  '150580708144840704', // Damon / Space (Owner / Super Admin)
+  '106419991343034368', // Rue (Senior Administrator)
+  '209737624649203712', // Strix (Head Administrator)
+  '557375299881533440', // soupy (Head Administrator)
+  '218185947487928321', // authenticbeth / Peaches (Administrator)
+  '222783354985119744', // MrCarlile (Administrator)
+  '323896916347715584', // NNEZZIE (Administrator)
+  '399373087172198400', // Craysteens (Administrator)
+  '504708209936695307', // gtschaos / Artemis (Administrator)
+  '762546436893442049', // unit620 / IVY (Administrator)
+  '936385915075575869', // o8ktr33 / Churro (Administrator)
 ];
 
 export function isKnownAdminId(discordId?: string | null): boolean {

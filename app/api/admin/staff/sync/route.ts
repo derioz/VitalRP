@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
-import { hasPermission, SUPER_ADMIN_DISCORD_ID } from '@/lib/auth/permissions';
+import { hasPermission, SUPER_ADMIN_DISCORD_ID, isKnownAdmin } from '@/lib/auth/permissions';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getEffectiveAuth, resolveStaffRoles, syncDiscordStaffRoster } from '@/lib/auth/vital-admin';
+import { syncDiscordStaffRoster, enrichStaffRoster } from '@/lib/auth/vital-admin';
 import { recordAuditEvent } from '@/lib/audit/audit-logger';
 
 export async function POST(request: NextRequest) {
@@ -58,49 +58,7 @@ export async function POST(request: NextRequest) {
       if (data) staffList = data;
     }
 
-    const enrichedStaff = await Promise.all(
-      staffList.map(async (member) => {
-        const isSuper = member.discord_user_id === SUPER_ADMIN_DISCORD_ID;
-        if (isSuper) {
-          const auth = await getEffectiveAuth(SUPER_ADMIN_DISCORD_ID);
-          return {
-            ...member,
-            isSuperAdmin: true,
-            primary_role: 'Super Admin',
-            recognized_roles: ['Super Admin'],
-            other_roles: [],
-            active: true,
-            effectivePermissions: auth.permissions,
-            roleBreakdown: auth.roleBreakdown,
-            matchedRoleNames: ['Super Admin'],
-            discordRoles: [],
-          };
-        }
-
-        const auth = await getEffectiveAuth(member.discord_user_id);
-        const rolesToCheck =
-          auth.discordRoles && auth.discordRoles.length > 0
-            ? auth.discordRoles
-            : Array.isArray(member.last_known_roles)
-            ? member.last_known_roles
-            : [];
-        const roleRes = resolveStaffRoles(rolesToCheck, member.discord_user_id);
-        const isCurrentlyActive = Boolean(member.active) && roleRes.isStaff;
-
-        return {
-          ...member,
-          isSuperAdmin: false,
-          primary_role: roleRes.primaryRole || (isCurrentlyActive ? 'Staff' : 'Former Staff'),
-          recognized_roles: roleRes.recognizedRoles,
-          other_roles: roleRes.otherRoles || [],
-          active: isCurrentlyActive,
-          effectivePermissions: auth.permissions,
-          roleBreakdown: auth.roleBreakdown,
-          matchedRoleNames: roleRes.recognizedRoles.length > 0 ? roleRes.recognizedRoles : auth.matchedRoleNames,
-          discordRoles: auth.discordRoles,
-        };
-      })
-    );
+    const enrichedStaff = await enrichStaffRoster(staffList, supabase);
 
     return NextResponse.json({
       success: true,
