@@ -1122,7 +1122,27 @@ export async function deleteCategory(
   id: string,
   user: { discordId: string; displayName: string }
 ): Promise<{ success: boolean; message?: string }> {
-  // Check if rules exist in category
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      const { data: dbRules } = await supabase
+        .from('rules')
+        .select('id')
+        .eq('category_id', id)
+        .is('deleted_at', null);
+
+      if (dbRules && dbRules.length > 0) {
+        return {
+          success: false,
+          message: `Cannot delete category "${id}" because it contains ${dbRules.length} active rules. Move or delete them first.`,
+        };
+      }
+    } catch {
+      // fallback to memory check
+    }
+  }
+
+  // Check if rules exist in memory category
   const activeRules = memRules.filter((r) => r.category_id === id && !r.deleted_at);
   if (activeRules.length > 0) {
     return {
@@ -1131,7 +1151,6 @@ export async function deleteCategory(
     };
   }
 
-  const supabase = createAdminClient();
   if (supabase) {
     try {
       await supabase.from('rule_categories').delete().eq('id', id);
@@ -1152,3 +1171,41 @@ export async function deleteCategory(
 
   return { success: true };
 }
+
+export async function reorderCategories(
+  items: Array<{ id: string; sort_order: number }>,
+  user: { discordId: string; displayName: string }
+): Promise<boolean> {
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      for (const item of items) {
+        await supabase
+          .from('rule_categories')
+          .update({ sort_order: item.sort_order, updated_at: new Date().toISOString() })
+          .eq('id', item.id);
+      }
+    } catch (err) {
+      console.warn('[SupabaseRules] Error reordering categories in DB:', err);
+    }
+  }
+
+  for (const item of items) {
+    const idx = memCategories.findIndex((c) => c.id === item.id);
+    if (idx >= 0) {
+      memCategories[idx].sort_order = item.sort_order;
+    }
+  }
+  memCategories.sort((a, b) => a.sort_order - b.sort_order);
+
+  await recordAuditEvent({
+    discordUserId: user.discordId,
+    displayName: user.displayName,
+    action: 'category.reordered',
+    target: 'categories',
+    details: `Reordered ${items.length} categories`,
+  });
+
+  return true;
+}
+

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
-import { createCategory, updateCategory, deleteCategory } from '@/lib/rules/supabase-rules';
+import { createCategory, updateCategory, deleteCategory, reorderCategories } from '@/lib/rules/supabase-rules';
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -35,6 +35,15 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    if (body.reorder && Array.isArray(body.reorder)) {
+      await reorderCategories(body.reorder, {
+        discordId: session.discordId,
+        displayName: session.displayName,
+      });
+      return NextResponse.json({ success: true });
+    }
+
     const { id, ...data } = body;
     if (!id) return NextResponse.json({ error: 'Missing category id' }, { status: 400 });
 

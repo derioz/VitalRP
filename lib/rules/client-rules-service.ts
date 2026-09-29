@@ -700,6 +700,37 @@ export async function deleteClientCategory(categoryId: string): Promise<{ succes
 }
 
 /**
+ * Reorder categories with new sort_order values.
+ */
+export async function reorderClientCategories(
+  orderedCategories: DbRuleCategory[]
+): Promise<boolean> {
+  const items = orderedCategories.map((c, idx) => ({
+    id: c.id,
+    sort_order: idx + 1,
+  }));
+
+  const apiRes = await safeApiCall<{ success: boolean }>('/api/admin/rules/categories', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reorder: items }),
+  });
+  if (apiRes) return true;
+
+  try {
+    for (const item of items) {
+      await supabase
+        .from('rule_categories')
+        .update({ sort_order: item.sort_order, updated_at: new Date().toISOString() })
+        .eq('id', item.id);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fetch Rules Hero customization configuration.
  */
 export async function getRulesHeroConfig(): Promise<RulesHeroConfig> {

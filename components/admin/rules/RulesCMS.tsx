@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import {
   BookOpen,
   Plus,
@@ -42,6 +42,8 @@ import {
   Pencil,
   LayoutTemplate,
   Sliders,
+  GripVertical,
+  MoreVertical,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { DbRule, DbRuleCategory, DbRuleDraft, StagedChangeSummary, DbRuleVersion } from '@/lib/rules/supabase-rules';
@@ -59,10 +61,97 @@ import {
   rollbackClientToVersion,
   saveClientCategory,
   deleteClientCategory,
+  reorderClientCategories,
   getRulesHeroConfig,
   saveRulesHeroConfig,
   RulesHeroConfig,
 } from '@/lib/rules/client-rules-service';
+
+interface CategoryItemProps {
+  cat: DbRuleCategory;
+  isSelected: boolean;
+  count: number;
+  canEdit: boolean;
+  onSelect: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onEdit: (e: React.MouseEvent) => void;
+}
+
+const CategoryItem: React.FC<CategoryItemProps> = ({
+  cat,
+  isSelected,
+  count,
+  canEdit,
+  onSelect,
+  onContextMenu,
+  onEdit,
+}) => {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={cat}
+      id={cat.id}
+      dragListener={false}
+      dragControls={controls}
+      className={`group/cat relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors select-none ${
+        isSelected
+          ? 'bg-vital-500/15 border border-vital-500/30 text-white font-bold'
+          : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+      }`}
+      onContextMenu={onContextMenu}
+      whileDrag={{
+        scale: 1.025,
+        boxShadow: '0 15px 35px -5px rgba(249, 115, 22, 0.4), 0 8px 16px -6px rgba(0, 0, 0, 0.8)',
+        zIndex: 50,
+        backgroundColor: '#121212',
+        borderColor: 'rgba(249, 115, 22, 0.6)',
+        cursor: 'grabbing',
+      }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+    >
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {canEdit && (
+          <div
+            onPointerDown={(e) => {
+              e.preventDefault();
+              controls.start(e);
+            }}
+            className="touch-none p-1 -ml-1 text-gray-600 hover:text-vital-400 cursor-grab active:cursor-grabbing rounded hover:bg-white/5 transition-colors shrink-0"
+            title="Drag to move category position"
+          >
+            <GripVertical size={13} />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex-1 text-left truncate flex items-center gap-2 py-0.5 cursor-pointer"
+          title={`Right-click for options • ${cat.title}`}
+        >
+          <span className="truncate">{cat.title}</span>
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1 ml-1.5 shrink-0">
+        {canEdit && (
+          <button
+            type="button"
+            onClick={onContextMenu}
+            className="opacity-0 group-hover/cat:opacity-100 p-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-vital-400 transition-all cursor-pointer"
+            title="Category options (right-click)"
+          >
+            <MoreVertical size={12} />
+          </button>
+        )}
+        <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
+          {count}
+        </span>
+      </div>
+    </Reorder.Item>
+  );
+};
 
 export const RulesCMS: React.FC = () => {
   const { user, isSuperAdmin, hasPermission } = useAuth();
@@ -124,6 +213,17 @@ export const RulesCMS: React.FC = () => {
     icon: 'ShieldAlert',
     sort_order: 99,
   });
+
+  // Category Context Menu & Drag reorder state
+  const [categoryContextMenu, setCategoryContextMenu] = useState<{
+    x: number;
+    y: number;
+    category: DbRuleCategory;
+  } | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<DbRuleCategory | null>(null);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [isReorderingCategories, setIsReorderingCategories] = useState(false);
+  const [categoryReorderSuccess, setCategoryReorderSuccess] = useState(false);
 
   // Hero Section Customization state
   const [isHeroModalOpen, setIsHeroModalOpen] = useState(false);
@@ -577,7 +677,96 @@ export const RulesCMS: React.FC = () => {
     setIsRuleHistoryModalOpen(true);
   };
 
+  // Category Context Menu & Dismissal
+  useEffect(() => {
+    if (!categoryContextMenu) return;
+    const handleClose = () => setCategoryContextMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCategoryContextMenu(null);
+    };
+    window.addEventListener('click', handleClose);
+    window.addEventListener('contextmenu', handleClose);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', handleClose);
+      window.removeEventListener('contextmenu', handleClose);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [categoryContextMenu]);
+
   // Category Handlers
+  const handleCategoryContextMenu = (e: React.MouseEvent, cat: DbRuleCategory) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const menuWidth = 220;
+    const menuHeight = 180;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 12);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 12);
+    setCategoryContextMenu({ x, y, category: cat });
+  };
+
+  const handleContextMenuEdit = () => {
+    if (!categoryContextMenu) return;
+    const cat = categoryContextMenu.category;
+    setCategoryContextMenu(null);
+    handleOpenEditCategory(cat);
+  };
+
+  const handleContextMenuDelete = () => {
+    if (!categoryContextMenu) return;
+    const cat = categoryContextMenu.category;
+    setCategoryContextMenu(null);
+    promptDeleteCategory(cat);
+  };
+
+  const promptDeleteCategory = (cat: DbRuleCategory) => {
+    const rulesInCat = rules.filter((r) => r.category_id === cat.id && !r.deleted_at);
+    if (rulesInCat.length > 0) {
+      alert(
+        `Cannot delete category "${cat.title}" because it contains ${rulesInCat.length} rule(s). Move or delete those rules first.`
+      );
+      return;
+    }
+    setCategoryToDelete(cat);
+    setIsDeleteCategoryModalOpen(true);
+  };
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    setDeletingCategory(true);
+    try {
+      const res = await deleteClientCategory(categoryToDelete.id);
+      if (res.success) {
+        setIsDeleteCategoryModalOpen(false);
+        if (selectedCategoryId === categoryToDelete.id) {
+          setSelectedCategoryId('all');
+        }
+        setCategoryToDelete(null);
+        await fetchData();
+      } else {
+        alert(res.message || 'Failed to delete category');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete category');
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  const handleReorderCategories = async (newOrder: DbRuleCategory[]) => {
+    setCategories(newOrder);
+    setIsReorderingCategories(true);
+    try {
+      await reorderClientCategories(newOrder);
+      setCategoryReorderSuccess(true);
+      setTimeout(() => setCategoryReorderSuccess(false), 2000);
+    } catch (err) {
+      console.warn('[RulesCMS] Category reorder error:', err);
+    } finally {
+      setIsReorderingCategories(false);
+    }
+  };
+
   const handleOpenEditCategory = (cat: DbRuleCategory, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setCategoryForm({
@@ -652,6 +841,7 @@ export const RulesCMS: React.FC = () => {
       setDeletingCategory(false);
     }
   };
+
 
   // Hero Section Handlers
   const handleOpenHeroModal = async () => {
@@ -879,13 +1069,27 @@ export const RulesCMS: React.FC = () => {
           {/* Categories Selector Box */}
           <div className="bg-dark-900 border border-white/5 rounded-3xl p-4 space-y-2">
             <div className="flex items-center justify-between px-2 pb-2 border-b border-white/5">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider font-tech">
-                Categories
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider font-tech">
+                  Categories
+                </span>
+                {isReorderingCategories && (
+                  <span className="text-[10px] text-vital-400 font-tech animate-pulse flex items-center gap-1">
+                    <RefreshCw size={10} className="animate-spin" />
+                    <span>Saving...</span>
+                  </span>
+                )}
+                {categoryReorderSuccess && (
+                  <span className="text-[10px] text-emerald-400 font-tech flex items-center gap-1">
+                    <CheckCircle2 size={10} />
+                    <span>Saved</span>
+                  </span>
+                )}
+              </div>
               {canEdit && (
                 <button
                   onClick={handleOpenNewCategory}
-                  className="text-xs text-vital-400 hover:text-vital-300 font-bold flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-vital-500/10 transition-colors"
+                  className="text-xs text-vital-400 hover:text-vital-300 font-bold flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-vital-500/10 transition-colors cursor-pointer"
                   title="Add new category"
                 >
                   <Plus size={12} />
@@ -894,10 +1098,17 @@ export const RulesCMS: React.FC = () => {
               )}
             </div>
 
+            {canEdit && (
+              <div className="px-2 py-0.5 text-[10px] text-gray-500 font-tech flex items-center justify-between">
+                <span>Drag handle to reorder</span>
+                <span>Right-click for options</span>
+              </div>
+            )}
+
             <div className="space-y-1">
               <button
                 onClick={() => setSelectedCategoryId('all')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                   selectedCategoryId === 'all'
                     ? 'bg-white/10 text-white font-bold'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -907,49 +1118,35 @@ export const RulesCMS: React.FC = () => {
                   <Layers size={14} className="text-vital-500" />
                   <span>All Categories</span>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
                   {rules.length}
                 </span>
               </button>
 
-              {categories.map((cat) => {
-                const count = rules.filter((r) => r.category_id === cat.id && !r.deleted_at).length;
-                const isSelected = selectedCategoryId === cat.id;
-                return (
-                  <div
-                    key={cat.id}
-                    className={`group/cat w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                      isSelected
-                        ? 'bg-vital-500/15 border border-vital-500/30 text-white font-bold'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCategoryId(cat.id)}
-                      className="flex-1 text-left truncate flex items-center gap-2 py-1"
-                    >
-                      <span className="truncate">{cat.title}</span>
-                    </button>
-
-                    <div className="flex items-center gap-1.5 ml-2">
-                      {canEdit && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleOpenEditCategory(cat, e)}
-                          className="opacity-0 group-hover/cat:opacity-100 p-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-vital-400 transition-all"
-                          title={`Edit Category: ${cat.title}`}
-                        >
-                          <Pencil size={12} />
-                        </button>
-                      )}
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400">
-                        {count}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+              <Reorder.Group
+                axis="y"
+                values={categories}
+                onReorder={handleReorderCategories}
+                className="space-y-1"
+                as="div"
+              >
+                {categories.map((cat) => {
+                  const count = rules.filter((r) => r.category_id === cat.id && !r.deleted_at).length;
+                  const isSelected = selectedCategoryId === cat.id;
+                  return (
+                    <CategoryItem
+                      key={cat.id}
+                      cat={cat}
+                      isSelected={isSelected}
+                      count={count}
+                      canEdit={canEdit}
+                      onSelect={() => setSelectedCategoryId(cat.id)}
+                      onContextMenu={(e) => handleCategoryContextMenu(e, cat)}
+                      onEdit={(e) => handleOpenEditCategory(cat, e)}
+                    />
+                  );
+                })}
+              </Reorder.Group>
             </div>
           </div>
         </div>
@@ -2220,6 +2417,148 @@ export const RulesCMS: React.FC = () => {
                     </div>
                   ))
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* CATEGORY CONTEXT MENU (Right Click) */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {categoryContextMenu && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: -4 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            style={{
+              position: 'fixed',
+              left: categoryContextMenu.x,
+              top: categoryContextMenu.y,
+              zIndex: 9999,
+            }}
+            className="w-56 rounded-2xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_25px_rgba(249,115,22,0.15)] text-xs font-sans"
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {/* Context Menu Header */}
+            <div className="px-3 py-2 border-b border-white/5 mb-1 flex items-center justify-between gap-2">
+              <span className="text-[10px] uppercase font-tech text-gray-500 font-bold tracking-wider">
+                Category
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-gray-400 truncate max-w-[100px]">
+                {categoryContextMenu.category.id}
+              </span>
+            </div>
+            <div className="px-3 py-1 text-white font-bold truncate text-xs mb-1">
+              {categoryContextMenu.category.title}
+            </div>
+
+            {/* Edit Option */}
+            <button
+              type="button"
+              onClick={handleContextMenuEdit}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left cursor-pointer group"
+            >
+              <Pencil size={14} className="text-vital-400 group-hover:scale-110 transition-transform" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-xs">Edit Category</div>
+                <div className="text-[10px] text-gray-500">Title, description & icon</div>
+              </div>
+            </button>
+
+            {/* Delete Option */}
+            <button
+              type="button"
+              onClick={handleContextMenuDelete}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-300 hover:text-rose-100 hover:bg-rose-500/20 transition-colors text-left cursor-pointer group mt-0.5"
+            >
+              <Trash2 size={14} className="text-rose-400 group-hover:scale-110 transition-transform" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-xs text-rose-300">Delete Category</div>
+                <div className="text-[10px] text-rose-400/70">Remove from server rules</div>
+              </div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* CATEGORY DELETION CONFIRMATION MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {isDeleteCategoryModalOpen && categoryToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDeleteCategoryModalOpen(false)}
+              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
+            >
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)] shrink-0">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Delete Category?</h3>
+                  <p className="text-xs text-gray-400">
+                    This action will permanently delete the category.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-dark-950/80 border border-white/5 rounded-2xl p-4 mb-6 space-y-1.5">
+                <div className="text-xs text-gray-400">Category to delete:</div>
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>{categoryToDelete.title}</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-400">
+                    {categoryToDelete.id}
+                  </span>
+                </div>
+                {categoryToDelete.description && (
+                  <div className="text-xs text-gray-500 italic mt-1">
+                    "{categoryToDelete.description}"
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteCategoryModalOpen(false)}
+                  disabled={deletingCategory}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteCategory}
+                  disabled={deletingCategory}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-600/30 cursor-pointer disabled:opacity-50"
+                >
+                  {deletingCategory ? (
+                    <>
+                      <RefreshCw size={13} className="animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={13} />
+                      <span>Delete Category</span>
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           </div>
