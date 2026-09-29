@@ -71,10 +71,17 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing category id' }, { status: 400 });
 
-    const result = await deleteCategory(id, {
-      discordId: session.discordId,
-      displayName: session.displayName,
-    });
+    const cascade = searchParams.get('cascade') === 'true';
+    const reassignTo = searchParams.get('reassignTo') || undefined;
+
+    const result = await deleteCategory(
+      id,
+      {
+        discordId: session.discordId,
+        displayName: session.displayName,
+      },
+      { cascadeRules: cascade, reassignToCategoryId: reassignTo }
+    );
 
     if (!result.success) {
       return NextResponse.json({ error: result.message }, { status: 400 });

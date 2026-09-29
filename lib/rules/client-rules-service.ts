@@ -689,14 +689,58 @@ export async function saveClientCategory(categoryData: {
 /**
  * Delete category by ID.
  */
-export async function deleteClientCategory(categoryId: string): Promise<{ success: boolean; message?: string }> {
-  const apiRes = await safeApiCall<{ success: boolean; error?: string }>(`/api/admin/rules/categories?id=${encodeURIComponent(categoryId)}`, {
-    method: 'DELETE',
-  });
-  if (apiRes) return { success: apiRes.success, message: apiRes.error };
+export async function deleteClientCategory(
+  categoryId: string,
+  options?: { cascadeRules?: boolean; reassignToCategoryId?: string }
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    // 1. If reassigning rules, move them to target category first
+    if (options?.reassignToCategoryId) {
+      await supabase
+        .from('rules')
+        .update({ category_id: options.reassignToCategoryId })
+        .eq('category_id', categoryId);
+      await supabase
+        .from('rules_draft')
+        .update({ category_id: options.reassignToCategoryId })
+        .eq('category_id', categoryId);
+    } else if (options?.cascadeRules) {
+      // Cascade delete: remove active rules in this category
+      await supabase.from('rules_draft').delete().eq('category_id', categoryId);
+      await supabase.from('rules').delete().eq('category_id', categoryId);
+    }
 
-  const { error } = await supabase.from('rule_categories').delete().eq('id', categoryId);
-  return { success: !error, message: error?.message };
+    // 2. Always clean up soft-deleted rule remnants and drafts so they don't violate foreign key constraint
+    await supabase.from('rules_draft').delete().eq('category_id', categoryId);
+    await supabase.from('rules').delete().eq('category_id', categoryId).not('deleted_at', 'is', null);
+
+    // 3. Try server API if available
+    const queryParams = new URLSearchParams({ id: categoryId });
+    if (options?.cascadeRules) queryParams.set('cascade', 'true');
+    if (options?.reassignToCategoryId) queryParams.set('reassignTo', options.reassignToCategoryId);
+
+    const apiRes = await safeApiCall<{ success: boolean; error?: string }>(
+      `/api/admin/rules/categories?${queryParams.toString()}`,
+      { method: 'DELETE' }
+    );
+    if (apiRes) return { success: apiRes.success, message: apiRes.error };
+
+    // 4. Delete category row from rule_categories
+    const { error } = await supabase.from('rule_categories').delete().eq('id', categoryId);
+    if (error) {
+      if (error.message.includes('foreign key constraint') || error.message.includes('rules_category_id_fkey')) {
+        return {
+          success: false,
+          message: 'Cannot delete category because active rules are still linked to it. Move or delete those rules first.',
+        };
+      }
+      return { success: false, message: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, message: err.message || 'Failed to delete category' };
+  }
 }
 
 /**

@@ -222,6 +222,7 @@ export const RulesCMS: React.FC = () => {
   } | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<DbRuleCategory | null>(null);
   const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [deleteCategoryAction, setDeleteCategoryAction] = useState<'clean' | 'move' | 'cascade'>('clean');
   const [isReorderingCategories, setIsReorderingCategories] = useState(false);
   const [categoryReorderSuccess, setCategoryReorderSuccess] = useState(false);
 
@@ -720,14 +721,9 @@ export const RulesCMS: React.FC = () => {
   };
 
   const promptDeleteCategory = (cat: DbRuleCategory) => {
-    const rulesInCat = rules.filter((r) => r.category_id === cat.id && !r.deleted_at);
-    if (rulesInCat.length > 0) {
-      alert(
-        `Cannot delete category "${cat.title}" because it contains ${rulesInCat.length} rule(s). Move or delete those rules first.`
-      );
-      return;
-    }
+    const activeRulesCount = rules.filter((r) => r.category_id === cat.id && !r.deleted_at).length;
     setCategoryToDelete(cat);
+    setDeleteCategoryAction(activeRulesCount > 0 ? 'move' : 'clean');
     setIsDeleteCategoryModalOpen(true);
   };
 
@@ -735,7 +731,19 @@ export const RulesCMS: React.FC = () => {
     if (!categoryToDelete) return;
     setDeletingCategory(true);
     try {
-      const res = await deleteClientCategory(categoryToDelete.id);
+      const activeRulesCount = rules.filter((r) => r.category_id === categoryToDelete.id && !r.deleted_at).length;
+      let options: { cascadeRules?: boolean; reassignToCategoryId?: string } = {};
+
+      if (activeRulesCount > 0) {
+        if (deleteCategoryAction === 'move') {
+          const fallbackCat = categories.find((c) => c.id !== categoryToDelete.id)?.id || 'general';
+          options = { reassignToCategoryId: fallbackCat };
+        } else if (deleteCategoryAction === 'cascade') {
+          options = { cascadeRules: true };
+        }
+      }
+
+      const res = await deleteClientCategory(categoryToDelete.id, options);
       if (res.success) {
         setIsDeleteCategoryModalOpen(false);
         if (selectedCategoryId === categoryToDelete.id) {
@@ -815,31 +823,16 @@ export const RulesCMS: React.FC = () => {
 
   const handleDeleteCategory = async () => {
     if (!categoryForm.id) return;
-    const rulesInCat = rules.filter((r) => r.category_id === categoryForm.id && !r.deleted_at);
-    if (rulesInCat.length > 0) {
-      alert(
-        `Cannot delete category "${categoryForm.title}" because it contains ${rulesInCat.length} rule(s). Move or delete those rules first.`
-      );
-      return;
-    }
-    if (!confirm(`Are you sure you want to delete category "${categoryForm.title}"?`)) {
-      return;
-    }
-    setDeletingCategory(true);
-    try {
-      const res = await deleteClientCategory(categoryForm.id);
-      if (res.success) {
-        setIsCategoryModalOpen(false);
-        if (selectedCategoryId === categoryForm.id) setSelectedCategoryId('all');
-        await fetchData();
-      } else {
-        alert(res.message || 'Failed to delete category');
-      }
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setDeletingCategory(false);
-    }
+    const cat = categories.find((c) => c.id === categoryForm.id) || {
+      id: categoryForm.id,
+      title: categoryForm.title,
+      description: categoryForm.description,
+      icon: categoryForm.icon,
+      sort_order: categoryForm.sort_order || 99,
+      enabled: true,
+    };
+    setIsCategoryModalOpen(false);
+    promptDeleteCategory(cat);
   };
 
 
@@ -2489,80 +2482,148 @@ export const RulesCMS: React.FC = () => {
       {/* CATEGORY DELETION CONFIRMATION MODAL */}
       {/* ========================================================================= */}
       <AnimatePresence>
-        {isDeleteCategoryModalOpen && categoryToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDeleteCategoryModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
-            />
+        {isDeleteCategoryModalOpen && categoryToDelete && (() => {
+          const activeRules = rules.filter((r) => r.category_id === categoryToDelete.id && !r.deleted_at);
+          const activeCount = activeRules.length;
+          const fallbackCat = categories.find((c) => c.id !== categoryToDelete.id);
 
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
-            >
-              <div className="flex items-center gap-3.5 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)] shrink-0">
-                  <AlertTriangle size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Delete Category?</h3>
-                  <p className="text-xs text-gray-400">
-                    This action will permanently delete the category.
-                  </p>
-                </div>
-              </div>
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !deletingCategory && setIsDeleteCategoryModalOpen(false)}
+                className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              />
 
-              <div className="bg-dark-950/80 border border-white/5 rounded-2xl p-4 mb-6 space-y-1.5">
-                <div className="text-xs text-gray-400">Category to delete:</div>
-                <div className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>{categoryToDelete.title}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-400">
-                    {categoryToDelete.id}
-                  </span>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
+              >
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)] shrink-0">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Delete Category</h3>
+                    <p className="text-xs text-gray-400">
+                      Permanently remove category legislation container
+                    </p>
+                  </div>
                 </div>
-                {categoryToDelete.description && (
-                  <div className="text-xs text-gray-500 italic mt-1">
-                    "{categoryToDelete.description}"
+
+                <div className="bg-dark-950/80 border border-white/5 rounded-2xl p-4 mb-4 space-y-1.5">
+                  <div className="text-xs text-gray-400">Target Category:</div>
+                  <div className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>{categoryToDelete.title}</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-400">
+                      {categoryToDelete.id}
+                    </span>
+                  </div>
+                  {categoryToDelete.description && (
+                    <div className="text-xs text-gray-500 italic">
+                      "{categoryToDelete.description}"
+                    </div>
+                  )}
+                </div>
+
+                {activeCount > 0 ? (
+                  <div className="mb-5 space-y-3">
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                      <strong>Notice:</strong> This category currently contains <strong>{activeCount} active rule(s)</strong>. Choose how you want to handle them:
+                    </div>
+
+                    <div className="space-y-2">
+                      <label
+                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          deleteCategoryAction === 'move'
+                            ? 'bg-vital-500/10 border-vital-500/40 text-white'
+                            : 'bg-dark-950 border-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="category_rule_action"
+                          checked={deleteCategoryAction === 'move'}
+                          onChange={() => setDeleteCategoryAction('move')}
+                          className="mt-0.5 text-vital-500 focus:ring-vital-500"
+                        />
+                        <div className="text-xs">
+                          <div className="font-bold text-white">
+                            Move {activeCount} rule(s) to "{fallbackCat?.title || 'General'}"
+                          </div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            Recommended. Safely reassigns all rules so you don't lose any published legislation.
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          deleteCategoryAction === 'cascade'
+                            ? 'bg-rose-500/15 border-rose-500/40 text-white'
+                            : 'bg-dark-950 border-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="category_rule_action"
+                          checked={deleteCategoryAction === 'cascade'}
+                          onChange={() => setDeleteCategoryAction('cascade')}
+                          className="mt-0.5 text-rose-500 focus:ring-rose-500"
+                        />
+                        <div className="text-xs">
+                          <div className="font-bold text-rose-300">
+                            Delete Category and permanently erase all {activeCount} rule(s)
+                          </div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            Destructive. Deletes both the category and all rules inside it.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-gray-400 mb-5">
+                    This category has <strong className="text-gray-200">0 active rules</strong> and is safe to delete. Any historical drafts or soft-deleted records will be cleaned up automatically.
                   </div>
                 )}
-              </div>
 
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsDeleteCategoryModalOpen(false)}
-                  disabled={deletingCategory}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmDeleteCategory}
-                  disabled={deletingCategory}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-600/30 cursor-pointer disabled:opacity-50"
-                >
-                  {deletingCategory ? (
-                    <>
-                      <RefreshCw size={13} className="animate-spin" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={13} />
-                      <span>Delete Category</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteCategoryModalOpen(false)}
+                    disabled={deletingCategory}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDeleteCategory}
+                    disabled={deletingCategory}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-600/30 cursor-pointer disabled:opacity-50"
+                  >
+                    {deletingCategory ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={13} />
+                        <span>{activeCount > 0 && deleteCategoryAction === 'move' ? 'Move Rules & Delete Category' : 'Delete Category'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

@@ -1120,42 +1120,74 @@ export async function updateCategory(
 
 export async function deleteCategory(
   id: string,
-  user: { discordId: string; displayName: string }
+  user: { discordId: string; displayName: string },
+  options?: { cascadeRules?: boolean; reassignToCategoryId?: string }
 ): Promise<{ success: boolean; message?: string }> {
   const supabase = createAdminClient();
   if (supabase) {
     try {
-      const { data: dbRules } = await supabase
-        .from('rules')
-        .select('id')
-        .eq('category_id', id)
-        .is('deleted_at', null);
+      if (options?.reassignToCategoryId) {
+        await supabase
+          .from('rules')
+          .update({ category_id: options.reassignToCategoryId })
+          .eq('category_id', id);
+        await supabase
+          .from('rules_draft')
+          .update({ category_id: options.reassignToCategoryId })
+          .eq('category_id', id);
+      } else if (options?.cascadeRules) {
+        await supabase.from('rules_draft').delete().eq('category_id', id);
+        await supabase.from('rules').delete().eq('category_id', id);
+      } else {
+        // Check if active rules exist in DB
+        const { data: dbRules } = await supabase
+          .from('rules')
+          .select('id')
+          .eq('category_id', id)
+          .is('deleted_at', null);
 
-      if (dbRules && dbRules.length > 0) {
-        return {
-          success: false,
-          message: `Cannot delete category "${id}" because it contains ${dbRules.length} active rules. Move or delete them first.`,
-        };
+        if (dbRules && dbRules.length > 0) {
+          return {
+            success: false,
+            message: `Cannot delete category "${id}" because it contains ${dbRules.length} active rules. Move or delete them first.`,
+          };
+        }
       }
-    } catch {
-      // fallback to memory check
+
+      // Always clean up drafts and soft-deleted rules referencing category so foreign key doesn't fail
+      await supabase.from('rules_draft').delete().eq('category_id', id);
+      await supabase.from('rules').delete().eq('category_id', id).not('deleted_at', 'is', null);
+
+      const { error } = await supabase.from('rule_categories').delete().eq('id', id);
+      if (error) {
+        if (error.message.includes('foreign key constraint') || error.message.includes('rules_category_id_fkey')) {
+          return {
+            success: false,
+            message: `Cannot delete category "${id}" because rules are still linked to it.`,
+          };
+        }
+        return { success: false, message: error.message };
+      }
+    } catch (err: any) {
+      console.warn('[SupabaseRules] Error deleting category from DB:', err);
+      return { success: false, message: err.message };
     }
   }
 
-  // Check if rules exist in memory category
-  const activeRules = memRules.filter((r) => r.category_id === id && !r.deleted_at);
-  if (activeRules.length > 0) {
-    return {
-      success: false,
-      message: `Cannot delete category "${id}" because it contains ${activeRules.length} active rules. Move or delete them first.`,
-    };
-  }
-
-  if (supabase) {
-    try {
-      await supabase.from('rule_categories').delete().eq('id', id);
-    } catch {
-      // ignore
+  // Also handle memory store
+  if (options?.reassignToCategoryId) {
+    memRules.forEach((r) => {
+      if (r.category_id === id) r.category_id = options.reassignToCategoryId!;
+    });
+  } else if (options?.cascadeRules) {
+    memRules = memRules.filter((r) => r.category_id !== id);
+  } else {
+    const activeRules = memRules.filter((r) => r.category_id === id && !r.deleted_at);
+    if (activeRules.length > 0) {
+      return {
+        success: false,
+        message: `Cannot delete category "${id}" because it contains ${activeRules.length} active rules. Move or delete them first.`,
+      };
     }
   }
 
