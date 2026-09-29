@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:docs": "vite build && node -e \"require('fs').copyFileSync('docs/index.html', 'docs/404.html')\"",
+    "build:docs": "vite build && node -e \"require('fs').copyFileSync('docs/index.html', 'docs/404.html')\" && node scripts/generate_merch_meta.cjs",
     "dev:vite": "vite",
     "start": "next start",
     "lint": "next lint"

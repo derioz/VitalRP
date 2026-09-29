@@ -267,6 +267,14 @@ const MerchContent: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    document.title = 'Vital RP Official Store | Heavyweight Gear & Limited Drops';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Rep the city in style. Official Vital RP premium heavyweight hoodies, graphic tees, kiss-cut decals, and exclusive apparel. Handcrafted quality for Los Santos citizens.');
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchCatalog = async () => {
       // 1. Try server API route first
       try {
