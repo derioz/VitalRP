@@ -16,7 +16,11 @@ import {
   Clock,
   LogIn,
 } from 'lucide-react';
-import { VitalLogo } from '@/components/VitalLogo';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { AdminControls } from '@/components/AdminControls';
+import { StoreModal } from '@/components/StoreModal';
+import { ScrollToTop } from '@/components/ScrollToTop';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/components/AuthProvider';
 
@@ -25,6 +29,7 @@ export default function OrdersHistoryPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lookupNumber, setLookupNumber] = useState('');
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserOrders = async () => {
@@ -52,105 +57,105 @@ export default function OrdersHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white">
-      {/* Top Bar */}
-      <nav className="border-b border-white/10 bg-dark-950/80 backdrop-blur-md py-4">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative">
+      <AdminControls />
+      <Navbar onOpenStore={() => setIsStoreOpen(true)} />
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16 relative z-10">
+        {/* Sub-Header Breadcrumb Bar */}
+        <div className="py-4 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 mb-8">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-tech tracking-wider uppercase text-gray-400">
+            <Link href="/" className="hover:text-white transition-colors">
+              Vital RP
+            </Link>
+            <span className="text-gray-600">/</span>
+            <Link href="/merch" className="hover:text-vital-400 transition-colors">
+              Merch
+            </Link>
+            <span className="text-gray-600">/</span>
+            <span className="text-gray-200 font-bold">Track Orders</span>
+          </nav>
+
           <Link
             href="/merch"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-tech uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech text-gray-400 hover:text-white border border-white/5 hover:border-white/20 transition-all uppercase tracking-wider"
           >
-            <ArrowLeft size={16} />
-            <span>Back to Store</span>
+            <ArrowLeft size={13} />
+            <span>Storefront</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <VitalLogo className="w-7 h-7" />
-            <span className="font-display font-bold text-sm tracking-wider">VITAL MERCH</span>
-          </div>
         </div>
-      </nav>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
-        <div className="mb-8">
+        <div className="mb-10 text-center sm:text-left">
           <span className="text-xs font-tech uppercase tracking-widest text-vital-400 font-bold block mb-1">
-            Customer Hub
+            Fulfillment Tracking
           </span>
-          <h1 className="text-3xl sm:text-4xl font-display font-black tracking-tight text-white">
-            Order Tracking & History
+          <h1 className="text-3xl sm:text-5xl font-display font-black tracking-tight text-white mb-3">
+            Track Merch Orders
           </h1>
-          <p className="text-gray-400 text-sm font-sans mt-1">
-            Review past purchases, monitor production status, and retrieve live shipping carrier updates.
+          <p className="text-gray-400 text-sm font-sans max-w-lg">
+            Look up any order by your Vital RP order number (e.g. VRP-XXXX-XXXX) to check production progress, carrier tracking, and delivery status.
           </p>
         </div>
 
-        {/* Quick Search Card */}
-        <div className="bg-dark-800/40 border border-white/10 rounded-2xl p-6 mb-10 backdrop-blur-sm">
-          <h3 className="font-display font-bold text-white text-base mb-2">
-            Track Any Order
-          </h3>
-          <p className="text-gray-400 text-xs font-tech mb-4">
-            Enter your order number from your confirmation email (e.g., VRP-1001) to look up tracking details:
-          </p>
+        {/* Lookup Box */}
+        <div className="bg-dark-900/60 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md mb-12 shadow-2xl">
           <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
-                placeholder="Order # (e.g. VRP-1001)"
+                placeholder="Enter Order Number (e.g. VRP-202609-AB12)"
                 value={lookupNumber}
-                onChange={(e) => setLookupNumber(e.target.value.toUpperCase())}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 font-tech uppercase focus:outline-none focus:border-vital-500/50"
+                onChange={(e) => setLookupNumber(e.target.value)}
+                className="w-full bg-dark-950/80 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-gray-500 font-tech uppercase tracking-wider focus:outline-none focus:border-vital-500"
               />
             </div>
-            <Button variant="primary" size="md" type="submit">
-              Track Order
-            </Button>
+            <button
+              type="submit"
+              className="px-6 py-3.5 bg-vital-500 hover:bg-vital-400 text-white font-display font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-vital-500/25 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Truck size={14} />
+              <span>Track Order</span>
+            </button>
           </form>
         </div>
 
-        {/* User Order List */}
+        {/* Recent Orders / Account Orders */}
         <div>
-          <h2 className="text-xl font-display font-bold text-white mb-4">
-            Your Orders {user ? `(${user.displayName || user.username})` : ''}
+          <h2 className="text-xl font-display font-bold text-white mb-4 flex items-center gap-2">
+            <Package size={18} className="text-vital-400" />
+            <span>Your Merch Order History</span>
           </h2>
 
           {!user ? (
-            <div className="bg-dark-800/20 border border-white/5 rounded-2xl p-8 text-center">
-              <LogIn size={32} className="mx-auto text-gray-600 mb-3" />
-              <h4 className="text-white font-display font-bold text-base mb-1">
-                Want to link your orders to your Discord profile?
-              </h4>
-              <p className="text-gray-400 text-xs font-tech max-w-md mx-auto mb-6">
-                Sign in with Discord to automatically view all merchandise orders associated with your Vital RP account.
+            <div className="text-center py-12 px-4 rounded-2xl bg-dark-900/40 border border-white/5">
+              <LogIn size={32} className="mx-auto text-gray-500 mb-3" />
+              <p className="text-gray-300 font-display text-sm mb-4">
+                Sign in with Discord to view past orders associated with your profile.
               </p>
-              <Button onClick={() => login()} variant="secondary" size="sm">
-                Sign In with Discord
+              <Button onClick={() => login('/merch/orders')} variant="primary" size="sm">
+                Sign in with Discord
               </Button>
             </div>
           ) : loading ? (
-            <div className="py-12 flex justify-center">
-              <Loader2 size={28} className="animate-spin text-vital-500" />
+            <div className="flex items-center justify-center py-12 text-gray-400 text-xs font-tech gap-2">
+              <Loader2 size={16} className="animate-spin text-vital-400" />
+              <span>Loading orders...</span>
             </div>
           ) : orders.length === 0 ? (
-            <div className="bg-dark-800/20 border border-white/5 rounded-2xl p-8 text-center">
-              <Package size={32} className="mx-auto text-gray-600 mb-3" />
-              <h4 className="text-white font-display font-bold text-base mb-1">
-                No orders found for this account
-              </h4>
-              <p className="text-gray-400 text-xs font-tech max-w-xs mx-auto mb-6">
-                Orders placed using your linked Discord account will appear here automatically.
-              </p>
-              <Button href="/merch" variant="primary" size="sm">
-                Browse Store
-              </Button>
+            <div className="text-center py-12 px-4 rounded-2xl bg-dark-900/40 border border-white/5 text-gray-400 text-sm">
+              <p className="mb-2">No orders found for your account yet.</p>
+              <Link href="/merch" className="text-vital-400 hover:underline text-xs font-tech uppercase tracking-wider">
+                Explore The Merch Store
+              </Link>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {orders.map((ord) => (
                 <Link
                   key={ord.id}
                   href={`/merch/order/${ord.order_number}`}
-                  className="block p-5 rounded-2xl bg-dark-800/40 border border-white/5 hover:border-vital-500/30 transition-all group"
+                  className="block p-5 rounded-2xl bg-dark-900/60 border border-white/5 hover:border-vital-500/30 transition-all group"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
@@ -184,6 +189,10 @@ export default function OrdersHistoryPage() {
           )}
         </div>
       </main>
+
+      <Footer onOpenStore={() => setIsStoreOpen(true)} />
+      <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
+      <ScrollToTop />
     </div>
   );
 }

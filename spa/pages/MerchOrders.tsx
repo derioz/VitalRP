@@ -3,6 +3,11 @@ import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Search, Package, ChevronRight, Loader2, LogIn, CheckCircle2, Truck, ExternalLink } from 'lucide-react';
 import { VitalLogo } from '../../components/VitalLogo';
 import { Button } from '../../components/Button';
+import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
+import { AdminControls } from '../../components/AdminControls';
+import { StoreModal } from '../../components/StoreModal';
+import { ScrollToTop } from '../../components/ScrollToTop';
 import { useAuth } from '../../components/AuthProvider';
 import { getApiUrl } from '../../lib/api-config';
 import { supabase } from '../../lib/supabase/client';
@@ -117,25 +122,36 @@ export const MerchOrders: React.FC = () => {
     navigate(`/merch/order/${cleanNum}`);
   };
 
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white">
-      <nav className="border-b border-white/10 bg-dark-950/80 backdrop-blur-md py-4">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative">
+      <AdminControls />
+      <Navbar onOpenStore={() => setIsStoreOpen(true)} />
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16 relative z-10">
+        {/* Sub-Header Breadcrumb Bar */}
+        <div className="py-4 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 mb-8">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-tech tracking-wider uppercase text-gray-400">
+            <Link to="/" className="hover:text-white transition-colors">
+              Vital RP
+            </Link>
+            <span className="text-gray-600">/</span>
+            <Link to="/merch" className="hover:text-vital-400 transition-colors">
+              Merch
+            </Link>
+            <span className="text-gray-600">/</span>
+            <span className="text-gray-200 font-bold">Track Orders</span>
+          </nav>
+
           <Link
             to="/merch"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-tech uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech text-gray-400 hover:text-white border border-white/5 hover:border-white/20 transition-all uppercase tracking-wider"
           >
-            <ArrowLeft size={16} />
-            <span>Back to Store</span>
+            <ArrowLeft size={13} />
+            <span>Storefront</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <VitalLogo className="w-7 h-7" />
-            <span className="font-display font-bold text-sm tracking-wider">VITAL MERCH</span>
-          </div>
         </div>
-      </nav>
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
         {/* Success Banner when returning from Stripe Checkout */}
         {isSuccess && (
           <div className="mb-8 p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-md flex items-start gap-4">
@@ -355,6 +371,10 @@ export const MerchOrders: React.FC = () => {
           )}
         </div>
       </main>
+
+      <Footer onOpenStore={() => setIsStoreOpen(true)} />
+      <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
+      <ScrollToTop />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './spa/pages/Home';
 import { Merch } from './spa/pages/Merch';
+import { MerchProduct } from './spa/pages/MerchProduct';
 import { MerchPolicies } from './spa/pages/MerchPolicies';
 import { MerchOrders } from './spa/pages/MerchOrders';
 import { RulesPage } from './spa/pages/RulesPage';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/merch/policies" element={<MerchPolicies />} />
           <Route path="/merch/orders" element={<MerchOrders />} />
           <Route path="/merch/order/:orderId" element={<MerchOrders />} />
+          <Route path="/merch/:slug" element={<MerchProduct />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

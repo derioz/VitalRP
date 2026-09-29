@@ -1,29 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Truck, RotateCcw, ShieldCheck, HelpCircle, ArrowLeft } from 'lucide-react';
-import { VitalLogo } from '../../components/VitalLogo';
+import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
+import { AdminControls } from '../../components/AdminControls';
+import { StoreModal } from '../../components/StoreModal';
+import { ScrollToTop } from '../../components/ScrollToTop';
 import { Button } from '../../components/Button';
 
 export const MerchPolicies: React.FC = () => {
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-vital-500 selection:text-white">
-      <nav className="border-b border-white/10 bg-dark-950/80 backdrop-blur-md py-4">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative">
+      <AdminControls />
+      <Navbar onOpenStore={() => setIsStoreOpen(true)} />
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16 relative z-10">
+        {/* Sub-Header Breadcrumb Bar */}
+        <div className="py-4 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 mb-8">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-tech tracking-wider uppercase text-gray-400">
+            <Link to="/" className="hover:text-white transition-colors">
+              Vital RP
+            </Link>
+            <span className="text-gray-600">/</span>
+            <Link to="/merch" className="hover:text-vital-400 transition-colors">
+              Merch
+            </Link>
+            <span className="text-gray-600">/</span>
+            <span className="text-gray-200 font-bold">Store Policies</span>
+          </nav>
+
           <Link
             to="/merch"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-tech uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech text-gray-400 hover:text-white border border-white/5 hover:border-white/20 transition-all uppercase tracking-wider"
           >
-            <ArrowLeft size={16} />
-            <span>Back to Store</span>
+            <ArrowLeft size={13} />
+            <span>Storefront</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <VitalLogo className="w-7 h-7" />
-            <span className="font-display font-bold text-sm tracking-wider">VITAL MERCH</span>
-          </div>
         </div>
-      </nav>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
         <div className="mb-10 text-center sm:text-left">
           <span className="text-xs font-tech uppercase tracking-widest text-vital-400 font-bold block mb-1">
             Store Guidelines
@@ -82,14 +98,14 @@ export const MerchPolicies: React.FC = () => {
                 <ShieldCheck size={20} />
               </div>
               <h2 className="text-xl font-display font-bold text-white">
-                3. Sizing & Exchanges
+                3. Size Exchanges & Cancellations
               </h2>
             </div>
             <p className="mb-3">
-              Because every piece of apparel is made on-demand specifically for you, we cannot accept general returns or size exchanges once an order has gone into production.
+              Because all products are custom printed uniquely for you, we cannot accept general returns for buyer&apos;s remorse or ordering the incorrect size.
             </p>
             <p className="text-xs font-tech text-gray-400">
-              We strongly encourage checking the size specifications on each product page before ordering.
+              Please consult the sizing guides provided on each product drop before finalizing your checkout. If you need to cancel an order, you must do so within 2 hours of payment by opening a priority Discord support ticket.
             </p>
           </div>
 
@@ -113,6 +129,10 @@ export const MerchPolicies: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <Footer onOpenStore={() => setIsStoreOpen(true)} />
+      <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
+      <ScrollToTop />
     </div>
   );
 };
