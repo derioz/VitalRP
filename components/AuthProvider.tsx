@@ -119,6 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'staff.manage',
             'audit.view',
             'settings.manage',
+            'merch.view',
+            'merch.manage',
           ]
         : [];
       let discordRoles: string[] = [];
@@ -161,6 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   'staff.manage',
                   'audit.view',
                   'settings.manage',
+                  'merch.view',
+                  'merch.manage',
                 ];
               }
               if (matchedRoleNames.length === 0) {
@@ -314,9 +318,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (permission: AppPermission): boolean => {
       if (isSuperAdmin || user?.isSuperAdmin) return true;
       if (!user) return false;
+      if ((isAdmin || user?.isAdmin) && (permission === 'merch.view' || permission === 'merch.manage')) {
+        return true;
+      }
       return user.effectivePermissions.includes(permission);
     },
-    [isSuperAdmin, user]
+    [isSuperAdmin, isAdmin, user]
   );
 
   const login = React.useCallback(async (redirect: string = '/') => {

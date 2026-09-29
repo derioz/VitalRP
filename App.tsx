@@ -14,6 +14,7 @@ import { RulesManagerPage } from './spa/pages/admin/RulesManager';
 import { StaffManagerPage } from './spa/pages/admin/StaffManager';
 import { RolePermissionsPage } from './spa/pages/admin/RolePermissionsManager';
 import { AuditLogsPage } from './spa/pages/admin/AuditLogs';
+import { MerchManagerPage } from './spa/pages/admin/MerchManager';
 import { AuthCallback } from './spa/pages/AuthCallback';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
             <Route path="audit" element={<AuditLogsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="merch" element={<MerchManagerPage />} />
           </Route>
 
           {/* Catch-all fallback */}

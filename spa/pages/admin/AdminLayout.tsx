@@ -7,6 +7,7 @@ import {
   Users,
   ShieldCheck,
   History,
+  ShoppingBag,
   Settings,
   LogOut,
   Home,
@@ -68,6 +69,13 @@ export const AdminLayout: React.FC = () => {
       label: 'Audit History',
       path: '/admin/audit',
       allowed: hasPermission('audit.view'),
+    },
+    {
+      icon: ShoppingBag,
+      label: 'Merch Store',
+      path: '/admin/merch',
+      badge: 'Printify',
+      allowed: hasPermission('merch.view') || hasPermission('merch.manage') || isAdmin || isSuperAdmin || user?.role === 'admin' || user?.role === 'owner',
     },
     {
       icon: Settings,

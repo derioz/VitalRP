@@ -456,6 +456,8 @@ function applyFallbackRoleMappings(
       'staff.manage',
       'audit.view',
       'settings.manage',
+      'merch.view',
+      'merch.manage',
     ];
     for (const p of adminPerms) {
       permissionsSet.add(p);

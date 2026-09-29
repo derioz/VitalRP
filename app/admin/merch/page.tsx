@@ -25,11 +25,12 @@ import {
 import { AdminShell } from '@/components/admin/AdminShell';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/Button';
+import { supabase } from '@/lib/supabase/client';
 
 type MerchTab = 'overview' | 'products' | 'orders' | 'discounts' | 'sync';
 
 export default function AdminMerchPage() {
-  const { user, isSuperAdmin, hasPermission } = useAuth();
+  const { user, isAdmin, isSuperAdmin, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<MerchTab>('overview');
 
   const [orders, setOrders] = useState<any[]>([]);
@@ -38,25 +39,45 @@ export default function AdminMerchPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
-  const canManage = isSuperAdmin || hasPermission('merch.manage');
+  const canManage = isSuperAdmin || isAdmin || hasPermission('merch.manage') || user?.role === 'admin' || user?.role === 'owner';
 
   // Fetch initial data
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/merch/orders?all=true'),
-        fetch('/api/merch/products'),
-      ]);
-
-      if (ordersRes.ok) {
-        const oData = await ordersRes.json();
-        setOrders(oData.orders || []);
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      if (productsRes.ok) {
+      const [ordersRes, productsRes] = await Promise.all([
+        fetch('/api/merch/orders?all=true', { headers }).catch(() => null),
+        fetch('/api/merch/products', { headers }).catch(() => null),
+      ]);
+
+      if (ordersRes && ordersRes.ok) {
+        const oData = await ordersRes.json();
+        setOrders(oData.orders || []);
+      } else {
+        // Fallback directly to Supabase client query
+        const { data: dbOrders } = await supabase
+          .from('merch_orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (dbOrders) setOrders(dbOrders);
+      }
+
+      if (productsRes && productsRes.ok) {
         const pData = await productsRes.json();
         setProducts(pData.products || []);
+      } else {
+        // Fallback directly to Supabase client query
+        const { data: dbProducts } = await supabase
+          .from('merch_products')
+          .select('*, merch_variants(*)')
+          .order('sort_order', { ascending: true });
+        if (dbProducts) setProducts(dbProducts);
       }
     } catch (err) {
       console.error('Error fetching admin merch data:', err);
@@ -73,7 +94,15 @@ export default function AdminMerchPage() {
     setIsSyncing(true);
     setSyncFeedback(null);
     try {
-      const res = await fetch('/api/merch/sync', { method: 'POST' });
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch('/api/merch/sync', { method: 'POST', headers });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Sync failed');

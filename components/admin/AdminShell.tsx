@@ -23,7 +23,7 @@ import { VitalLogo } from '@/components/VitalLogo';
 import { useAuth } from '@/components/AuthProvider';
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const { user, isSuperAdmin, logout, hasPermission } = useAuth();
+  const { user, isAdmin, isSuperAdmin, logout, hasPermission } = useAuth();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -65,7 +65,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       label: 'Merch Store',
       path: '/admin/merch',
       badge: 'Printify',
-      allowed: hasPermission('merch.view') || hasPermission('merch.manage') || isSuperAdmin,
+      allowed: hasPermission('merch.view') || hasPermission('merch.manage') || isSuperAdmin || isAdmin || user?.role === 'admin' || user?.role === 'owner',
     },
     {
       icon: Settings,
