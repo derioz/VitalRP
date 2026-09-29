@@ -156,12 +156,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   };
 
 
-  // Nav links exclude Gallery and Staff as per redesign phases
+  // Nav links include Rules and Merch
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Features', href: '/#features' },
     { name: 'About', href: '/#values' },
     { name: 'Rules', href: '/rules' },
+    { name: 'Merch', href: '/merch' },
     { name: 'FAQ', href: '/#faq' },
     { name: 'Join', href: '/#join' },
   ];

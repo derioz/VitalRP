@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './spa/pages/Home';
 import { Merch } from './spa/pages/Merch';
+import { MerchPolicies } from './spa/pages/MerchPolicies';
+import { MerchOrders } from './spa/pages/MerchOrders';
 import { RulesPage } from './spa/pages/RulesPage';
 import { AdminLayout } from './spa/pages/admin/AdminLayout';
 import { Dashboard } from './spa/pages/admin/Dashboard';
@@ -23,6 +25,9 @@ function App() {
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/merch" element={<Merch />} />
+          <Route path="/merch/policies" element={<MerchPolicies />} />
+          <Route path="/merch/orders" element={<MerchOrders />} />
+          <Route path="/merch/order/:orderId" element={<MerchOrders />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

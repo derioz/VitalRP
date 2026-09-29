@@ -17,6 +17,7 @@ import {
   X,
   Crown,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react';
 import { VitalLogo } from '@/components/VitalLogo';
 import { useAuth } from '@/components/AuthProvider';
@@ -58,6 +59,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       label: 'Audit History',
       path: '/admin/audit',
       allowed: hasPermission('audit.view'),
+    },
+    {
+      icon: ShoppingBag,
+      label: 'Merch Store',
+      path: '/admin/merch',
+      badge: 'Printify',
+      allowed: hasPermission('merch.view') || hasPermission('merch.manage') || isSuperAdmin,
     },
     {
       icon: Settings,

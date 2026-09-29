@@ -31,6 +31,8 @@ export const ALL_PERMISSIONS = [
   'permissions.manage',
   'audit.view',
   'settings.manage',
+  'merch.view',
+  'merch.manage',
 ] as const;
 
 export type AppPermission = typeof ALL_PERMISSIONS[number];
@@ -38,7 +40,7 @@ export type AppPermission = typeof ALL_PERMISSIONS[number];
 export interface PermissionDefinition {
   id: AppPermission;
   name: string;
-  category: 'Administration' | 'Rules CMS' | 'Staff & Access' | 'System';
+  category: 'Administration' | 'Rules CMS' | 'Staff & Access' | 'System' | 'Merch Store';
   description: string;
 }
 
@@ -103,6 +105,18 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'System',
     description: 'Configure website and server parameters.',
   },
+  {
+    id: 'merch.view',
+    name: 'View Merch Dashboard & Orders',
+    category: 'Merch Store',
+    description: 'View orders, sales metrics, and Printify sync status.',
+  },
+  {
+    id: 'merch.manage',
+    name: 'Manage Merch Catalog & Sync',
+    category: 'Merch Store',
+    description: 'Edit prices, toggle product visibility, trigger Printify catalog sync, and manage orders.',
+  },
 ];
 
 /**
@@ -126,7 +140,7 @@ export function hasPermission(
   if (isSuperAdmin(discordId)) {
     return true;
   }
-  if (isKnownAdmin(discordId) && (permission === 'admin.access' || permission === 'staff.view' || permission === 'rules.view')) {
+  if (isKnownAdmin(discordId) && (permission === 'admin.access' || permission === 'staff.view' || permission === 'rules.view' || permission === 'merch.view' || permission === 'merch.manage')) {
     return true;
   }
   if (effectivePermissions instanceof Set) {
