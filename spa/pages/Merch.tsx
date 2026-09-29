@@ -24,6 +24,7 @@ import { CartProvider, useCart } from '../../lib/merch/CartContext';
 import { CartDrawer } from '../../components/merch/CartDrawer';
 import { ProductModal, StoreProduct } from '../../components/merch/ProductModal';
 import { supabase } from '../../lib/supabase/client';
+import { getApiUrl } from '../../lib/api-config';
 
 const FALLBACK_PRODUCTS: StoreProduct[] = [
   {
@@ -269,7 +270,7 @@ const MerchContent: React.FC = () => {
     const fetchCatalog = async () => {
       // 1. Try server API route first
       try {
-        const res = await fetch('/api/merch/products');
+        const res = await fetch(getApiUrl('/api/merch/products'));
         const contentType = res.headers.get('content-type') || '';
         if (res.ok && contentType.includes('application/json')) {
           const data = await res.json();

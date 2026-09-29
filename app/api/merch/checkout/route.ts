@@ -6,13 +6,32 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentSession } from '@/lib/auth/session';
 import { getPrintifyProduct } from '@/lib/printify/client';
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
+  const originHeader = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': originHeader === 'null' ? '*' : originHeader,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  };
   try {
     const body = await request.json();
     const { items, discountCode, successUrl, cancelUrl } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 });
+      return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400, headers: corsHeaders });
     }
 
     // Optional user session (for linking order to user)
@@ -22,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
     if (!supabase) {
-      return NextResponse.json({ error: 'Database service unavailable.' }, { status: 500 });
+      return NextResponse.json({ error: 'Database service unavailable.' }, { status: 500, headers: corsHeaders });
     }
 
     // 1. Authoritative Server-Side Price Verification
@@ -167,17 +186,17 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
     }));
 
-    const origin = request.nextUrl.origin || 'https://vitalrp.net';
+    const origin = originHeader && originHeader !== '*' && originHeader !== 'null' ? originHeader : (request.nextUrl.origin || 'https://vitalrp.net');
     const finalSuccessUrl = successUrl || `${origin}/merch/order/{CHECKOUT_SESSION_ID}?success=true`;
-    const finalCancelUrl = cancelUrl || `${origin}/merch/cart`;
+    const finalCancelUrl = cancelUrl || `${origin}/merch?canceled=true`;
 
     // 4. Create Stripe Checkout Session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+    const sessionParams: any = {
       line_items: stripeLineItems,
       mode: 'payment',
       discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : undefined,
-      automatic_tax: { enabled: true },
+      managed_payments: { enabled: false },
+      automatic_tax: { enabled: false },
       billing_address_collection: 'required',
       shipping_address_collection: {
         allowed_countries: [
@@ -206,7 +225,9 @@ export async function POST(request: NextRequest) {
       },
       success_url: finalSuccessUrl,
       cancel_url: finalCancelUrl,
-    });
+    };
+
+    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 
     // 5. Pre-create Pending Order in Supabase
     const { data: newOrder, error: orderError } = await supabase
@@ -258,12 +279,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       url: checkoutSession.url,
       sessionId: checkoutSession.id,
-    });
+    }, { headers: corsHeaders });
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to initiate checkout.' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

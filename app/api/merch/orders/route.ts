@@ -5,13 +5,33 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentSession } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  };
+
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
   const session = await getCurrentSession(token);
 
   if (!session) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401, headers: corsHeaders });
   }
 
   const { searchParams } = new URL(request.url);
@@ -19,7 +39,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
   if (!supabase) {
-    return NextResponse.json({ error: 'Database service unavailable' }, { status: 500 });
+    return NextResponse.json({ error: 'Database service unavailable' }, { status: 500, headers: corsHeaders });
   }
 
   const isAdmin = hasPermission(session.effectivePermissions, 'merch.view', session.discordId) || session.isSuperAdmin;
@@ -62,9 +82,9 @@ export async function GET(request: NextRequest) {
     // Admin retrieving all store orders
     const { data: orders, error } = await query.limit(100);
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders });
     }
-    return NextResponse.json({ orders });
+    return NextResponse.json({ orders }, { headers: corsHeaders });
   }
 
   // Customer viewing their personal order history
@@ -72,8 +92,8 @@ export async function GET(request: NextRequest) {
   const { data: userOrders, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }
 
-  return NextResponse.json({ orders: userOrders || [] });
+  return NextResponse.json({ orders: userOrders || [] }, { headers: corsHeaders });
 }

@@ -15,4 +15,12 @@ export default defineConfig({
     outDir: 'docs',
     emptyOutDir: true,
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://vital-rp.vercel.app',
+        changeOrigin: true,
+      },
+    },
+  },
 });

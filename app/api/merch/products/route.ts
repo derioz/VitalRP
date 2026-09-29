@@ -5,7 +5,27 @@ import { createClient } from '@/lib/supabase/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPrintifyProducts, getPrintifyProduct } from '@/lib/printify/client';
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  };
+
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug');
   const category = searchParams.get('category');
@@ -25,7 +45,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (product) {
-        return NextResponse.json(product);
+        return NextResponse.json(product, { headers: corsHeaders });
       }
 
       // Fallback: search by printify_product_id or check Printify directly
@@ -39,18 +59,18 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (productById) {
-        return NextResponse.json(productById);
+        return NextResponse.json(productById, { headers: corsHeaders });
       }
 
       // If still not found in Supabase, attempt Printify direct fetch
       try {
         const printifyProd = await getPrintifyProduct(slug);
         if (printifyProd) {
-          return NextResponse.json(printifyProd);
+          return NextResponse.json(printifyProd, { headers: corsHeaders });
         }
       } catch {}
 
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Product not found' }, { status: 404, headers: corsHeaders });
     }
 
     // 2. Fetch all products
@@ -70,7 +90,7 @@ export async function GET(request: NextRequest) {
     const { data: dbProducts, error } = await query;
 
     if (dbProducts && dbProducts.length > 0) {
-      return NextResponse.json({ products: dbProducts });
+      return NextResponse.json({ products: dbProducts }, { headers: corsHeaders });
     }
 
     // 3. Fallback: if Supabase table is empty, fetch live from Printify API
@@ -112,9 +132,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ products: liveProducts });
+    return NextResponse.json({ products: liveProducts }, { headers: corsHeaders });
   } catch (error: any) {
     console.error('Error in /api/merch/products:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch products' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to fetch products' }, { status: 500, headers: corsHeaders });
   }
 }

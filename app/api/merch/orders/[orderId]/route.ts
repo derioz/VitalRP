@@ -5,18 +5,38 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentSession } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
+  const origin = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  };
+
   const { orderId } = await params;
   if (!orderId) {
-    return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Order ID is required' }, { status: 400, headers: corsHeaders });
   }
 
   const supabase = createAdminClient();
   if (!supabase) {
-    return NextResponse.json({ error: 'Database service unavailable' }, { status: 500 });
+    return NextResponse.json({ error: 'Database service unavailable' }, { status: 500, headers: corsHeaders });
   }
 
   const authHeader = request.headers.get('authorization');
@@ -72,13 +92,13 @@ export async function GET(
   const { data: order, error } = await query.maybeSingle();
 
   if (error || !order) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: corsHeaders });
   }
 
   // Security check: If order has an associated user_id, ensure caller is that user or an admin
   if (order.user_id && session && !isAdmin && order.user_id !== session.id) {
-    return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403 });
+    return NextResponse.json({ error: 'Unauthorized to view this order' }, { status: 403, headers: corsHeaders });
   }
 
-  return NextResponse.json(order);
+  return NextResponse.json(order, { headers: corsHeaders });
 }

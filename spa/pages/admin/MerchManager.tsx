@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../components/AuthProvider';
 import { supabase } from '../../../lib/supabase/client';
+import { getApiUrl } from '../../../lib/api-config';
 
 type MerchTab = 'overview' | 'orders' | 'products' | 'sync';
 
@@ -40,8 +41,8 @@ export const MerchManagerPage: React.FC = () => {
 
       // Try API endpoints first
       const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/merch/orders?all=true', { headers }).catch(() => null),
-        fetch('/api/merch/products', { headers }).catch(() => null),
+        fetch(getApiUrl('/api/merch/orders?all=true'), { headers }).catch(() => null),
+        fetch(getApiUrl('/api/merch/products'), { headers }).catch(() => null),
       ]);
 
       let loadedOrders = false;
@@ -106,7 +107,7 @@ export const MerchManagerPage: React.FC = () => {
       let syncMessage = '';
 
       try {
-        const res = await fetch('/api/merch/sync', { method: 'POST', headers });
+        const res = await fetch(getApiUrl('/api/merch/sync'), { method: 'POST', headers });
         const contentType = res.headers.get('content-type') || '';
         if (res.ok && contentType.includes('application/json')) {
           const data = await res.json();

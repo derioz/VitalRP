@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api-config';
 
 export interface CartItem {
   printify_product_id: string;
@@ -137,7 +138,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const applyDiscount = async (code: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/merch/discount', {
+      const res = await fetch(getApiUrl('/api/merch/discount'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, subtotal_cents: subtotalCents }),
@@ -165,7 +166,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (items.length === 0) return;
     setIsCheckingOut(true);
     try {
-      const res = await fetch('/api/merch/checkout', {
+      const res = await fetch(getApiUrl('/api/merch/checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,12 +175,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
 
+      let data: any = {};
       const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Checkout service is currently initializing on the server. Please try again in a few moments.');
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      } else {
+        const rawText = await res.text().catch(() => '');
+        console.error('Non-JSON response from checkout endpoint:', rawText);
+        throw new Error('The checkout service is currently starting up on the server. Please wait a moment and try again.');
       }
 
-      const data = await res.json();
       if (!res.ok || !data.url) {
         throw new Error(data.error || 'Failed to initialize checkout session');
       }
