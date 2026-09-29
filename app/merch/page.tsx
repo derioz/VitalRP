@@ -29,7 +29,9 @@ import {
   StoreProduct,
   FALLBACK_PRODUCTS,
   normalizeSlug,
+  parseProductDescription,
 } from '@/lib/merch/catalog';
+import { ProductCardSkeleton } from '@/components/merch/MerchSkeletons';
 import { supabase } from '@/lib/supabase/client';
 
 const categories = ['All', 'Apparel', 'Accessories', 'In-Game'];
@@ -41,7 +43,6 @@ const ProductCard: React.FC<{
   setHoveredProduct: (id: string | null) => void;
 }> = ({ product, index, hoveredProduct, setHoveredProduct }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
   const { addItem, setIsCartOpen } = useCart();
   const router = useRouter();
 
@@ -83,13 +84,8 @@ const ProductCard: React.FC<{
   };
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      layout
-      initial={{ opacity: 0, y: 40, scale: 0.96 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 40, scale: 0.96 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.5, delay: (index % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
       className="group relative cursor-pointer"
       onMouseEnter={() => setHoveredProduct(product.id)}
       onMouseLeave={() => setHoveredProduct(null)}
@@ -169,13 +165,14 @@ const ProductCard: React.FC<{
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 };
 
 const MerchStoreContent: React.FC = () => {
   const { totalItems, setIsCartOpen } = useCart();
   const [productsList, setProductsList] = useState<StoreProduct[]>(FALLBACK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,55 +184,62 @@ const MerchStoreContent: React.FC = () => {
 
   useEffect(() => {
     const fetchCatalog = async () => {
+      setLoading(true);
       try {
-        const res = await fetch('/api/merch/products');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.products) && data.products.length > 0) {
-            setProductsList(data.products);
-            return;
+        try {
+          const res = await fetch('/api/merch/products');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.products) && data.products.length > 0) {
+              setProductsList(data.products);
+              return;
+            }
           }
-        }
-      } catch {}
+        } catch {}
 
-      try {
-        const { data: dbProducts } = await supabase
-          .from('merch_products')
-          .select('*, merch_variants(*)')
-          .eq('status', 'live')
-          .order('display_order', { ascending: true });
+        try {
+          const { data: dbProducts } = await supabase
+            .from('merch_products')
+            .select('*, merch_variants(*)')
+            .eq('status', 'live')
+            .order('display_order', { ascending: true });
 
-        if (dbProducts && dbProducts.length > 0) {
-          const mapped: StoreProduct[] = dbProducts.map((p: any) => {
-            const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
-            const cleanSlug = normalizeSlug(p.slug);
-            return {
-              id: p.id,
-              printify_product_id: p.printify_product_id,
-              title: cleanTitle,
-              slug: cleanSlug,
-              description: p.description,
-              category: p.category,
-              status: p.status,
-              badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
-              retail_price_cents: p.retail_price_cents,
-              mockup_images: p.mockup_images || [],
-              variants: (p.merch_variants || []).map((v: any) => ({
-                id: v.id,
-                printify_variant_id: v.printify_variant_id,
-                title: v.title,
-                size: v.size,
-                color: v.color,
-                retail_price_cents: v.retail_price_cents,
-                is_enabled: v.is_enabled,
-                is_in_stock: v.is_in_stock,
-              })),
-            };
-          });
-          setProductsList(mapped);
+          if (dbProducts && dbProducts.length > 0) {
+            const mapped: StoreProduct[] = dbProducts.map((p: any) => {
+              const parsed = parseProductDescription(p.description);
+              const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+              const cleanSlug = normalizeSlug(p.slug);
+              return {
+                id: p.id,
+                printify_product_id: p.printify_product_id,
+                title: cleanTitle,
+                slug: cleanSlug,
+                description: parsed.cleanDescription,
+                category: p.category,
+                status: p.status,
+                badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
+                retail_price_cents: p.retail_price_cents,
+                mockup_images: p.mockup_images || [],
+                details: (p.details && p.details.length > 0) ? p.details : parsed.details,
+                variants: (p.merch_variants || []).map((v: any) => ({
+                  id: v.id,
+                  printify_variant_id: v.printify_variant_id,
+                  title: v.title,
+                  size: v.size,
+                  color: v.color,
+                  retail_price_cents: v.retail_price_cents,
+                  is_enabled: v.is_enabled,
+                  is_in_stock: v.is_in_stock,
+                })),
+              };
+            });
+            setProductsList(mapped);
+          }
+        } catch (err) {
+          console.warn('Using local fallback catalog in Next.js:', err);
         }
-      } catch (err) {
-        console.warn('Using local fallback catalog in Next.js:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCatalog();
@@ -385,19 +389,27 @@ const MerchStoreContent: React.FC = () => {
 
         {/* Products Grid */}
         <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {filteredProducts.map((p, i) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                index={i}
-                hoveredProduct={hoveredProduct}
-                setHoveredProduct={setHoveredProduct}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <ProductCardSkeleton key={idx} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {filteredProducts.map((p, i) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  index={i}
+                  hoveredProduct={hoveredProduct}
+                  setHoveredProduct={setHoveredProduct}
+                />
+              ))}
+            </div>
+          )}
 
-          {filteredProducts.length === 0 && (
+          {!loading && filteredProducts.length === 0 && (
             <div className="py-20 text-center text-gray-500 font-tech">
               No products found matching &ldquo;{searchQuery}&rdquo;.
             </div>

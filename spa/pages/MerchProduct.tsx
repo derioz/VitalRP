@@ -32,7 +32,9 @@ import {
   FALLBACK_PRODUCTS,
   findProductBySlug,
   normalizeSlug,
+  parseProductDescription,
 } from '../../lib/merch/catalog';
+import { ProductDetailSkeleton } from '../../components/merch/MerchSkeletons';
 import { getApiUrl } from '../../lib/api-config';
 import { supabase } from '../../lib/supabase/client';
 
@@ -64,7 +66,7 @@ const MerchProductInner: React.FC = () => {
       setLoading(true);
       const targetSlug = slug || '';
 
-      // 1. Initial check against local fallback
+      // 1. Initial check against local fallback (synchronized with DB)
       const initial = findProductBySlug(targetSlug, FALLBACK_PRODUCTS);
       if (initial && isMounted) {
         setProduct(initial);
@@ -79,7 +81,17 @@ const MerchProductInner: React.FC = () => {
         if (res.ok && contentType.includes('application/json')) {
           const data = await res.json();
           if (Array.isArray(data.products) && data.products.length > 0) {
-            liveProducts = data.products;
+            liveProducts = data.products.map((p: any) => {
+              const parsed = parseProductDescription(p.description);
+              const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+              return {
+                ...p,
+                title: cleanTitle,
+                slug: normalizeSlug(p.slug),
+                description: parsed.cleanDescription,
+                details: (p.details && p.details.length > 0) ? p.details : parsed.details,
+              };
+            });
           }
         }
 
@@ -92,28 +104,33 @@ const MerchProductInner: React.FC = () => {
             .order('display_order', { ascending: true });
 
           if (dbProducts && dbProducts.length > 0) {
-            liveProducts = dbProducts.map((p: any) => ({
-              id: p.id,
-              printify_product_id: p.printify_product_id,
-              title: p.title,
-              slug: p.slug,
-              description: p.description,
-              category: p.category,
-              status: p.status,
-              badge: p.badge,
-              retail_price_cents: p.retail_price_cents,
-              mockup_images: p.mockup_images || [],
-              variants: (p.merch_variants || []).map((v: any) => ({
-                id: v.id,
-                printify_variant_id: v.printify_variant_id,
-                title: v.title,
-                size: v.size,
-                color: v.color,
-                retail_price_cents: v.retail_price_cents,
-                is_enabled: v.is_enabled,
-                is_in_stock: v.is_in_stock,
-              })),
-            }));
+            liveProducts = dbProducts.map((p: any) => {
+              const parsed = parseProductDescription(p.description);
+              const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+              return {
+                id: p.id,
+                printify_product_id: p.printify_product_id,
+                title: cleanTitle,
+                slug: normalizeSlug(p.slug),
+                description: parsed.cleanDescription,
+                category: p.category,
+                status: p.status,
+                badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
+                retail_price_cents: p.retail_price_cents,
+                mockup_images: p.mockup_images || [],
+                details: (p.details && p.details.length > 0) ? p.details : parsed.details,
+                variants: (p.merch_variants || []).map((v: any) => ({
+                  id: v.id,
+                  printify_variant_id: v.printify_variant_id,
+                  title: v.title,
+                  size: v.size,
+                  color: v.color,
+                  retail_price_cents: v.retail_price_cents,
+                  is_enabled: v.is_enabled,
+                  is_in_stock: v.is_in_stock,
+                })),
+              };
+            });
           }
         }
 
@@ -299,6 +316,9 @@ const MerchProductInner: React.FC = () => {
             </div>
           </div>
 
+          {/* Loading Skeleton State */}
+          {loading && <ProductDetailSkeleton />}
+
           {/* Product Not Found State */}
           {!loading && !product && (
             <div className="py-20 text-center max-w-xl mx-auto">
@@ -332,7 +352,7 @@ const MerchProductInner: React.FC = () => {
           )}
 
           {/* Product Details Section */}
-          {product && (
+          {!loading && product && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
               {/* Left Column: Image Gallery Carousel */}
               <div className="lg:col-span-7 flex flex-col gap-4">
@@ -371,10 +391,10 @@ const MerchProductInner: React.FC = () => {
                       key={selectedImageIndex}
                       src={product.mockup_images[selectedImageIndex]?.src || product.mockup_images[0]?.src}
                       alt={product.title}
-                      initial={{ opacity: 0, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.96 }}
-                      transition={{ duration: 0.25 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
                       className="w-full h-full object-contain p-6 sm:p-12 filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-500"
                     />
                   </AnimatePresence>

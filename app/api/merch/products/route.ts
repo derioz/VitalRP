@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPrintifyProducts, getPrintifyProduct } from '@/lib/printify/client';
-import { normalizeSlug, findProductBySlug, FALLBACK_PRODUCTS } from '@/lib/merch/catalog';
+import { normalizeSlug, findProductBySlug, FALLBACK_PRODUCTS, parseProductDescription } from '@/lib/merch/catalog';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -49,10 +49,13 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (dbProduct) {
+        const parsed = parseProductDescription(dbProduct.description);
         return NextResponse.json({
           ...dbProduct,
           title: dbProduct.title.replace(/\s*\|.*$/, '').trim(),
           slug: normalized,
+          description: parsed.cleanDescription,
+          details: (dbProduct.details && dbProduct.details.length > 0) ? dbProduct.details : parsed.details,
         }, { headers: corsHeaders });
       }
 
@@ -90,7 +93,18 @@ export async function GET(request: NextRequest) {
     const { data: dbProducts, error } = await query;
 
     if (dbProducts && dbProducts.length > 0) {
-      return NextResponse.json({ products: dbProducts }, { headers: corsHeaders });
+      const normalizedProducts = dbProducts.map((p) => {
+        const parsed = parseProductDescription(p.description);
+        const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+        return {
+          ...p,
+          title: cleanTitle,
+          slug: normalizeSlug(p.slug),
+          description: parsed.cleanDescription,
+          details: (p.details && p.details.length > 0) ? p.details : parsed.details,
+        };
+      });
+      return NextResponse.json({ products: normalizedProducts }, { headers: corsHeaders });
     }
 
     // 3. Fallback: if Supabase table is empty, fetch live from Printify API
