@@ -4,18 +4,12 @@ const PRINTIFY_BASE_URL = 'https://api.printify.com/v1';
 
 export function getPrintifyToken(): string {
   const token = process.env.PRINTIFY_API_TOKEN;
-  if (!token) {
-    throw new Error('PRINTIFY_API_TOKEN is not configured in server environment variables.');
-  }
-  return token.trim();
+  return token ? token.trim() : '';
 }
 
 export function getPrintifyShopId(): string {
   const shopId = process.env.PRINTIFY_SHOP_ID;
-  if (!shopId) {
-    throw new Error('PRINTIFY_SHOP_ID is not configured in server environment variables.');
-  }
-  return shopId.trim();
+  return shopId ? shopId.trim() : '';
 }
 
 async function printifyFetch<T>(
@@ -23,6 +17,9 @@ async function printifyFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getPrintifyToken();
+  if (!token) {
+    throw new Error('PRINTIFY_API_TOKEN is not configured in server environment variables.');
+  }
   const url = `${PRINTIFY_BASE_URL}${endpoint}`;
 
   const headers = {

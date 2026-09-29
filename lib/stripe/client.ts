@@ -1,18 +1,30 @@
 import 'server-only';
 import Stripe from 'stripe';
 
-function getStripeSecretKey(): string {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error('STRIPE_SECRET_KEY is not configured in server environment variables.');
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const key = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_build_key';
+    stripeInstance = new Stripe(key.trim(), {
+      apiVersion: '2025-02-24.acacia' as any,
+      appInfo: {
+        name: 'Vital RP Merch Store',
+        version: '1.0.0',
+      },
+    });
   }
-  return key.trim();
+  return stripeInstance;
 }
 
-export const stripe = new Stripe(getStripeSecretKey(), {
-  apiVersion: '2025-02-24.acacia' as any,
-  appInfo: {
-    name: 'Vital RP Merch Store',
-    version: '1.0.0',
+// Lazy proxy so importing this module never throws at build time
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    const instance = getStripe();
+    const value = (instance as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+    return value;
   },
 });
