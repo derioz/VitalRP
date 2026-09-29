@@ -52,6 +52,11 @@ const MerchProductInner: React.FC = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
+  // Always scroll to top immediately when mounting or changing product slug
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [slug]);
+
   // Fetch full catalog and product by slug
   useEffect(() => {
     let isMounted = true;

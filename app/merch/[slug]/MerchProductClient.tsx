@@ -52,6 +52,10 @@ const ProductClientInner: React.FC<MerchProductClientProps> = ({ slug }) => {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [slug]);
+
+  useEffect(() => {
     let isMounted = true;
     const loadProduct = async () => {
       setLoading(true);

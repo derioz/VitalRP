@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPrintifyProducts, getPrintifyProduct } from '@/lib/printify/client';
+import { normalizeSlug, findProductBySlug, FALLBACK_PRODUCTS } from '@/lib/merch/catalog';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -35,31 +36,30 @@ export async function GET(request: NextRequest) {
   try {
     // 1. If fetching single product by slug
     if (slug) {
-      const { data: product, error } = await supabase
+      const normalized = normalizeSlug(slug);
+
+      // Check DB by exact slug, normalized slug, or ID
+      const { data: dbProduct } = await supabase
         .from('merch_products')
         .select(`
           *,
           variants:merch_variants(*)
         `)
-        .eq('slug', slug)
+        .or(`slug.eq.${slug},slug.eq.${normalized},id.eq.${slug},printify_product_id.eq.${slug}`)
         .maybeSingle();
 
-      if (product) {
-        return NextResponse.json(product, { headers: corsHeaders });
+      if (dbProduct) {
+        return NextResponse.json({
+          ...dbProduct,
+          title: dbProduct.title.replace(/\s*\|.*$/, '').trim(),
+          slug: normalized,
+        }, { headers: corsHeaders });
       }
 
-      // Fallback: search by printify_product_id or check Printify directly
-      const { data: productById } = await supabase
-        .from('merch_products')
-        .select(`
-          *,
-          variants:merch_variants(*)
-        `)
-        .eq('printify_product_id', slug)
-        .maybeSingle();
-
-      if (productById) {
-        return NextResponse.json(productById, { headers: corsHeaders });
+      // Check local catalog fallback
+      const fallbackProd = findProductBySlug(slug, FALLBACK_PRODUCTS);
+      if (fallbackProd) {
+        return NextResponse.json(fallbackProd, { headers: corsHeaders });
       }
 
       // If still not found in Supabase, attempt Printify direct fetch

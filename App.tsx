@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
 import { Home } from './spa/pages/Home';
 import { Merch } from './spa/pages/Merch';
@@ -18,10 +18,19 @@ import { AuditLogsPage } from './spa/pages/admin/AuditLogs';
 import { MerchManagerPage } from './spa/pages/admin/MerchManager';
 import { AuthCallback } from './spa/pages/AuthCallback';
 
+function ScrollToTopOnNavigate() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTopOnNavigate />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rules" element={<RulesPage />} />

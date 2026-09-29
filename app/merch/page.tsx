@@ -28,6 +28,7 @@ import { CartDrawer } from '@/components/merch/CartDrawer';
 import {
   StoreProduct,
   FALLBACK_PRODUCTS,
+  normalizeSlug,
 } from '@/lib/merch/catalog';
 import { supabase } from '@/lib/supabase/client';
 
@@ -181,6 +182,10 @@ const MerchStoreContent: React.FC = () => {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
+  useEffect(() => {
     const fetchCatalog = async () => {
       try {
         const res = await fetch('/api/merch/products');
@@ -201,28 +206,32 @@ const MerchStoreContent: React.FC = () => {
           .order('display_order', { ascending: true });
 
         if (dbProducts && dbProducts.length > 0) {
-          const mapped: StoreProduct[] = dbProducts.map((p: any) => ({
-            id: p.id,
-            printify_product_id: p.printify_product_id,
-            title: p.title,
-            slug: p.slug,
-            description: p.description,
-            category: p.category,
-            status: p.status,
-            badge: p.badge,
-            retail_price_cents: p.retail_price_cents,
-            mockup_images: p.mockup_images || [],
-            variants: (p.merch_variants || []).map((v: any) => ({
-              id: v.id,
-              printify_variant_id: v.printify_variant_id,
-              title: v.title,
-              size: v.size,
-              color: v.color,
-              retail_price_cents: v.retail_price_cents,
-              is_enabled: v.is_enabled,
-              is_in_stock: v.is_in_stock,
-            })),
-          }));
+          const mapped: StoreProduct[] = dbProducts.map((p: any) => {
+            const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+            const cleanSlug = normalizeSlug(p.slug);
+            return {
+              id: p.id,
+              printify_product_id: p.printify_product_id,
+              title: cleanTitle,
+              slug: cleanSlug,
+              description: p.description,
+              category: p.category,
+              status: p.status,
+              badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
+              retail_price_cents: p.retail_price_cents,
+              mockup_images: p.mockup_images || [],
+              variants: (p.merch_variants || []).map((v: any) => ({
+                id: v.id,
+                printify_variant_id: v.printify_variant_id,
+                title: v.title,
+                size: v.size,
+                color: v.color,
+                retail_price_cents: v.retail_price_cents,
+                is_enabled: v.is_enabled,
+                is_in_stock: v.is_in_stock,
+              })),
+            };
+          });
           setProductsList(mapped);
         }
       } catch (err) {
