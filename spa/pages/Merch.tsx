@@ -3,10 +3,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   ShoppingBag,
   ArrowRight,
-  Shirt,
   Sparkles,
-  Globe,
-  CheckCircle,
   Search,
   ZoomIn,
   Truck,
@@ -29,6 +26,7 @@ import {
   parseProductDescription,
 } from '../../lib/merch/catalog';
 import { ProductCardSkeleton } from '../../components/merch/MerchSkeletons';
+import { MerchHero } from '../../components/merch/MerchHero';
 import { supabase } from '../../lib/supabase/client';
 import { getApiUrl } from '../../lib/api-config';
 
@@ -169,12 +167,26 @@ const ProductCard: React.FC<{
 
 const MerchContent: React.FC = () => {
   const { totalItems, setIsCartOpen } = useCart();
+  const navigate = useNavigate();
   const [productsList, setProductsList] = useState<StoreProduct[]>(FALLBACK_PRODUCTS);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isStoreOpen, setIsStoreOpen] = useState(false);
+
+  const handleScrollToCatalog = () => {
+    const el = document.getElementById('catalog');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleViewLatestDrops = () => {
+    setActiveCategory('All');
+    setSearchQuery('');
+    handleScrollToCatalog();
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -327,46 +339,16 @@ const MerchContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Hero Section */}
-        <section className="relative pb-16 lg:pb-24 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-sm">
-              <Shirt size={14} className="text-vital-400" />
-              <span className="text-xs font-tech text-gray-300 uppercase tracking-widest font-bold">
-                Official Vital RP Streetwear & Gear
-              </span>
-            </div>
-
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-white leading-[0.9] tracking-tighter mb-6 drop-shadow-xl">
-              VITAL{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-vital-400 to-vital-600">
-                MERCH
-              </span>
-            </h1>
-
-            <p className="text-lg sm:text-xl text-gray-400 font-light leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              Rep the city in style. High-grade heavyweight apparel and limited collectibles manufactured on-demand and delivered straight to your door.
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-              <div className="flex items-center gap-2 bg-dark-900/80 border border-white/5 px-4 py-2 rounded-xl">
-                <CheckCircle size={16} className="text-emerald-500" />
-                <span className="text-xs font-tech text-gray-300 uppercase tracking-wider">
-                  Archival DTG Print
-                </span>
-              </div>
-              <div className="flex items-center gap-2 bg-dark-900/80 border border-white/5 px-4 py-2 rounded-xl">
-                <Globe size={16} className="text-blue-400" />
-                <span className="text-xs font-tech text-gray-300 uppercase tracking-wider">
-                  Global Tracked Fulfillment
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Modern Minimal Hero Section */}
+        <MerchHero
+          onShopMerch={handleScrollToCatalog}
+          onViewLatestDrops={handleViewLatestDrops}
+          onSelectProduct={(slug) => navigate(`/merch/${slug}`)}
+          featuredProducts={productsList}
+        />
 
         {/* Filter and Product Grid */}
-        <section className="sticky top-[72px] z-30 bg-dark-950/90 backdrop-blur-xl border-y border-white/5 py-3">
+        <section id="catalog" className="sticky top-[72px] z-30 bg-dark-950/90 backdrop-blur-xl border-y border-white/5 py-3">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center gap-3">
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
               {categories.map((cat) => (
