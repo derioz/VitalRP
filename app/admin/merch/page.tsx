@@ -76,7 +76,7 @@ export default function AdminMerchPage() {
         const { data: dbProducts } = await supabase
           .from('merch_products')
           .select('*, merch_variants(*)')
-          .order('sort_order', { ascending: true });
+          .order('display_order', { ascending: true });
         if (dbProducts) setProducts(dbProducts);
       }
     } catch (err) {

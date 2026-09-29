@@ -142,6 +142,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, subtotal_cents: subtotalCents }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        return { success: false, error: 'Discount service temporarily unavailable' };
+      }
       const data = await res.json();
       if (!res.ok) {
         return { success: false, error: data.error || 'Invalid code' };
@@ -169,6 +173,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           discountCode: discount?.code,
         }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Checkout service is currently initializing on the server. Please try again in a few moments.');
+      }
 
       const data = await res.json();
       if (!res.ok || !data.url) {

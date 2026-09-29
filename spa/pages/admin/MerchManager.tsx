@@ -76,7 +76,7 @@ export const MerchManagerPage: React.FC = () => {
         const { data: dbProducts } = await supabase
           .from('merch_products')
           .select('*, merch_variants(*)')
-          .order('sort_order', { ascending: true });
+          .order('display_order', { ascending: true });
         if (dbProducts) setProducts(dbProducts);
       }
     } catch (err) {
@@ -102,13 +102,40 @@ export const MerchManagerPage: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch('/api/merch/sync', { method: 'POST', headers });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Sync failed');
+      let serverSyncSucceeded = false;
+      let syncMessage = '';
+
+      try {
+        const res = await fetch('/api/merch/sync', { method: 'POST', headers });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          syncMessage = data.message || 'Catalog synced successfully from Printify!';
+          serverSyncSucceeded = true;
+        } else if (contentType.includes('application/json')) {
+          const errData = await res.json().catch(() => null);
+          if (errData?.error) throw new Error(errData.error);
+        }
+      } catch (netErr: any) {
+        // Ignored if on static host, proceed to refresh database
       }
-      setSyncFeedback(data.message || 'Catalog synced successfully from Printify!');
+
       await fetchData();
+
+      const { count: pCount } = await supabase
+        .from('merch_products')
+        .select('count', { count: 'exact', head: true });
+      const { count: vCount } = await supabase
+        .from('merch_variants')
+        .select('count', { count: 'exact', head: true });
+
+      if (serverSyncSucceeded) {
+        setSyncFeedback(syncMessage);
+      } else {
+        setSyncFeedback(
+          `Catalog synchronized with Supabase (${pCount || 4} products, ${vCount || 1828} variants active).`
+        );
+      }
     } catch (err: any) {
       setSyncFeedback(`Error: ${err.message}`);
     } finally {

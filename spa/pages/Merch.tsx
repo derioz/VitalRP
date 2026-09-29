@@ -23,6 +23,7 @@ import { VitalLogo } from '../../components/VitalLogo';
 import { CartProvider, useCart } from '../../lib/merch/CartContext';
 import { CartDrawer } from '../../components/merch/CartDrawer';
 import { ProductModal, StoreProduct } from '../../components/merch/ProductModal';
+import { supabase } from '../../lib/supabase/client';
 
 const FALLBACK_PRODUCTS: StoreProduct[] = [
   {
@@ -266,13 +267,51 @@ const MerchContent: React.FC = () => {
 
   useEffect(() => {
     const fetchCatalog = async () => {
+      // 1. Try server API route first
       try {
         const res = await fetch('/api/merch/products');
-        if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
           const data = await res.json();
-          if (data.products && data.products.length > 0) {
+          if (Array.isArray(data.products) && data.products.length > 0) {
             setProductsList(data.products);
+            return;
           }
+        }
+      } catch {}
+
+      // 2. Direct Supabase Query (Runs on vitalrp.net static SPA)
+      try {
+        const { data: dbProducts } = await supabase
+          .from('merch_products')
+          .select('*, merch_variants(*)')
+          .eq('status', 'live')
+          .order('display_order', { ascending: true });
+
+        if (dbProducts && dbProducts.length > 0) {
+          const mapped: StoreProduct[] = dbProducts.map((p: any) => ({
+            id: p.id,
+            printify_product_id: p.printify_product_id,
+            title: p.title,
+            slug: p.slug,
+            description: p.description,
+            category: p.category,
+            status: p.status,
+            badge: p.badge,
+            retail_price_cents: p.retail_price_cents,
+            mockup_images: p.mockup_images || [],
+            variants: (p.merch_variants || []).map((v: any) => ({
+              id: v.id,
+              printify_variant_id: v.printify_variant_id,
+              title: v.title,
+              size: v.size,
+              color: v.color,
+              retail_price_cents: v.retail_price_cents,
+              is_enabled: v.is_enabled,
+              is_in_stock: v.is_in_stock,
+            })),
+          }));
+          setProductsList(mapped);
         }
       } catch (err) {
         console.warn('Using local fallback catalog in SPA:', err);
