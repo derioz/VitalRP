@@ -9,6 +9,8 @@ import {
   Truck,
   FileText,
   ChevronRight,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Link, useNavigate } from 'react-router-dom';
@@ -168,8 +170,9 @@ const ProductCard: React.FC<{
 const MerchContent: React.FC = () => {
   const { totalItems, setIsCartOpen } = useCart();
   const navigate = useNavigate();
-  const [productsList, setProductsList] = useState<StoreProduct[]>(FALLBACK_PRODUCTS);
+  const [productsList, setProductsList] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,69 +206,90 @@ const MerchContent: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      setLoading(true);
-      try {
-        // 1. Try server API route first
-        try {
-          const res = await fetch(getApiUrl(`/api/merch/products?_t=${Date.now()}`), { cache: 'no-store' });
-          const contentType = res.headers.get('content-type') || '';
-          if (res.ok && contentType.includes('application/json')) {
-            const data = await res.json();
-            if (Array.isArray(data.products) && data.products.length > 0) {
-              setProductsList(data.products);
-              return;
-            }
-          }
-        } catch {}
+  const fetchCatalog = async () => {
+    setLoading(true);
+    setError(null);
+    let loadedProducts: StoreProduct[] | null = null;
+    let lastError: string | null = null;
 
-        // 2. Direct Supabase Query (Runs on vitalrp.net static SPA)
-        try {
-          const { data: dbProducts } = await supabase
-            .from('merch_products')
-            .select('*, merch_variants(*)')
-            .eq('status', 'live')
-            .order('display_order', { ascending: true });
-
-          if (dbProducts && dbProducts.length > 0) {
-            const mapped: StoreProduct[] = dbProducts.map((p: any) => {
-              const parsed = parseProductDescription(p.description);
-              const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
-              const cleanSlug = normalizeSlug(p.slug);
-              return {
-                id: p.id,
-                printify_product_id: p.printify_product_id,
-                title: cleanTitle,
-                slug: cleanSlug,
-                description: parsed.cleanDescription,
-                category: p.category,
-                status: p.status,
-                badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
-                retail_price_cents: p.retail_price_cents,
-                mockup_images: p.mockup_images || [],
-                details: (p.details && p.details.length > 0) ? p.details : parsed.details,
-                variants: (p.merch_variants || []).map((v: any) => ({
-                  id: v.id,
-                  printify_variant_id: v.printify_variant_id,
-                  title: v.title,
-                  size: v.size,
-                  color: v.color,
-                  retail_price_cents: v.retail_price_cents,
-                  is_enabled: v.is_enabled,
-                  is_in_stock: v.is_in_stock,
-                })),
-              };
-            });
-            setProductsList(mapped);
-          }
-        } catch (err) {
-          console.warn('Using local fallback catalog in SPA:', err);
+    // 1. Try server API route first
+    try {
+      const res = await fetch(getApiUrl(`/api/merch/products?_t=${Date.now()}`), { cache: 'no-store' });
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (Array.isArray(data.products)) {
+          loadedProducts = data.products;
         }
-      } finally {
-        setLoading(false);
+      } else if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        lastError = errJson?.error || `API returned status ${res.status}`;
       }
-    };
+    } catch (apiErr: any) {
+      console.warn('[Merch] API fetch failed, falling back to Supabase:', apiErr?.message || apiErr);
+      lastError = apiErr?.message || 'Network error';
+    }
+
+    // 2. Direct Supabase Query (Runs on vitalrp.net static SPA or as fallback)
+    if (loadedProducts === null) {
+      try {
+        const { data: dbProducts, error: dbError } = await supabase
+          .from('merch_products')
+          .select('*, merch_variants(*)')
+          .eq('status', 'live')
+          .order('display_order', { ascending: true });
+
+        if (dbError) {
+          throw new Error(dbError.message);
+        }
+
+        if (Array.isArray(dbProducts)) {
+          loadedProducts = dbProducts.map((p: any) => {
+            const parsed = parseProductDescription(p.description);
+            const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
+            const cleanSlug = normalizeSlug(p.slug);
+            return {
+              id: p.id,
+              printify_product_id: p.printify_product_id,
+              title: cleanTitle,
+              slug: cleanSlug,
+              description: parsed.cleanDescription,
+              category: p.category,
+              status: p.status,
+              badge: p.badge || (cleanTitle.toLowerCase().includes('hoodie') ? 'Best Seller' : cleanTitle.toLowerCase().includes('sticker') ? 'Official Drop' : undefined),
+              retail_price_cents: p.retail_price_cents,
+              mockup_images: p.mockup_images || [],
+              details: (p.details && p.details.length > 0) ? p.details : parsed.details,
+              variants: (p.merch_variants || []).map((v: any) => ({
+                id: v.id,
+                printify_variant_id: v.printify_variant_id,
+                title: v.title,
+                size: v.size,
+                color: v.color,
+                retail_price_cents: v.retail_price_cents,
+                is_enabled: v.is_enabled,
+                is_in_stock: v.is_in_stock,
+              })),
+            };
+          });
+        }
+      } catch (err: any) {
+        console.error('[Merch] Direct Supabase fetch error:', err);
+        lastError = err?.message || lastError || 'Failed to load catalog';
+      }
+    }
+
+    if (loadedProducts !== null) {
+      setProductsList(loadedProducts);
+      setError(null);
+    } else {
+      setError(lastError || 'Unable to connect to the merch catalog. Please try again.');
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchCatalog();
   }, []);
 
@@ -386,9 +410,58 @@ const MerchContent: React.FC = () => {
         <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {Array.from({ length: 4 }).map((_, idx) => (
+              {Array.from({ length: 6 }).map((_, idx) => (
                 <ProductCardSkeleton key={idx} />
               ))}
+            </div>
+          ) : error ? (
+            <div className="py-16 px-6 max-w-lg mx-auto text-center rounded-3xl bg-red-500/10 border border-red-500/20 shadow-2xl">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="font-display font-black text-white text-lg tracking-tight mb-1.5">
+                Failed to Load Products
+              </h3>
+              <p className="text-xs font-tech text-gray-400 mb-6 leading-relaxed">
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => fetchCatalog()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-vital-500 hover:bg-vital-400 text-white font-display font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-vital-500/25 cursor-pointer"
+              >
+                <RefreshCw size={14} />
+                <span>Try Again</span>
+              </button>
+            </div>
+          ) : productsList.length === 0 ? (
+            <div className="py-20 text-center space-y-3 max-w-md mx-auto">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-500">
+                <ShoppingBag size={22} />
+              </div>
+              <h3 className="font-display font-bold text-white text-lg">No Products Available</h3>
+              <p className="text-xs font-tech text-gray-400 leading-relaxed">
+                Official Vital RP drops are currently being prepared. Check back soon for the next drop!
+              </p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="py-20 text-center space-y-3 max-w-md mx-auto font-tech">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-500">
+                <Search size={20} />
+              </div>
+              <p className="text-gray-300 text-sm">
+                No products found matching &ldquo;{searchQuery}&rdquo; in {activeCategory}.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveCategory('All');
+                  setSearchQuery('');
+                }}
+                className="text-xs text-vital-400 hover:text-vital-300 underline uppercase tracking-wider cursor-pointer"
+              >
+                Reset search & filters
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -401,12 +474,6 @@ const MerchContent: React.FC = () => {
                   setHoveredProduct={setHoveredProduct}
                 />
               ))}
-            </div>
-          )}
-
-          {!loading && filteredProducts.length === 0 && (
-            <div className="py-20 text-center text-gray-500 font-tech">
-              No products found matching &ldquo;{searchQuery}&rdquo;.
             </div>
           )}
         </section>

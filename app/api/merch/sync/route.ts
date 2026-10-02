@@ -42,25 +42,36 @@ export async function POST(request: NextRequest) {
     const result = await syncPrintifyCatalog();
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error || 'Sync failed.' },
+        {
+          success: false,
+          error: result.error || 'Sync failed.',
+          message: result.message || `Sync failed\nPrintify catalog could not be fully retrieved.\nNo local products were removed.`,
+        },
         { status: 500, headers: corsHeaders }
       );
     }
 
     return NextResponse.json({
       success: true,
+      shopId: result.shopId,
       productsCreated: result.productsCreated,
       productsUpdated: result.productsUpdated,
+      productsReactivated: result.productsReactivated,
       productsArchived: result.productsArchived,
       productsSynced: result.productsSynced,
       variantsSynced: result.variantsSynced,
       pagesRetrieved: result.pagesRetrieved,
       totalPrintifyProducts: result.totalPrintifyProducts,
-      message: result.message || `Sync complete\n${result.productsUpdated} products updated\n${result.productsCreated} products added\n${result.productsArchived} deleted products removed`,
+      reconciliationPerformed: result.reconciliationPerformed,
+      message: result.message,
     }, { headers: corsHeaders });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to sync catalog from Printify.' },
+      {
+        success: false,
+        error: error.message || 'Failed to sync catalog from Printify.',
+        message: `Sync failed\nPrintify catalog could not be fully retrieved.\nNo local products were removed.\nReason: ${error.message || 'Unknown error'}`,
+      },
       { status: 500, headers: corsHeaders }
     );
   }

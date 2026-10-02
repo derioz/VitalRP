@@ -384,6 +384,48 @@ export async function getPrintifyWebhooks(
 }
 
 /**
+ * Ensures all required webhooks are registered on Printify for custom store integration.
+ */
+export async function ensurePrintifyWebhooks(
+  targetUrl: string = 'https://vital-rp.vercel.app/api/webhooks/printify',
+  shopId: string | number = getPrintifyShopId()
+): Promise<{ checked: boolean; registered: string[] }> {
+  const REQUIRED_TOPICS = [
+    'product:publish:started',
+    'product:updated',
+    'product:deleted',
+    'order:created',
+    'order:updated',
+    'order:sent-to-production',
+    'order:shipment:created',
+    'order:shipment:delivered',
+  ];
+
+  try {
+    const existing = await getPrintifyWebhooks(shopId);
+    const existingTopics = new Set((existing || []).map((w) => w.topic));
+    const registered: string[] = [];
+
+    for (const topic of REQUIRED_TOPICS) {
+      if (!existingTopics.has(topic)) {
+        try {
+          await registerPrintifyWebhook(topic, targetUrl, shopId);
+          registered.push(topic);
+          console.log(`[Printify Client] Registered missing webhook for topic: ${topic}`);
+        } catch (regErr: any) {
+          console.warn(`[Printify Client] Could not register webhook for topic ${topic}:`, regErr?.message || regErr);
+        }
+      }
+    }
+
+    return { checked: true, registered };
+  } catch (err: any) {
+    console.warn('[Printify Client] Could not verify registered webhooks:', err?.message || err);
+    return { checked: false, registered: [] };
+  }
+}
+
+/**
  * Notify Printify that product publishing failed or reset stuck publishing state.
  * POST /v1/shops/{shop_id}/products/{product_id}/publishing_failed.json
  * Clears the "locked" status in Printify.

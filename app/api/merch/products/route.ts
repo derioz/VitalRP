@@ -138,6 +138,11 @@ export async function GET(request: NextRequest) {
 
     const { data: dbProducts, error } = await query;
 
+    if (error) {
+      console.error('[Products API] Database query error:', error.message);
+      return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500, headers: corsHeaders });
+    }
+
     if (dbProducts && dbProducts.length > 0) {
       const normalizedProducts: any[] = dbProducts.map((p) => {
         const parsed = parseProductDescription(p.description);

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendShipmentNotificationEmail } from '@/lib/email/resend';
 import { syncSinglePrintifyProduct } from '@/lib/printify/sync';
+import { getPrintifyShopId } from '@/lib/printify/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
 
     const { type, topic, resource } = payload;
     const eventType = type || topic || 'unknown';
+    const shopId = payload.shop_id || resource?.shop_id || getPrintifyShopId();
 
     // 1. Handle Product Webhook Events (e.g. product:publish:started, product:deleted)
     if (eventType.startsWith('product:') || (!eventType.startsWith('order') && (resource?.blueprint_id || resource?.variants))) {
@@ -26,6 +28,11 @@ export async function POST(request: NextRequest) {
       if (!productId) {
         return NextResponse.json({ received: true, note: 'No product ID in product webhook payload' });
       }
+
+      console.log(`[Printify Webhook] Event received: ${eventType}`);
+      console.log(`[Printify Webhook] Printify product ID: ${productId}`);
+      console.log(`[Printify Webhook] Shop ID: ${shopId}`);
+      console.log(`[Printify Webhook] Timestamp: ${new Date().toISOString()}`);
 
       // Log webhook event
       await supabase.from('merch_webhook_events').insert({
@@ -37,7 +44,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (eventType === 'product:publish:started' || eventType === 'product:publish' || eventType === 'product:updated') {
-        const syncResult = await syncSinglePrintifyProduct(productId);
+        const syncResult = await syncSinglePrintifyProduct(productId, shopId);
         try {
           revalidatePath('/merch');
           revalidatePath('/admin/merch');
@@ -48,12 +55,14 @@ export async function POST(request: NextRequest) {
           received: true,
           event: eventType,
           productId,
+          shopId,
           synced: syncResult.success,
           error: syncResult.error,
         });
       }
 
       if (eventType === 'product:deleted') {
+        console.log(`[Printify Webhook] Processing product:deleted for ${productId} on shop ${shopId}`);
         // Safely clean up or archive local catalog record if product was deleted in Printify
         const { data: localProd } = await supabase
           .from('merch_products')

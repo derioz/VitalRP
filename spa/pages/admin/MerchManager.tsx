@@ -138,31 +138,24 @@ export const MerchManagerPage: React.FC = () => {
           serverSyncSucceeded = true;
         } else if (contentType.includes('application/json')) {
           const errData = await res.json().catch(() => null);
-          if (errData?.error) throw new Error(errData.error);
+          throw new Error(errData?.message || errData?.error || 'Sync failed');
+        } else {
+          throw new Error(`Server returned HTTP ${res.status}`);
         }
       } catch (netErr: any) {
-        // Ignored if on static host, proceed to refresh database
+        syncMessage = netErr.message?.startsWith('Sync failed') ? netErr.message : `Sync failed\n${netErr.message}`;
+        serverSyncSucceeded = false;
       }
 
       await fetchData();
 
-      const { count: pCount } = await supabase
-        .from('merch_products')
-        .select('count', { count: 'exact', head: true })
-        .neq('status', 'disabled');
-      const { count: vCount } = await supabase
-        .from('merch_variants')
-        .select('count', { count: 'exact', head: true });
-
       if (serverSyncSucceeded) {
         setSyncFeedback(syncMessage);
       } else {
-        setSyncFeedback(
-          `Catalog synchronized with Supabase (${pCount || 0} products active).`
-        );
+        setSyncFeedback(syncMessage || 'Sync failed: could not connect to server.');
       }
     } catch (err: any) {
-      setSyncFeedback(`Error: ${err.message}`);
+      setSyncFeedback(err.message?.startsWith('Sync failed') ? err.message : `Sync failed\n${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -351,19 +344,21 @@ export const MerchManagerPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl text-xs font-tech border flex items-center justify-between ${
-            syncFeedback.startsWith('Error')
+          className={`p-4 rounded-xl text-xs font-tech border flex items-start justify-between font-mono whitespace-pre-line leading-relaxed ${
+            syncFeedback.includes('failed') || syncFeedback.includes('Error')
               ? 'bg-red-500/10 border-red-500/20 text-red-400'
               : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
           }`}
         >
-          <div className="flex items-center gap-2">
-            {!syncFeedback.startsWith('Error') && <CheckCircle size={16} />}
+          <div className="flex items-start gap-2.5">
+            {!syncFeedback.includes('failed') && !syncFeedback.includes('Error') && (
+              <CheckCircle size={16} className="shrink-0 mt-0.5" />
+            )}
             <span>{syncFeedback}</span>
           </div>
           <button
             onClick={() => setSyncFeedback(null)}
-            className="text-gray-500 hover:text-white text-xs cursor-pointer ml-4"
+            className="text-gray-500 hover:text-white text-xs cursor-pointer ml-4 shrink-0"
           >
             ✕
           </button>

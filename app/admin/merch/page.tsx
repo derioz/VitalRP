@@ -127,12 +127,12 @@ export default function AdminMerchPage() {
       const res = await fetch('/api/merch/sync', { method: 'POST', headers });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Sync failed');
+        throw new Error(data.message || data.error || 'Sync failed');
       }
       setSyncFeedback(data.message || 'Catalog synced successfully!');
       await fetchData();
     } catch (err: any) {
-      setSyncFeedback(`Error: ${err.message}`);
+      setSyncFeedback(err.message?.startsWith('Sync failed') ? err.message : `Sync failed\n${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -307,8 +307,8 @@ export default function AdminMerchPage() {
 
         {syncFeedback && (
           <div
-            className={`p-4 rounded-xl text-xs font-tech border ${
-              syncFeedback.startsWith('Error')
+            className={`p-4 rounded-xl text-xs font-tech border whitespace-pre-line leading-relaxed font-mono ${
+              syncFeedback.includes('failed') || syncFeedback.includes('Error')
                 ? 'bg-red-500/10 border-red-500/20 text-red-400'
                 : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
             }`}
