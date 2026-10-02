@@ -797,6 +797,9 @@ export const MerchManagerPage: React.FC = () => {
                 {products.map((p) => {
                   const img = p.mockup_images?.[0]?.src || '/merch/hoodie.png';
                   const isLocked = Boolean(p.is_locked || p.is_stuck_publishing || p.status === 'publishing');
+                  const isPublishingError = p.status === 'publishing_error' || p.printify_status === 'PUBLISHING ERROR';
+                  const isLive = Boolean(p.printify_status === 'LIVE' || p.printify_published);
+                  const isArchived = p.status === 'disabled' || p.printify_status === 'ARCHIVED';
                   const targetId = p.printify_product_id || p.id;
 
                   return (
@@ -810,27 +813,49 @@ export const MerchManagerPage: React.FC = () => {
                     >
                       <div className="flex gap-3 items-start">
                         <div className="w-16 h-16 rounded-lg bg-dark-950 border border-white/5 overflow-hidden shrink-0">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <img
+                            src={img}
+                            alt={p.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== '/merch/hoodie.png') {
+                                target.src = '/merch/hoodie.png';
+                              }
+                            }}
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-white font-display font-bold text-sm truncate">{p.title}</h4>
                           <div className="flex items-center justify-between text-xs font-tech mt-1">
                             <span className="text-vital-400 font-bold">${(p.retail_price_cents / 100).toFixed(2)}</span>
-                            <span className="text-gray-500 uppercase">{p.category}</span>
+                            <span className="text-gray-400 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10 uppercase tracking-wider text-[10px]">
+                              {p.category}
+                            </span>
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5 mt-2">
                             {isLocked ? (
                               <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 animate-pulse">
                                 <AlertTriangle size={9} />
-                                <span>Stuck Publishing</span>
+                                <span>PUBLISHING</span>
+                              </span>
+                            ) : isPublishingError ? (
+                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1">
+                                <AlertTriangle size={9} />
+                                <span>PUBLISHING ERROR</span>
+                              </span>
+                            ) : isArchived ? (
+                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">
+                                ARCHIVED
+                              </span>
+                            ) : isLive ? (
+                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                                <span>LIVE</span>
                               </span>
                             ) : (
-                              <span
-                                className={`px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase ${
-                                  p.status === 'live' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-700 text-gray-300'
-                                }`}
-                              >
-                                {p.status}
+                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-gray-500/15 text-gray-400 border border-white/10">
+                                UNPUBLISHED
                               </span>
                             )}
                             <span className="text-[10px] font-tech text-gray-500">

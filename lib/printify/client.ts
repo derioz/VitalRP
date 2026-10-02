@@ -124,6 +124,12 @@ export interface PrintifyProduct {
       }>;
     }>;
   }>;
+  external?: {
+    id: string;
+    handle: string;
+    type?: number;
+    shipping_template_id?: number;
+  };
 }
 
 export interface PrintifyAddress {
@@ -478,3 +484,29 @@ export async function deletePrintifyProduct(
     }
   );
 }
+
+export interface PrintifyBlueprint {
+  id: number;
+  title: string;
+  description: string;
+  brand: string;
+  model: string;
+  images: string[];
+}
+
+/**
+ * Fetch blueprint details from Printify Catalog API.
+ * GET /v1/catalog/blueprints/{blueprint_id}.json
+ */
+export async function getPrintifyBlueprint(
+  blueprintId: number | string
+): Promise<PrintifyBlueprint | null> {
+  if (!blueprintId) return null;
+  try {
+    return await printifyFetch<PrintifyBlueprint>(`/catalog/blueprints/${blueprintId}.json`);
+  } catch (err) {
+    console.warn(`[Printify Client] Failed to fetch blueprint ${blueprintId}:`, err);
+    return null;
+  }
+}
+

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPrintifyProducts, getPrintifyProduct } from '@/lib/printify/client';
+import { sortMockupImages, resolvePrintifyCategory } from '@/lib/printify/sync';
 import { normalizeSlug, findProductBySlug, FALLBACK_PRODUCTS, parseProductDescription } from '@/lib/merch/catalog';
 import { getCurrentSession } from '@/lib/auth/session';
 import { hasPermission } from '@/lib/auth/permissions';
@@ -148,15 +149,34 @@ export async function GET(request: NextRequest) {
         const parsed = parseProductDescription(p.description);
         const cleanTitle = p.title.replace(/\s*\|.*$/, '').trim();
         const pLive = printifyProductsMap ? printifyProductsMap.get(String(p.printify_product_id)) : null;
+
+        const isLocked = Boolean(pLive ? pLive.is_locked : false);
+        const isPublished = Boolean(pLive?.external?.handle && pLive.external.handle.trim() !== '' && pLive.visible);
+
+        let printifyStatus: 'LIVE' | 'UNPUBLISHED' | 'PUBLISHING' | 'PUBLISHING ERROR' | 'ARCHIVED' = 'UNPUBLISHED';
+        if (p.status === 'disabled') {
+          printifyStatus = 'ARCHIVED';
+        } else if (isLocked) {
+          printifyStatus = 'PUBLISHING';
+        } else if (p.status === 'publishing_error') {
+          printifyStatus = 'PUBLISHING ERROR';
+        } else if (isPublished) {
+          printifyStatus = 'LIVE';
+        } else {
+          printifyStatus = 'UNPUBLISHED';
+        }
+
         return {
           ...p,
           title: cleanTitle,
           slug: normalizeSlug(p.slug),
           description: parsed.cleanDescription,
           details: (p.details && p.details.length > 0) ? p.details : parsed.details,
-          is_locked: pLive ? Boolean(pLive.is_locked) : false,
-          is_stuck_publishing: pLive ? Boolean(pLive.is_locked) : false,
+          is_locked: isLocked,
+          is_stuck_publishing: isLocked,
           printify_visible: pLive ? Boolean(pLive.visible) : undefined,
+          printify_published: isPublished,
+          printify_status: printifyStatus,
         };
       });
 
@@ -167,24 +187,33 @@ export async function GET(request: NextRequest) {
           if (!existingPrintifyIds.has(String(p.id))) {
             const minCost = p.variants?.reduce((min: number, v: any) => (v.cost < min ? v.cost : min), p.variants[0]?.cost || 0) || 0;
             const minPrice = p.variants?.reduce((min: number, v: any) => (v.price < min ? v.price : min), p.variants[0]?.price || 0) || 0;
+            const isProdLocked = Boolean(p.is_locked);
+            const isProdPublished = Boolean(p.external?.handle && p.external.handle.trim() !== '' && p.visible);
+            let prodStatus: 'LIVE' | 'UNPUBLISHED' | 'PUBLISHING' = 'UNPUBLISHED';
+            if (isProdLocked) prodStatus = 'PUBLISHING';
+            else if (isProdPublished) prodStatus = 'LIVE';
+
+            const detectedCat = resolvePrintifyCategory({
+              productTitle: p.title,
+              tags: p.tags,
+            });
+
             normalizedProducts.push({
               id: p.id,
               printify_product_id: p.id,
               title: p.title,
               slug: p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
               description: p.description ? p.description.replace(/<[^>]*>?/gm, '').trim() : '',
-              category: 'Printify POD',
-              status: p.is_locked ? 'publishing' : (p.visible ? 'live' : 'draft'),
+              category: detectedCat,
+              status: isProdLocked ? 'publishing' : (isProdPublished ? 'live' : 'draft'),
               base_price_cents: minCost,
               retail_price_cents: minPrice,
-              is_locked: Boolean(p.is_locked),
-              is_stuck_publishing: Boolean(p.is_locked),
+              is_locked: isProdLocked,
+              is_stuck_publishing: isProdLocked,
               printify_visible: Boolean(p.visible),
-              mockup_images: p.images?.map((img: any) => ({
-                src: img.src,
-                position: img.position,
-                is_default: img.is_default,
-              })) || [],
+              printify_published: isProdPublished,
+              printify_status: prodStatus,
+              mockup_images: sortMockupImages(p.images || []),
               variants: p.variants?.map((v: any) => ({
                 id: String(v.id),
                 printify_variant_id: v.id,
@@ -208,14 +237,15 @@ export async function GET(request: NextRequest) {
     const liveProducts = (printifyRes.data || [])
       .filter((p) => isAdminMode || p.visible)
       .map((p) => {
-      let detectedCat = 'Apparel';
-      const titleLower = p.title.toLowerCase();
-      if (titleLower.includes('sticker') || titleLower.includes('mug') || titleLower.includes('mat')) {
-        detectedCat = 'Accessories';
-      }
+      const detectedCat = resolvePrintifyCategory({
+        productTitle: p.title,
+        tags: p.tags,
+      });
 
       const minCost = p.variants.reduce((min, v) => (v.cost < min ? v.cost : min), p.variants[0]?.cost || 0);
       const minPrice = p.variants.reduce((min, v) => (v.price < min ? v.price : min), p.variants[0]?.price || 0);
+      const isLocked = Boolean(p.is_locked);
+      const isPublished = Boolean(p.external?.handle && p.external.handle.trim() !== '' && p.visible);
 
       return {
         id: p.id,
@@ -224,14 +254,15 @@ export async function GET(request: NextRequest) {
         slug: p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         description: p.description ? p.description.replace(/<[^>]*>?/gm, '').trim() : '',
         category: detectedCat,
-        status: p.visible ? 'live' : 'draft',
+        status: isLocked ? 'publishing' : (isPublished ? 'live' : 'draft'),
+        is_locked: isLocked,
+        is_stuck_publishing: isLocked,
+        printify_visible: Boolean(p.visible),
+        printify_published: isPublished,
+        printify_status: isLocked ? 'PUBLISHING' : (isPublished ? 'LIVE' : 'UNPUBLISHED'),
         base_price_cents: minCost,
         retail_price_cents: minPrice,
-        mockup_images: p.images.map((img) => ({
-          src: img.src,
-          position: img.position,
-          is_default: img.is_default,
-        })),
+        mockup_images: sortMockupImages(p.images || []),
         variants: p.variants.map((v) => ({
           id: String(v.id),
           printify_variant_id: v.id,

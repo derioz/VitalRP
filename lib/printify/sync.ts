@@ -9,6 +9,7 @@ import {
   setPrintifyProductPublishingFailed,
   ensurePrintifyWebhooks,
   getPrintifyShopId,
+  getPrintifyBlueprint,
   PrintifyProduct,
   PrintifyVariant,
 } from './client';
@@ -24,6 +25,137 @@ function slugify(text: string): string {
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 }
+
+/**
+ * Deterministically sort mockup images for a product:
+ * Priority:
+ * 1. is_default === true
+ * 2. position === 'front' or src contains front
+ * 3. is_selected_for_publishing === true
+ * 4. position !== 'back' (back views deprioritized)
+ * 5. original index
+ * Deduplicates by image src URL.
+ */
+export function sortMockupImages(images: Array<{
+  src: string;
+  position?: string;
+  is_default?: boolean;
+  is_selected_for_publishing?: boolean;
+  variant_ids?: number[];
+}>) {
+  if (!images || images.length === 0) return [];
+  const validImages = images.filter((img) => img && typeof img.src === 'string' && img.src.trim().length > 0);
+
+  const scored = validImages.map((img, originalIndex) => {
+    let score = 100;
+    const pos = (img.position || '').toLowerCase();
+    const srcLower = img.src.toLowerCase();
+
+    if (img.is_default) {
+      score -= 50;
+    }
+    if (pos === 'front' || srcLower.includes('front') || srcLower.includes('camera_label=front')) {
+      score -= 30;
+    } else if (pos === 'other' && originalIndex === 0) {
+      score -= 20;
+    } else if (pos === 'back' || srcLower.includes('back')) {
+      score += 20;
+    }
+
+    if (img.is_selected_for_publishing) {
+      score -= 10;
+    }
+
+    return { img, score, originalIndex };
+  });
+
+  scored.sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.originalIndex - b.originalIndex;
+  });
+
+  const seenUrls = new Set<string>();
+  const result: Array<{
+    src: string;
+    position?: string;
+    is_default?: boolean;
+    variant_ids?: number[];
+  }> = [];
+
+  for (const item of scored) {
+    const cleanUrl = item.img.src.trim();
+    if (!seenUrls.has(cleanUrl)) {
+      seenUrls.add(cleanUrl);
+      result.push({
+        src: item.img.src,
+        position: item.img.position || 'front',
+        is_default: Boolean(item.img.is_default),
+        variant_ids: item.img.variant_ids || [],
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Resolve product category from Printify blueprint, title, and tags.
+ * Normalizes into: 'Apparel' | 'Mugs' | 'Stickers' | 'Accessories' | 'Headwear' | 'Bags' | 'Wall Art' | 'Other'
+ */
+export function resolvePrintifyCategory(params: {
+  blueprintTitle?: string;
+  productTitle?: string;
+  tags?: string[];
+}): string {
+  const textToScan = [
+    params.blueprintTitle || '',
+    params.productTitle || '',
+    ...(params.tags || []),
+  ].join(' ').toLowerCase();
+
+  // 1. Mugs & Drinkware
+  if (/\b(mug|mugs|drinkware|tumbler|tumblers|coffee\s*cup|water\s*bottle)\b/i.test(textToScan)) {
+    return 'Mugs';
+  }
+
+  // 2. Stickers
+  if (/\b(sticker|stickers|decal|decals)\b/i.test(textToScan)) {
+    return 'Stickers';
+  }
+
+  // 3. Headwear
+  if (/\b(hat|hats|cap|caps|beanie|beanies|snapback|snapbacks|trucker\s*hat)\b/i.test(textToScan)) {
+    return 'Headwear';
+  }
+
+  // 4. Bags
+  if (/\b(bag|bags|tote|totes|backpack|backpacks|duffle|duffles)\b/i.test(textToScan)) {
+    return 'Bags';
+  }
+
+  // 5. Wall Art
+  if (/\b(poster|posters|canvas|wall\s*art)\b/i.test(textToScan)) {
+    return 'Wall Art';
+  }
+
+  // 6. Accessories (Desk mats, mousepads, phone cases, keychains, etc.)
+  if (
+    /\b(desk\s*mat|mousepad|mousepads|mouse\s*pad|desk\s*pad|phone\s*case|keychain|keychains|accessory|accessories)\b/i.test(textToScan) ||
+    /\bmat(s)?\b/i.test(textToScan)
+  ) {
+    return 'Accessories';
+  }
+
+  // 7. Apparel
+  if (
+    /\b(shirt|shirts|tee|tees|t-shirt|t-shirts|hoodie|hoodies|sweatshirt|sweatshirts|pajama|pajamas|jacket|jackets|pants|shorts|sweatpants|tank\s*top|tank\s*tops|clothing|apparel|sweater|sweaters)\b/i.test(textToScan)
+  ) {
+    return 'Apparel';
+  }
+
+  return 'Apparel';
+}
+
 
 /**
  * Synchronize the full Printify catalog into Supabase.
@@ -131,21 +263,36 @@ export async function syncPrintifyCatalog(shopId: string | number = getPrintifyS
     let productsReactivated = 0;
     let totalVariantsSynced = 0;
 
+    // In-memory cache for blueprints to avoid duplicate requests during sync
+    const blueprintCache = new Map<number, any>();
+
     // 3. Upsert all active products & variants from Printify
     for (const p of printifyProducts) {
       const existingProduct = localMap.get(String(p.id));
       const isExisting = Boolean(existingProduct);
       const isReactivating = existingProduct && existingProduct.status === 'disabled';
 
-      // Determine Category
-      let category = 'Apparel';
-      const titleLower = p.title.toLowerCase();
-      if (titleLower.includes('sticker')) category = 'Accessories';
-      else if (titleLower.includes('mug')) category = 'Accessories';
-      else if (titleLower.includes('mat') || titleLower.includes('mousepad')) category = 'Accessories';
-      else if (titleLower.includes('hat') || titleLower.includes('snapback') || titleLower.includes('beanie')) category = 'Apparel';
-      else if (p.tags?.some((t: string) => t.toLowerCase() === 'accessories')) category = 'Accessories';
-      else if (p.tags?.some((t: string) => t.toLowerCase() === 'in-game')) category = 'In-Game';
+      // Efficiently fetch blueprint details (cached per sync run)
+      let blueprintMeta = p.blueprint_id ? blueprintCache.get(p.blueprint_id) : null;
+      if (p.blueprint_id && !blueprintCache.has(p.blueprint_id)) {
+        try {
+          blueprintMeta = await getPrintifyBlueprint(p.blueprint_id);
+          blueprintCache.set(p.blueprint_id, blueprintMeta);
+        } catch (bpErr) {
+          console.warn(`[Printify Sync] Notice: Could not fetch blueprint ${p.blueprint_id}:`, bpErr);
+          blueprintCache.set(p.blueprint_id, null);
+        }
+      }
+
+      // Determine Category from blueprint, product title, and tags
+      const category = resolvePrintifyCategory({
+        blueprintTitle: blueprintMeta?.title,
+        productTitle: p.title,
+        tags: p.tags,
+      });
+
+      // Deterministically sort and deduplicate images (primary front mockup at index 0)
+      const sortedImages = sortMockupImages(p.images || []);
 
       // Base & Retail Price in cents
       const enabledVariants = p.variants.filter((v: PrintifyVariant) => v.is_enabled);
@@ -156,8 +303,21 @@ export async function syncPrintifyCatalog(shopId: string | number = getPrintifyS
       const baseSlug = slugify(p.title);
       const cleanDescription = p.description ? p.description.replace(/<[^>]*>?/gm, '').trim() : '';
 
-      // Set status: if visible in Printify, mark 'live' (which reactivates any disabled product!)
+      // Check Printify actual publish status
+      const isPublished = Boolean(p.external?.handle && p.external.handle.trim() !== '' && p.visible);
       const targetStatus = p.visible ? 'live' : 'draft';
+
+      // Structured debug logging
+      console.log(`[Printify Sync] Mapping product:`, {
+        printify_id: p.id,
+        blueprint_id: p.blueprint_id,
+        blueprint_title: blueprintMeta?.title || 'none',
+        title: p.title,
+        resolved_category: category,
+        is_published: isPublished,
+        primary_image: sortedImages[0]?.src || 'none',
+        total_images: sortedImages.length,
+      });
 
       // Upsert Product
       const { data: upsertedProduct, error: productError } = await supabase
@@ -174,12 +334,7 @@ export async function syncPrintifyCatalog(shopId: string | number = getPrintifyS
             status: targetStatus,
             base_price_cents: minCostCents,
             retail_price_cents: minPriceCents,
-            mockup_images: p.images.map((img) => ({
-              src: img.src,
-              position: img.position,
-              is_default: img.is_default,
-              variant_ids: img.variant_ids,
-            })),
+            mockup_images: sortedImages,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'printify_product_id' }

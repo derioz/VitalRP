@@ -32,7 +32,7 @@ import { MerchHero } from '../../components/merch/MerchHero';
 import { supabase } from '../../lib/supabase/client';
 import { getApiUrl } from '../../lib/api-config';
 
-const categories = ['All', 'Apparel', 'Accessories', 'In-Game'];
+const BASE_CATEGORIES = ['All', 'Apparel', 'Mugs', 'Stickers', 'Headwear', 'Accessories', 'Bags', 'Wall Art', 'In-Game'];
 
 const ProductCard: React.FC<{
   product: StoreProduct;
@@ -106,6 +106,12 @@ const ProductCard: React.FC<{
           <img
             src={primaryImage}
             alt={product.title}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== '/merch/hoodie.png') {
+                target.src = '/merch/hoodie.png';
+              }
+            }}
             className="w-full h-full object-contain filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-500"
           />
 
@@ -292,6 +298,21 @@ const MerchContent: React.FC = () => {
   useEffect(() => {
     fetchCatalog();
   }, []);
+
+  const categories = React.useMemo(() => {
+    const set = new Set<string>(['All']);
+    for (const p of productsList) {
+      if (p.category) set.add(p.category);
+    }
+    return Array.from(set).sort((a, b) => {
+      const idxA = BASE_CATEGORIES.indexOf(a);
+      const idxB = BASE_CATEGORIES.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [productsList]);
 
   const filteredProducts = productsList.filter((p) => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
