@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendShipmentNotificationEmail } from '@/lib/email/resend';
+import { syncSinglePrintifyProduct } from '@/lib/printify/sync';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Supabase admin client unavailable' }, { status: 500 });
     }
 
-    const { type, resource } = payload;
+    const { type, topic, resource } = payload;
+    const eventType = type || topic || 'unknown';
+
+    // 1. Handle Product Webhook Events (e.g. product:publish:started, product:deleted)
+    if (eventType.startsWith('product:') || (!eventType.startsWith('order') && (resource?.blueprint_id || resource?.variants))) {
+      const productId = resource?.id ? String(resource.id) : (payload?.product_id ? String(payload.product_id) : null);
+
+      if (!productId) {
+        return NextResponse.json({ received: true, note: 'No product ID in product webhook payload' });
+      }
+
+      // Log webhook event
+      await supabase.from('merch_webhook_events').insert({
+        source: 'printify',
+        event_id: `printify_${eventType}_${productId}_${Date.now()}`,
+        event_type: eventType,
+        payload,
+        processed: true,
+      });
+
+      if (eventType === 'product:publish:started' || eventType === 'product:publish' || eventType === 'product:updated') {
+        const syncResult = await syncSinglePrintifyProduct(productId);
+        return NextResponse.json({
+          received: true,
+          event: eventType,
+          productId,
+          synced: syncResult.success,
+          error: syncResult.error,
+        });
+      }
+
+      if (eventType === 'product:deleted') {
+        // Safely clean up local catalog record if product was deleted in Printify
+        await supabase
+          .from('merch_products')
+          .delete()
+          .eq('printify_product_id', productId);
+
+        return NextResponse.json({
+          received: true,
+          event: eventType,
+          productId,
+          deletedLocally: true,
+        });
+      }
+
+      return NextResponse.json({ received: true, event: eventType, productId });
+    }
+
+    // 2. Handle Order Webhook Events
     const printifyOrderId = resource?.id ? String(resource.id) : null;
 
     if (!printifyOrderId) {
@@ -24,8 +74,8 @@ export async function POST(request: NextRequest) {
     // Log the event
     await supabase.from('merch_webhook_events').insert({
       source: 'printify',
-      event_id: `printify_${type}_${printifyOrderId}_${Date.now()}`,
-      event_type: type || 'order:updated',
+      event_id: `printify_${eventType}_${printifyOrderId}_${Date.now()}`,
+      event_type: eventType || 'order:updated',
       payload,
       processed: false,
     });

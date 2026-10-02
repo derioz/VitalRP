@@ -9,7 +9,7 @@ export function getPrintifyToken(): string {
 
 export function getPrintifyShopId(): string {
   const shopId = process.env.PRINTIFY_SHOP_ID;
-  return shopId ? shopId.trim() : '';
+  return shopId ? shopId.trim() : '29132686';
 }
 
 async function printifyFetch<T>(
@@ -38,14 +38,22 @@ async function printifyFetch<T>(
     let errorDetails = '';
     try {
       const errorJson = await response.json();
-      errorDetails = JSON.stringify(errorJson);
+      errorDetails = typeof errorJson === 'string' ? errorJson : JSON.stringify(errorJson);
     } catch {
       errorDetails = await response.text();
     }
     throw new Error(`Printify API Error [${response.status} ${response.statusText}]: ${errorDetails}`);
   }
 
-  return response.json() as Promise<T>;
+  const text = await response.text();
+  if (!text || text.trim() === '') {
+    return {} as T;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -334,5 +342,59 @@ export async function getPrintifyWebhooks(
 ): Promise<Array<{ id: string; topic: string; url: string; shop_id: string }>> {
   return printifyFetch<Array<{ id: string; topic: string; url: string; shop_id: string }>>(
     `/shops/${shopId}/webhooks.json`
+  );
+}
+
+/**
+ * Notify Printify that product publishing failed or reset stuck publishing state.
+ * POST /v1/shops/{shop_id}/products/{product_id}/publishing_failed.json
+ * Clears the "locked" status in Printify.
+ */
+export async function setPrintifyProductPublishingFailed(
+  productId: string,
+  reason: string = 'Reset stuck publishing state',
+  shopId: string | number = getPrintifyShopId()
+): Promise<{ status?: string; [key: string]: any }> {
+  return printifyFetch<{ status?: string; [key: string]: any }>(
+    `/shops/${shopId}/products/${productId}/publishing_failed.json`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }
+  );
+}
+
+/**
+ * Notify Printify that product publishing succeeded.
+ * POST /v1/shops/{shop_id}/products/{product_id}/publishing_succeeded.json
+ * Clears the "locked" status in Printify and links the external ID and URL handle.
+ */
+export async function setPrintifyProductPublishingSucceeded(
+  productId: string,
+  external: { id: string; handle: string },
+  shopId: string | number = getPrintifyShopId()
+): Promise<{ status?: string; [key: string]: any }> {
+  return printifyFetch<{ status?: string; [key: string]: any }>(
+    `/shops/${shopId}/products/${productId}/publishing_succeeded.json`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ external }),
+    }
+  );
+}
+
+/**
+ * Delete a product directly through Printify's API.
+ * DELETE /v1/shops/{shop_id}/products/{product_id}.json
+ */
+export async function deletePrintifyProduct(
+  productId: string,
+  shopId: string | number = getPrintifyShopId()
+): Promise<{ success?: boolean; [key: string]: any }> {
+  return printifyFetch<{ success?: boolean; [key: string]: any }>(
+    `/shops/${shopId}/products/${productId}.json`,
+    {
+      method: 'DELETE',
+    }
   );
 }
