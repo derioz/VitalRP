@@ -60,10 +60,11 @@ export const MerchManagerPage: React.FC = () => {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      // Try API endpoints first
+      // Try API endpoints first with cache-busting
+      const timestamp = Date.now();
       const [ordersRes, productsRes] = await Promise.all([
-        fetch(getApiUrl('/api/merch/orders?all=true'), { headers }).catch(() => null),
-        fetch(getApiUrl('/api/merch/products?admin=true'), { headers }).catch(() => null),
+        fetch(getApiUrl(`/api/merch/orders?all=true&_t=${timestamp}`), { headers, cache: 'no-store' }).catch(() => null),
+        fetch(getApiUrl(`/api/merch/products?admin=true&_t=${timestamp}`), { headers, cache: 'no-store' }).catch(() => null),
       ]);
 
       let loadedOrders = false;
@@ -94,10 +95,11 @@ export const MerchManagerPage: React.FC = () => {
       }
 
       if (!loadedProducts) {
-        // Fallback directly to Supabase client
+        // Fallback directly to Supabase client, excluding disabled products
         const { data: dbProducts } = await supabase
           .from('merch_products')
           .select('*, merch_variants(*)')
+          .neq('status', 'disabled')
           .order('display_order', { ascending: true });
         if (dbProducts) setProducts(dbProducts);
       }
@@ -146,7 +148,8 @@ export const MerchManagerPage: React.FC = () => {
 
       const { count: pCount } = await supabase
         .from('merch_products')
-        .select('count', { count: 'exact', head: true });
+        .select('count', { count: 'exact', head: true })
+        .neq('status', 'disabled');
       const { count: vCount } = await supabase
         .from('merch_variants')
         .select('count', { count: 'exact', head: true });
@@ -155,7 +158,7 @@ export const MerchManagerPage: React.FC = () => {
         setSyncFeedback(syncMessage);
       } else {
         setSyncFeedback(
-          `Catalog synchronized with Supabase (${pCount || 4} products, ${vCount || 1828} variants active).`
+          `Catalog synchronized with Supabase (${pCount || 0} products active).`
         );
       }
     } catch (err: any) {
@@ -240,6 +243,7 @@ export const MerchManagerPage: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!deleteModalProduct) return;
     const targetId = deleteModalProduct.printify_product_id || deleteModalProduct.id;
+    const localId = deleteModalProduct.id;
     setIsDeleting(true);
     setModalError(null);
 
@@ -264,6 +268,11 @@ export const MerchManagerPage: React.FC = () => {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to delete product from Printify.');
       }
+
+      // Optimistically remove product from local state immediately
+      setProducts((prev) =>
+        prev.filter((p) => p.id !== targetId && p.printify_product_id !== targetId && p.id !== localId)
+      );
 
       setDeleteModalProduct(null);
       setProductFeedback({

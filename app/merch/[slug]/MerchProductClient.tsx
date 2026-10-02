@@ -70,7 +70,8 @@ const ProductClientInner: React.FC<MerchProductClientProps> = ({ slug }) => {
       }
 
       try {
-        const res = await fetch(`/api/merch/products?slug=${encodeURIComponent(targetSlug)}`);
+        const timestamp = Date.now();
+        const res = await fetch(`/api/merch/products?slug=${encodeURIComponent(targetSlug)}&_t=${timestamp}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data && data.title && isMounted) {
@@ -87,7 +88,7 @@ const ProductClientInner: React.FC<MerchProductClientProps> = ({ slug }) => {
         }
 
         // Fetch full catalog for related items
-        const catRes = await fetch('/api/merch/products');
+        const catRes = await fetch(`/api/merch/products?_t=${timestamp}`, { cache: 'no-store' });
         if (catRes.ok) {
           const catData = await catRes.json();
           if (Array.isArray(catData.products) && isMounted) {

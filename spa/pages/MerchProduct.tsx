@@ -74,7 +74,7 @@ const MerchProductInner: React.FC = () => {
 
       // 2. Fetch live database products
       try {
-        const res = await fetch(getApiUrl('/api/merch/products'));
+        const res = await fetch(getApiUrl(`/api/merch/products?_t=${Date.now()}`), { cache: 'no-store' });
         const contentType = res.headers.get('content-type') || '';
         let liveProducts: StoreProduct[] = [];
 

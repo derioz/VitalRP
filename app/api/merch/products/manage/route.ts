@@ -20,13 +20,21 @@ export async function OPTIONS(request: NextRequest) {
  * GET /api/merch/products/manage?productId=...
  */
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  };
+
   const { searchParams } = new URL(request.url);
   const productId = searchParams.get('productId') || searchParams.get('id') || '';
 
   if (!productId) {
     return NextResponse.json(
       { error: 'Missing productId query parameter' },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     );
   }
 
@@ -38,6 +46,14 @@ export async function GET(request: NextRequest) {
  * Body: { productId: string, action: string, reason?: string }
  */
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  };
+
   try {
     const rawBody = await request.text();
     const body = JSON.parse(rawBody);
@@ -46,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (!productId) {
       return NextResponse.json(
         { error: 'Missing productId in request body' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -60,7 +76,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || 'Invalid JSON request' },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     );
   }
 }

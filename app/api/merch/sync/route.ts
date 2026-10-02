@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     'Access-Control-Allow-Origin': originHeader === 'null' ? '*' : originHeader,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
   };
 
   const authHeader = request.headers.get('authorization');
@@ -48,9 +49,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      productsCreated: result.productsCreated,
+      productsUpdated: result.productsUpdated,
+      productsArchived: result.productsArchived,
       productsSynced: result.productsSynced,
       variantsSynced: result.variantsSynced,
-      message: `Successfully synchronized ${result.productsSynced} products and ${result.variantsSynced} variants from Printify.`,
+      pagesRetrieved: result.pagesRetrieved,
+      totalPrintifyProducts: result.totalPrintifyProducts,
+      message: result.message || `Sync complete\n${result.productsUpdated} products updated\n${result.productsCreated} products added\n${result.productsArchived} deleted products removed`,
     }, { headers: corsHeaders });
   } catch (error: any) {
     return NextResponse.json(

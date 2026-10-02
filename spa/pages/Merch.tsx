@@ -209,7 +209,7 @@ const MerchContent: React.FC = () => {
       try {
         // 1. Try server API route first
         try {
-          const res = await fetch(getApiUrl('/api/merch/products'));
+          const res = await fetch(getApiUrl(`/api/merch/products?_t=${Date.now()}`), { cache: 'no-store' });
           const contentType = res.headers.get('content-type') || '';
           if (res.ok && contentType.includes('application/json')) {
             const data = await res.json();

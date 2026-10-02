@@ -27,11 +27,15 @@ export async function GET(request: NextRequest) {
     'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   };
 
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug');
   const category = searchParams.get('category');
+  const isAdminMode = searchParams.get('admin') === 'true';
 
   const supabase = createAdminClient() || createClient();
 
@@ -51,6 +55,11 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (dbProduct) {
+        // If product is disabled/archived and requester is not admin, treat as 404
+        if (dbProduct.status === 'disabled' && !isAdminMode) {
+          return NextResponse.json({ error: 'Product not found' }, { status: 404, headers: corsHeaders });
+        }
+
         const parsed = parseProductDescription(dbProduct.description);
         return NextResponse.json({
           ...dbProduct,
@@ -61,7 +70,7 @@ export async function GET(request: NextRequest) {
         }, { headers: corsHeaders });
       }
 
-      // Check local catalog fallback
+      // Check local catalog fallback (only for active known items)
       const fallbackProd = findProductBySlug(slug, FALLBACK_PRODUCTS);
       if (fallbackProd) {
         return NextResponse.json(fallbackProd, { headers: corsHeaders });
@@ -70,7 +79,7 @@ export async function GET(request: NextRequest) {
       // If still not found in Supabase, attempt Printify direct fetch
       try {
         const printifyProd = await getPrintifyProduct(slug);
-        if (printifyProd) {
+        if (printifyProd && (printifyProd.visible || isAdminMode)) {
           return NextResponse.json(printifyProd, { headers: corsHeaders });
         }
       } catch {}
@@ -79,7 +88,6 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Fetch all products
-    const isAdminMode = searchParams.get('admin') === 'true';
     let printifyProductsMap: Map<string, any> | null = null;
     let rawPrintifyProducts: any[] = [];
 
@@ -116,6 +124,13 @@ export async function GET(request: NextRequest) {
       `)
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
+
+    // Exclude disabled/archived products from active storefront and active admin listing
+    if (!isAdminMode) {
+      query = query.in('status', ['live', 'sample_ordered', 'approved']);
+    } else {
+      query = query.neq('status', 'disabled');
+    }
 
     if (category && category !== 'All') {
       query = query.eq('category', category);
@@ -185,7 +200,9 @@ export async function GET(request: NextRequest) {
 
     // 3. Fallback: if Supabase table is empty, fetch live from Printify API
     const printifyRes = await getPrintifyProducts(1, 50);
-    const liveProducts = (printifyRes.data || []).map((p) => {
+    const liveProducts = (printifyRes.data || [])
+      .filter((p) => isAdminMode || p.visible)
+      .map((p) => {
       let detectedCat = 'Apparel';
       const titleLower = p.title.toLowerCase();
       if (titleLower.includes('sticker') || titleLower.includes('mug') || titleLower.includes('mat')) {

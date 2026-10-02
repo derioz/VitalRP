@@ -71,9 +71,10 @@ export default function AdminMerchPage() {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
+      const timestamp = Date.now();
       const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/merch/orders?all=true', { headers }).catch(() => null),
-        fetch('/api/merch/products?admin=true', { headers }).catch(() => null),
+        fetch(`/api/merch/orders?all=true&_t=${timestamp}`, { headers, cache: 'no-store' }).catch(() => null),
+        fetch(`/api/merch/products?admin=true&_t=${timestamp}`, { headers, cache: 'no-store' }).catch(() => null),
       ]);
 
       if (ordersRes && ordersRes.ok) {
@@ -92,10 +93,11 @@ export default function AdminMerchPage() {
         const pData = await productsRes.json();
         setProducts(pData.products || []);
       } else {
-        // Fallback directly to Supabase client query
+        // Fallback directly to Supabase client query, excluding disabled products
         const { data: dbProducts } = await supabase
           .from('merch_products')
           .select('*, merch_variants(*)')
+          .neq('status', 'disabled')
           .order('display_order', { ascending: true });
         if (dbProducts) setProducts(dbProducts);
       }
@@ -211,6 +213,7 @@ export default function AdminMerchPage() {
   const handleConfirmDelete = async () => {
     if (!deleteModalProduct) return;
     const targetId = deleteModalProduct.printify_product_id || deleteModalProduct.id;
+    const localId = deleteModalProduct.id;
     setIsDeleting(true);
     setModalError(null);
 
@@ -235,6 +238,11 @@ export default function AdminMerchPage() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to delete product from Printify.');
       }
+
+      // Optimistically remove product from local state immediately
+      setProducts((prev) =>
+        prev.filter((p) => p.id !== targetId && p.printify_product_id !== targetId && p.id !== localId)
+      );
 
       setDeleteModalProduct(null);
       setProductFeedback({

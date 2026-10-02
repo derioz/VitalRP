@@ -186,7 +186,7 @@ const MerchStoreContent: React.FC = () => {
       setLoading(true);
       try {
         try {
-          const res = await fetch('/api/merch/products');
+          const res = await fetch(`/api/merch/products?_t=${Date.now()}`, { cache: 'no-store' });
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.products) && data.products.length > 0) {

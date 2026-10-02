@@ -1,8 +1,10 @@
 import 'server-only';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   getPrintifyProducts,
   getPrintifyProduct,
+  fetchAllPrintifyProducts,
   setPrintifyProductPublishingSucceeded,
   setPrintifyProductPublishingFailed,
   PrintifyProduct,
@@ -23,11 +25,22 @@ function slugify(text: string): string {
 
 /**
  * Sync all Printify products and variants into Supabase.
+ * - Fetches every page of Printify products before performing deletion checks.
+ * - Upserts active products and variants.
+ * - Detects local Printify-linked products missing from the active Printify catalog.
+ * - Safely archives or deletes missing products while preserving order history.
+ * - Revalidates catalog cache.
  */
 export async function syncPrintifyCatalog(): Promise<{
   success: boolean;
+  productsCreated: number;
+  productsUpdated: number;
+  productsArchived: number;
   productsSynced: number;
   variantsSynced: number;
+  pagesRetrieved: number;
+  totalPrintifyProducts: number;
+  message?: string;
   error?: string;
 }> {
   const supabase = createAdminClient();
@@ -54,15 +67,40 @@ export async function syncPrintifyCatalog(): Promise<{
     console.warn('Could not create sync log entry:', err);
   }
 
-  try {
-    const response = await getPrintifyProducts(1, 100);
-    const printifyProducts = response.data || [];
+  console.log('[Printify Sync] Printify sync started');
 
-    let totalProductsSynced = 0;
+  try {
+    // 1. Fetch the COMPLETE catalog across all pages.
+    // If any page request fails, this will throw, preventing any premature deletion checks.
+    const { products: printifyProducts, pagesRetrieved, totalReported } = await fetchAllPrintifyProducts();
+
+    console.log(`[Printify Sync] Printify pages retrieved: ${pagesRetrieved}`);
+    console.log(`[Printify Sync] Printify products retrieved: ${printifyProducts.length}`);
+
+    // 2. Query all local Printify-linked products currently stored in Supabase
+    const { data: localProducts, error: localFetchError } = await supabase
+      .from('merch_products')
+      .select('id, printify_product_id, title, status, slug')
+      .not('printify_product_id', 'is', null);
+
+    if (localFetchError) {
+      throw new Error(`Failed to query local products: ${localFetchError.message}`);
+    }
+
+    console.log(`[Printify Sync] Local Printify products: ${localProducts?.length || 0}`);
+
+    const activePrintifyIds = new Set(printifyProducts.map((p) => String(p.id)));
+    const localMap = new Map((localProducts || []).map((lp) => [String(lp.printify_product_id), lp]));
+
+    let productsCreated = 0;
+    let productsUpdated = 0;
     let totalVariantsSynced = 0;
 
+    // 3. Upsert all active products & variants from Printify
     for (const p of printifyProducts) {
-      // 1. Determine Category
+      const isExisting = localMap.has(String(p.id));
+
+      // Determine Category
       let category = 'Apparel';
       const titleLower = p.title.toLowerCase();
       if (titleLower.includes('sticker')) category = 'Accessories';
@@ -72,7 +110,7 @@ export async function syncPrintifyCatalog(): Promise<{
       else if (p.tags?.some((t: string) => t.toLowerCase() === 'accessories')) category = 'Accessories';
       else if (p.tags?.some((t: string) => t.toLowerCase() === 'in-game')) category = 'In-Game';
 
-      // 2. Base & Retail Price in cents
+      // Base & Retail Price in cents
       const enabledVariants = p.variants.filter((v: PrintifyVariant) => v.is_enabled);
       const activeVariants = enabledVariants.length > 0 ? enabledVariants : p.variants;
       const minCostCents = activeVariants.reduce((min, v) => (v.cost < min ? v.cost : min), activeVariants[0]?.cost || 0);
@@ -82,7 +120,7 @@ export async function syncPrintifyCatalog(): Promise<{
       // Clean up description HTML tags if any
       const cleanDescription = p.description ? p.description.replace(/<[^>]*>?/gm, '').trim() : '';
 
-      // 3. Upsert Product
+      // Upsert Product
       const { data: upsertedProduct, error: productError } = await supabase
         .from('merch_products')
         .upsert(
@@ -122,19 +160,19 @@ export async function syncPrintifyCatalog(): Promise<{
         continue;
       }
 
-      totalProductsSynced++;
+      if (isExisting) {
+        productsUpdated++;
+      } else {
+        productsCreated++;
+      }
+
       const localProductId = upsertedProduct.id;
 
-      // 4. Map options to variant titles
-      const colorOption = p.options.find((o) => o.type === 'color' || o.name.toLowerCase() === 'color');
-      const sizeOption = p.options.find((o) => o.type === 'size' || o.name.toLowerCase() === 'size');
-
-      // 5. Upsert Variants
+      // Upsert Variants
       for (const v of p.variants) {
         let detectedColor: string | null = null;
         let detectedSize: string | null = null;
 
-        // Extract option titles from options array
         if (v.title.includes('/')) {
           const parts = v.title.split('/').map((s) => s.trim());
           if (parts.length >= 2) {
@@ -184,21 +222,98 @@ export async function syncPrintifyCatalog(): Promise<{
       }
     }
 
+    // 4. Deletion Reconciliation: Detect local Printify-linked products that no longer exist in Printify
+    let productsArchived = 0;
+    const missingLocalProducts = (localProducts || []).filter(
+      (lp) => lp.printify_product_id && !activePrintifyIds.has(String(lp.printify_product_id))
+    );
+
+    for (const missing of missingLocalProducts) {
+      console.log(
+        `[Printify Sync] Archiving/removing missing product: Printify ID: ${missing.printify_product_id}, Local ID: ${missing.id}, Title: "${missing.title}"`
+      );
+
+      // Check if this product has historical orders in merch_order_items
+      const { data: orderItemRefs } = await supabase
+        .from('merch_order_items')
+        .select('id')
+        .eq('product_id', missing.id)
+        .limit(1);
+
+      const hasHistoricalOrders = Boolean(orderItemRefs && orderItemRefs.length > 0);
+
+      if (!hasHistoricalOrders) {
+        // Safe to permanently delete from database completely
+        const { error: delError } = await supabase
+          .from('merch_products')
+          .delete()
+          .eq('id', missing.id);
+
+        if (delError) {
+          console.warn(`[Printify Sync] Hard delete failed for ${missing.id}, archiving with status disabled:`, delError.message);
+          await supabase
+            .from('merch_products')
+            .update({ status: 'disabled', updated_at: new Date().toISOString() })
+            .eq('id', missing.id);
+        }
+      } else {
+        // Product was purchased in historical orders.
+        // Archive it with status = 'disabled' so it disappears from the active store and admin listings,
+        // while preserving historical customer orders and order items intact.
+        await supabase
+          .from('merch_products')
+          .update({ status: 'disabled', updated_at: new Date().toISOString() })
+          .eq('id', missing.id);
+
+        // Disable all variants as well
+        await supabase
+          .from('merch_variants')
+          .update({ is_enabled: false, is_in_stock: false })
+          .eq('product_id', missing.id);
+      }
+
+      productsArchived++;
+    }
+
+    console.log(`[Printify Sync] Products created: ${productsCreated}`);
+    console.log(`[Printify Sync] Products updated: ${productsUpdated}`);
+    console.log(`[Printify Sync] Products archived because missing from Printify: ${productsArchived}`);
+    console.log('[Printify Sync] Sync completed successfully');
+
+    // 5. Invalidate Next.js cache
+    try {
+      revalidatePath('/merch');
+      revalidatePath('/admin/merch');
+      revalidatePath('/api/merch/products');
+    } catch (revalErr) {
+      console.warn('[Printify Sync] Notice: Could not trigger revalidatePath:', revalErr);
+    }
+
     if (logId) {
       await supabase
         .from('merch_sync_logs')
         .update({
           status: 'completed',
-          products_synced: totalProductsSynced,
+          products_synced: productsCreated + productsUpdated,
           variants_synced: totalVariantsSynced,
         })
         .eq('id', logId);
     }
 
+    const message = productsArchived > 0
+      ? `Sync complete\n${productsUpdated} products updated\n${productsCreated} products added\n${productsArchived} deleted products removed`
+      : `Sync complete\n${productsUpdated} products updated\n${productsCreated} products added\n0 products removed`;
+
     return {
       success: true,
-      productsSynced: totalProductsSynced,
+      productsCreated,
+      productsUpdated,
+      productsArchived,
+      productsSynced: productsCreated + productsUpdated,
       variantsSynced: totalVariantsSynced,
+      pagesRetrieved,
+      totalPrintifyProducts: printifyProducts.length,
+      message,
     };
   } catch (error: any) {
     console.error('Fatal error during Printify catalog sync:', error);
@@ -213,8 +328,13 @@ export async function syncPrintifyCatalog(): Promise<{
     }
     return {
       success: false,
+      productsCreated: 0,
+      productsUpdated: 0,
+      productsArchived: 0,
       productsSynced: 0,
       variantsSynced: 0,
+      pagesRetrieved: 0,
+      totalPrintifyProducts: 0,
       error: error.message,
     };
   }

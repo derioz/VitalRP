@@ -228,6 +228,44 @@ export async function getPrintifyProducts(
 }
 
 /**
+ * Fetch the COMPLETE list of all products across every page from Printify.
+ * Retrieves all pages sequentially before returning.
+ * Throws immediately if any page fetch fails to guarantee completeness and prevent partial catalog checks.
+ */
+export async function fetchAllPrintifyProducts(
+  shopId: string | number = getPrintifyShopId()
+): Promise<{ products: PrintifyProduct[]; pagesRetrieved: number; totalReported: number }> {
+  const allProducts: PrintifyProduct[] = [];
+  let page = 1;
+  const limit = 50;
+  let totalReported = 0;
+  let pagesRetrieved = 0;
+
+  while (true) {
+    const res = await getPrintifyProducts(page, limit, shopId);
+    if (!res || !Array.isArray(res.data)) {
+      throw new Error(`Invalid response structure from Printify on page ${page}`);
+    }
+
+    allProducts.push(...res.data);
+    pagesRetrieved++;
+    totalReported = typeof res.total === 'number' ? res.total : allProducts.length;
+
+    const lastPage = typeof res.last_page === 'number' && res.last_page > 0 ? res.last_page : 1;
+    if (page >= lastPage || res.data.length < limit || allProducts.length >= totalReported) {
+      break;
+    }
+    page++;
+  }
+
+  return {
+    products: allProducts,
+    pagesRetrieved,
+    totalReported,
+  };
+}
+
+/**
  * Fetch a single product by ID from Printify.
  */
 export async function getPrintifyProduct(

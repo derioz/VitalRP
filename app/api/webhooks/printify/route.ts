@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendShipmentNotificationEmail } from '@/lib/email/resend';
 import { syncSinglePrintifyProduct } from '@/lib/printify/sync';
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
 
       if (eventType === 'product:publish:started' || eventType === 'product:publish' || eventType === 'product:updated') {
         const syncResult = await syncSinglePrintifyProduct(productId);
+        try {
+          revalidatePath('/merch');
+          revalidatePath('/admin/merch');
+          revalidatePath('/api/merch/products');
+        } catch {}
+
         return NextResponse.json({
           received: true,
           event: eventType,
@@ -47,11 +54,43 @@ export async function POST(request: NextRequest) {
       }
 
       if (eventType === 'product:deleted') {
-        // Safely clean up local catalog record if product was deleted in Printify
-        await supabase
+        // Safely clean up or archive local catalog record if product was deleted in Printify
+        const { data: localProd } = await supabase
           .from('merch_products')
-          .delete()
-          .eq('printify_product_id', productId);
+          .select('id')
+          .eq('printify_product_id', productId)
+          .maybeSingle();
+
+        if (localProd) {
+          const { data: orderItemRefs } = await supabase
+            .from('merch_order_items')
+            .select('id')
+            .eq('product_id', localProd.id)
+            .limit(1);
+
+          if (!orderItemRefs || orderItemRefs.length === 0) {
+            await supabase
+              .from('merch_products')
+              .delete()
+              .eq('id', localProd.id);
+          } else {
+            // Archive/disable so order history remains intact
+            await supabase
+              .from('merch_products')
+              .update({ status: 'disabled', updated_at: new Date().toISOString() })
+              .eq('id', localProd.id);
+            await supabase
+              .from('merch_variants')
+              .update({ is_enabled: false, is_in_stock: false })
+              .eq('product_id', localProd.id);
+          }
+        }
+
+        try {
+          revalidatePath('/merch');
+          revalidatePath('/admin/merch');
+          revalidatePath('/api/merch/products');
+        } catch {}
 
         return NextResponse.json({
           received: true,
