@@ -458,6 +458,11 @@ function applyFallbackRoleMappings(
       'settings.manage',
       'merch.view',
       'merch.manage',
+      'wiki.view',
+      'wiki.create',
+      'wiki.edit',
+      'wiki.upload',
+      'wiki.moderate',
     ];
     for (const p of adminPerms) {
       permissionsSet.add(p);
@@ -471,7 +476,17 @@ function applyFallbackRoleMappings(
   // Senior Moderator (1256346822914347170)
   if (memberRoles.includes('1256346822914347170') || memberRoles.includes('Senior Moderator')) {
     matchedRoleNames.push('Senior Moderator');
-    const srModPerms: AppPermission[] = ['admin.access', 'rules.view', 'rules.history', 'staff.view'];
+    const srModPerms: AppPermission[] = [
+      'admin.access',
+      'rules.view',
+      'rules.history',
+      'staff.view',
+      'wiki.view',
+      'wiki.create',
+      'wiki.edit',
+      'wiki.upload',
+      'wiki.moderate',
+    ];
     for (const p of srModPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
@@ -484,7 +499,15 @@ function applyFallbackRoleMappings(
   // Moderator (733091376832708689)
   if (memberRoles.includes('733091376832708689') || memberRoles.includes('Moderator')) {
     matchedRoleNames.push('Moderator');
-    const modPerms: AppPermission[] = ['admin.access', 'rules.view', 'rules.history'];
+    const modPerms: AppPermission[] = [
+      'admin.access',
+      'rules.view',
+      'rules.history',
+      'wiki.view',
+      'wiki.create',
+      'wiki.edit',
+      'wiki.upload',
+    ];
     for (const p of modPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
@@ -497,12 +520,42 @@ function applyFallbackRoleMappings(
   // Support Staff (733091380540473384)
   if (memberRoles.includes('733091380540473384') || memberRoles.includes('Support Staff')) {
     matchedRoleNames.push('Support Staff');
-    const supPerms: AppPermission[] = ['admin.access', 'rules.view'];
+    const supPerms: AppPermission[] = [
+      'admin.access',
+      'rules.view',
+      'wiki.view',
+      'wiki.create',
+      'wiki.edit',
+      'wiki.upload',
+    ];
     for (const p of supPerms) {
       permissionsSet.add(p);
       roleBreakdown[p] = roleBreakdown[p] || [];
       if (!roleBreakdown[p].includes('Support Staff')) {
         roleBreakdown[p].push('Support Staff');
+      }
+    }
+  }
+
+  // Whitelist Approved Role Check
+  const whitelistEnvId = process.env.DISCORD_WHITELIST_ROLE_ID;
+  const isWhitelisted =
+    (whitelistEnvId && memberRoles.includes(whitelistEnvId)) ||
+    memberRoles.some((r) => {
+      const lower = r.toLowerCase();
+      return lower === 'whitelist approved' || lower === 'whitelisted' || lower === 'whitelist' || lower.includes('whitelist');
+    });
+
+  if (isWhitelisted) {
+    if (!matchedRoleNames.includes('Whitelist Approved')) {
+      matchedRoleNames.push('Whitelist Approved');
+    }
+    const wlPerms: AppPermission[] = ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
+    for (const p of wlPerms) {
+      permissionsSet.add(p);
+      roleBreakdown[p] = roleBreakdown[p] || [];
+      if (!roleBreakdown[p].includes('Whitelist Approved')) {
+        roleBreakdown[p].push('Whitelist Approved');
       }
     }
   }

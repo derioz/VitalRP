@@ -78,6 +78,13 @@ export const AdminLayout: React.FC = () => {
       allowed: hasPermission('merch.view') || hasPermission('merch.manage') || isAdmin || isSuperAdmin || user?.role === 'admin' || user?.role === 'owner',
     },
     {
+      icon: BookOpen,
+      label: 'Wiki Moderation',
+      path: '/admin/wiki',
+      badge: 'Wiki',
+      allowed: hasPermission('wiki.moderate') || isAdmin || isSuperAdmin,
+    },
+    {
       icon: Settings,
       label: 'Settings',
       path: '/admin/settings',

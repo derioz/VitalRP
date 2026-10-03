@@ -45,7 +45,7 @@ const TikTokLogo = ({ className }: { className?: string }) => (
 );
 
 interface FooterProps {
-  onOpenStore: () => void;
+  onOpenStore?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
@@ -87,8 +87,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
 
   const handleLinkClick = (e: React.MouseEvent, item: any) => {
     if (item.isStore) {
-      e.preventDefault();
-      onOpenStore();
+      if (onOpenStore) {
+        e.preventDefault();
+        onOpenStore();
+      }
     } else if (item.href.startsWith('/')) {
       e.preventDefault();
       window.location.href = item.href;

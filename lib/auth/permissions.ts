@@ -33,6 +33,11 @@ export const ALL_PERMISSIONS = [
   'settings.manage',
   'merch.view',
   'merch.manage',
+  'wiki.view',
+  'wiki.create',
+  'wiki.edit',
+  'wiki.upload',
+  'wiki.moderate',
 ] as const;
 
 export type AppPermission = typeof ALL_PERMISSIONS[number];
@@ -40,7 +45,7 @@ export type AppPermission = typeof ALL_PERMISSIONS[number];
 export interface PermissionDefinition {
   id: AppPermission;
   name: string;
-  category: 'Administration' | 'Rules CMS' | 'Staff & Access' | 'System' | 'Merch Store';
+  category: 'Administration' | 'Rules CMS' | 'Staff & Access' | 'System' | 'Merch Store' | 'Character Wiki';
   description: string;
 }
 
@@ -117,6 +122,36 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'Merch Store',
     description: 'Edit prices, toggle product visibility, trigger Printify catalog sync, and manage orders.',
   },
+  {
+    id: 'wiki.view',
+    name: 'View Character Wiki',
+    category: 'Character Wiki',
+    description: 'Public read access to browse character pages and lore.',
+  },
+  {
+    id: 'wiki.create',
+    name: 'Create Wiki Characters',
+    category: 'Character Wiki',
+    description: 'Authorized Whitelist players and staff to create new Wiki character pages.',
+  },
+  {
+    id: 'wiki.edit',
+    name: 'Edit Wiki Characters',
+    category: 'Character Wiki',
+    description: 'Authorized Whitelist players and staff to edit character details and bios.',
+  },
+  {
+    id: 'wiki.upload',
+    name: 'Upload Wiki Media',
+    category: 'Character Wiki',
+    description: 'Upload character portraits and gallery photos through FiveManage.',
+  },
+  {
+    id: 'wiki.moderate',
+    name: 'Moderate Character Wiki',
+    category: 'Character Wiki',
+    description: 'Administrative ability to archive, restore, and moderate Wiki pages and revisions.',
+  },
 ];
 
 /**
@@ -140,7 +175,7 @@ export function hasPermission(
   if (isSuperAdmin(discordId)) {
     return true;
   }
-  if (isKnownAdmin(discordId) && (permission === 'admin.access' || permission === 'staff.view' || permission === 'rules.view' || permission === 'merch.view' || permission === 'merch.manage')) {
+  if (isKnownAdmin(discordId)) {
     return true;
   }
   if (effectivePermissions instanceof Set) {

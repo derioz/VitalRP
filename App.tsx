@@ -17,6 +17,15 @@ import { RolePermissionsPage } from './spa/pages/admin/RolePermissionsManager';
 import { AuditLogsPage } from './spa/pages/admin/AuditLogs';
 import { MerchManagerPage } from './spa/pages/admin/MerchManager';
 import { AuthCallback } from './spa/pages/AuthCallback';
+import { WikiHome } from './spa/pages/wiki/WikiHome';
+import { WikiCharacters } from './spa/pages/wiki/WikiCharacters';
+import { WikiCharacterDetail } from './spa/pages/wiki/WikiCharacterDetail';
+import { WikiCharacterEdit } from './spa/pages/wiki/WikiCharacterEdit';
+import { WikiCharacterNew } from './spa/pages/wiki/WikiCharacterNew';
+import { WikiCharacterBacklinks } from './spa/pages/wiki/WikiCharacterBacklinks';
+import { WikiCharacterHistory } from './spa/pages/wiki/WikiCharacterHistory';
+import { WikiCategory } from './spa/pages/wiki/WikiCategory';
+import { WikiAdmin } from './spa/pages/wiki/WikiAdmin';
 
 function ScrollToTopOnNavigate() {
   const { pathname } = useLocation();
@@ -41,6 +50,17 @@ function App() {
           <Route path="/merch/order/:orderId" element={<MerchOrders />} />
           <Route path="/merch/:slug" element={<MerchProduct />} />
 
+          {/* Wiki Routes */}
+          <Route path="/wiki" element={<WikiHome />} />
+          <Route path="/wiki/characters" element={<WikiCharacters />} />
+          <Route path="/wiki/characters/new" element={<WikiCharacterNew />} />
+          <Route path="/wiki/characters/:slug" element={<WikiCharacterDetail />} />
+          <Route path="/wiki/characters/:slug/edit" element={<WikiCharacterEdit />} />
+          <Route path="/wiki/characters/:slug/backlinks" element={<WikiCharacterBacklinks />} />
+          <Route path="/wiki/characters/:slug/history" element={<WikiCharacterHistory />} />
+          <Route path="/wiki/categories/:slug" element={<WikiCategory />} />
+          <Route path="/wiki/admin" element={<WikiAdmin />} />
+
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
@@ -51,6 +71,7 @@ function App() {
             <Route path="users" element={<UsersPage />} />
             <Route path="settings" element={<Settings />} />
             <Route path="merch" element={<MerchManagerPage />} />
+            <Route path="wiki" element={<WikiAdmin />} />
           </Route>
 
           {/* Catch-all fallback */}

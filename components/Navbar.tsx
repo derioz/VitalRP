@@ -156,12 +156,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   };
 
 
-  // Nav links include Rules and Merch
+  // Nav links include Rules, Wiki, and Merch
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Features', href: '/#features' },
     { name: 'About', href: '/#values' },
     { name: 'Rules', href: '/rules' },
+    { name: 'Wiki', href: '/wiki' },
     { name: 'Merch', href: '/merch' },
     { name: 'FAQ', href: '/#faq' },
     { name: 'Join', href: '/#join' },
