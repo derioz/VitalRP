@@ -104,7 +104,10 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
       isAdmin ||
       isCreator ||
       user?.effectivePermissions?.includes('wiki.edit') ||
-      user?.matchedRoleNames?.some((r) => r.toLowerCase().includes('whitelist')));
+      user?.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
+      user?.discordRoles?.some((r) =>
+        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
+      ));
 
   if (loading) {
     return (

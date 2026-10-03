@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Role, UserPermissions, getPermissions, normalizeRole, isKnownAdminId } from '@/lib/auth/rbac';
 import { AppPermission, isSuperAdmin as checkIsSuperAdmin, isKnownAdmin, getAllPermissions } from '@/lib/auth/permissions';
 import { supabase } from '@/lib/supabase/client';
+import { getApiUrl } from '@/lib/api-config';
 
 export interface AuthUser {
   id?: string;
@@ -224,7 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (clientSession.access_token) {
           headers['Authorization'] = `Bearer ${clientSession.access_token}`;
         }
-        const res = await fetch(`/api/auth/me${forceRefresh ? '?refresh=true' : ''}`, {
+        const apiUrl = getApiUrl(`/api/auth/me${forceRefresh ? '?refresh=true' : ''}`);
+        const res = await fetch(apiUrl, {
           headers,
           cache: 'no-store',
           signal: controller.signal,

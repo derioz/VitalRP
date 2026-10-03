@@ -169,7 +169,18 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
   initialSlug,
   isNew = false,
 }) => {
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
+
+  const isWhitelisted = Boolean(
+    user &&
+    (isSuperAdmin ||
+      isAdmin ||
+      user.effectivePermissions?.includes('wiki.create') ||
+      user.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
+      user.discordRoles?.some((r) =>
+        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
+      ))
+  );
 
   // Try to load any previously saved character synchronously from local storage
   const cachedCharacter =
@@ -880,6 +891,32 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
           <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium flex items-center gap-2">
             <AlertTriangle size={16} className="shrink-0" />
             <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {!user && isNew && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+              <span>
+                <strong>Notice:</strong> You are not logged in. You can draft your character below, but saving/publishing requires logging in with your approved Whitelist Discord account.
+              </span>
+            </div>
+            <a
+              href="/login"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 font-tech font-bold uppercase tracking-wider text-[11px] self-start sm:self-auto shrink-0 transition-colors"
+            >
+              Login with Discord
+            </a>
+          </div>
+        )}
+
+        {user && !isWhitelisted && isNew && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-2.5">
+            <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+            <span>
+              <strong>Notice:</strong> Your Discord account (@{user.username || user.displayName}) is signed in, but does not have the <strong>Whitelist Approved</strong> role in the Vital RP Discord server.
+            </span>
           </div>
         )}
 

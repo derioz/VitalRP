@@ -10,6 +10,24 @@ import {
 
 export const VITAL_GUILD_ID = process.env.DISCORD_GUILD_ID || '730015674348601384';
 export const VITAL_ADMIN_ROLE_ID = process.env.DISCORD_ADMIN_ROLE_ID || '733091115577901158';
+export const VITAL_WHITELIST_ROLE_ID = process.env.DISCORD_WHITELIST_ROLE_ID || '1241050651677556806';
+
+export const KNOWN_WHITELIST_ROLE_IDS = new Set<string>([
+  '1241050651677556806', // Whitelist Approved
+  '1315051212072161340', // Whitelist Team
+  '1392591587434955015', // Pre-whitelisted faction member
+  '1241050904887824444', // Expedited Whitelist Apps
+]);
+
+export function isWhitelistApproved(roles: string[]): boolean {
+  if (!Array.isArray(roles)) return false;
+  return roles.some(
+    (r) =>
+      KNOWN_WHITELIST_ROLE_IDS.has(r) ||
+      r === VITAL_WHITELIST_ROLE_ID ||
+      (typeof r === 'string' && /whitelist/i.test(r))
+  );
+}
 
 export interface DiscordGuildRole {
   id: string;
@@ -381,6 +399,22 @@ export async function getEffectiveAuth(
     applyFallbackRoleMappings(memberRoles, permissionsSet, roleBreakdown, matchedRoleNames);
   }
 
+  // Authoritative Whitelist Role Check:
+  // If the member has any recognized Whitelist Discord role, grant wiki permissions
+  if (isWhitelistApproved(memberRoles)) {
+    if (!matchedRoleNames.includes('Whitelist Approved')) {
+      matchedRoleNames.push('Whitelist Approved');
+    }
+    const wlPerms: AppPermission[] = ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
+    for (const p of wlPerms) {
+      permissionsSet.add(p);
+      roleBreakdown[p] = roleBreakdown[p] || [];
+      if (!roleBreakdown[p].includes('Whitelist Approved')) {
+        roleBreakdown[p].push('Whitelist Approved');
+      }
+    }
+  }
+
   const permissions = Array.from(permissionsSet);
   const isAdmin = permissions.includes('admin.access') || permissions.length > 0 || staffRoleRes.isStaff || isKnownAdmin(discordId);
   const role = staffRoleRes.primaryRole || (matchedRoleNames[0] || (isAdmin ? 'admin' : 'user'));
@@ -538,15 +572,7 @@ function applyFallbackRoleMappings(
   }
 
   // Whitelist Approved Role Check
-  const whitelistEnvId = process.env.DISCORD_WHITELIST_ROLE_ID;
-  const isWhitelisted =
-    (whitelistEnvId && memberRoles.includes(whitelistEnvId)) ||
-    memberRoles.some((r) => {
-      const lower = r.toLowerCase();
-      return lower === 'whitelist approved' || lower === 'whitelisted' || lower === 'whitelist' || lower.includes('whitelist');
-    });
-
-  if (isWhitelisted) {
+  if (isWhitelistApproved(memberRoles)) {
     if (!matchedRoleNames.includes('Whitelist Approved')) {
       matchedRoleNames.push('Whitelist Approved');
     }
