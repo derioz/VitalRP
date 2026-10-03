@@ -33,6 +33,9 @@ export async function GET(
   const { slug } = await params;
   const isPreview = request.nextUrl.searchParams.get('preview') === 'true';
 
+  const rawSlug = decodeURIComponent(slug).toLowerCase().trim();
+  const normalizedSlug = rawSlug.replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+
   const supabase = createAdminClient();
 
   if (supabase) {
@@ -41,7 +44,7 @@ export async function GET(
       const { data: redirect } = await supabase
         .from('wiki_slug_redirects')
         .select('new_slug')
-        .eq('old_slug', slug.toLowerCase())
+        .or(`old_slug.eq.${rawSlug},old_slug.eq.${normalizedSlug}`)
         .maybeSingle();
 
       if (redirect?.new_slug) {
@@ -49,12 +52,12 @@ export async function GET(
       }
 
       // 2. Fetch page (by slug or UUID)
-      const isUuid = /^[0-9a-fA-F-]{36}$/.test(slug);
+      const isUuid = /^[0-9a-fA-F-]{36}$/.test(rawSlug);
       let pageQuery = supabase.from('wiki_pages').select('*');
       if (isUuid) {
-        pageQuery = pageQuery.eq('id', slug);
+        pageQuery = pageQuery.eq('id', rawSlug);
       } else {
-        pageQuery = pageQuery.eq('slug', slug.toLowerCase());
+        pageQuery = pageQuery.or(`slug.eq.${rawSlug},slug.eq.${normalizedSlug}`);
       }
 
       const { data: page, error: pageErr } = await pageQuery.maybeSingle();
@@ -271,12 +274,19 @@ export async function PUT(
   }
 
   try {
+    const rawSlug = decodeURIComponent(slug).toLowerCase().trim();
+    const normalizedSlug = rawSlug.replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    const isUuid = /^[0-9a-fA-F-]{36}$/.test(rawSlug);
+
     // 2. Fetch existing page to verify permissions
-    const { data: page, error: pageErr } = await supabase
-      .from('wiki_pages')
-      .select('*')
-      .eq('slug', slug.toLowerCase())
-      .single();
+    let pageQuery = supabase.from('wiki_pages').select('*');
+    if (isUuid) {
+      pageQuery = pageQuery.eq('id', rawSlug);
+    } else {
+      pageQuery = pageQuery.or(`slug.eq.${rawSlug},slug.eq.${normalizedSlug}`);
+    }
+
+    const { data: page, error: pageErr } = await pageQuery.maybeSingle();
 
     if (pageErr || !page) {
       return NextResponse.json({ error: 'Character page not found.' }, { status: 404 });

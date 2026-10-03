@@ -18,12 +18,23 @@ export function saveLocalCharacter(character: WikiCharacterDetail): void {
   if (typeof window === 'undefined') return;
   try {
     const current = getLocalCharacters();
-    const existingIndex = current.findIndex(
-      (c) => c.id === character.id || c.slug.toLowerCase() === character.slug.toLowerCase()
-    );
+    const charSlug = (character.slug || '').toLowerCase().trim();
+    const charId = (character.id || '').toLowerCase().trim();
+    const charName = (character.character?.full_name || character.title || '').toLowerCase().trim();
+
+    const existingIndex = current.findIndex((c) => {
+      const cSlug = (c.slug || '').toLowerCase().trim();
+      const cId = (c.id || '').toLowerCase().trim();
+      const cName = (c.character?.full_name || c.title || '').toLowerCase().trim();
+      return (
+        (charId && cId === charId) ||
+        (charSlug && cSlug === charSlug) ||
+        (charName && cName === charName)
+      );
+    });
 
     if (existingIndex >= 0) {
-      current[existingIndex] = character;
+      current[existingIndex] = { ...current[existingIndex], ...character, updated_at: new Date().toISOString() };
     } else {
       current.unshift(character);
     }
@@ -37,16 +48,46 @@ export function saveLocalCharacter(character: WikiCharacterDetail): void {
 export function getLocalCharacterBySlug(slug: string): WikiCharacterDetail | null {
   if (typeof window === 'undefined' || !slug) return null;
   const list = getLocalCharacters();
-  const target = slug.toLowerCase().trim();
-  return list.find((c) => c.slug.toLowerCase() === target) || null;
+  const rawTarget = decodeURIComponent(slug).toLowerCase().trim();
+  const normalizedTarget = rawTarget
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+
+  return (
+    list.find((c) => {
+      if (!c) return false;
+      const cSlug = (c.slug || '').toLowerCase().trim();
+      const cNormalizedSlug = cSlug.replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+      const cTitle = (c.title || '').toLowerCase().trim();
+      const cFullName = (c.character?.full_name || '').toLowerCase().trim();
+      const cId = (c.id || '').toLowerCase().trim();
+
+      return (
+        cSlug === rawTarget ||
+        cSlug === normalizedTarget ||
+        cNormalizedSlug === normalizedTarget ||
+        cTitle === rawTarget ||
+        cTitle === normalizedTarget ||
+        cFullName === rawTarget ||
+        cFullName === normalizedTarget ||
+        cId === rawTarget
+      );
+    }) || null
+  );
 }
 
 export function removeLocalCharacter(slug: string): void {
   if (typeof window === 'undefined' || !slug) return;
   try {
     const current = getLocalCharacters();
-    const target = slug.toLowerCase().trim();
-    const filtered = current.filter((c) => c.slug.toLowerCase() !== target);
+    const rawTarget = decodeURIComponent(slug).toLowerCase().trim();
+    const normalizedTarget = rawTarget.replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+    const filtered = current.filter((c) => {
+      const cSlug = (c.slug || '').toLowerCase().trim();
+      const cId = (c.id || '').toLowerCase().trim();
+      return cSlug !== rawTarget && cSlug !== normalizedTarget && cId !== rawTarget;
+    });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
   } catch {}
 }
