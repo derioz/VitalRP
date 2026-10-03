@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { MentionData } from '../../lib/wiki/mentions';
 import { Skeleton } from '../ui/skeleton';
+import { getApiUrl } from '../../lib/api-config';
 
 export { type MentionData } from '../../lib/wiki/mentions';
 
@@ -34,8 +35,11 @@ export const MentionLink: React.FC<{
       if (!cardData && !characterLookup?.[characterId]) {
         setLoadingCard(true);
         // Async fetch preview data
-        fetch(`/api/wiki/characters/${characterId}?preview=true`)
-          .then((res) => (res.ok ? res.json() : null))
+        fetch(getApiUrl(`/api/wiki/characters/${characterId}?preview=true`))
+          .then((res) => {
+            const ct = res.headers.get('content-type') || '';
+            return res.ok && ct.includes('application/json') ? res.json() : null;
+          })
           .then((data) => {
             if (data?.character) {
               setCardData({

@@ -6,6 +6,8 @@ import { Footer } from '../Footer';
 import { Skeleton } from '../ui/skeleton';
 import { useAuth } from '../AuthProvider';
 import { ArrowLeft, History, RotateCcw, Clock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { getApiUrl } from '../../lib/api-config';
+import { supabase } from '../../lib/supabase/client';
 
 interface CharacterHistoryViewProps {
   slug: string;
@@ -23,8 +25,11 @@ export const CharacterHistoryView: React.FC<CharacterHistoryViewProps> = ({ slug
     let isMounted = true;
     setLoading(true);
 
-    fetch(`/api/wiki/characters/${slug}/history`)
-      .then((res) => (res.ok ? res.json() : null))
+    fetch(getApiUrl(`/api/wiki/characters/${slug}/history`))
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        return res.ok && ct.includes('application/json') ? res.json() : null;
+      })
       .then((data) => {
         if (isMounted && data) {
           if (data.pageTitle) setCharacterName(data.pageTitle);
@@ -48,14 +53,24 @@ export const CharacterHistoryView: React.FC<CharacterHistoryViewProps> = ({ slug
 
     try {
       setRestoringId(revisionId);
-      const res = await fetch(`/api/wiki/characters/${slug}/history`, {
+      const { data: authData } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${authData.session.access_token}`;
+      }
+
+      const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}/history`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ revisionId }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to restore revision.');
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : null;
+      if (!res.ok) throw new Error(data?.error || 'Failed to restore revision.');
 
       setMessage(`Successfully restored to Revision #${revNum}`);
       setTimeout(() => {

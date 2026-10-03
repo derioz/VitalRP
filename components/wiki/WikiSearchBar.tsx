@@ -5,6 +5,8 @@ import { Search, X, Shield, Briefcase, ArrowRight, Loader2 } from 'lucide-react'
 import { WikiSearchResult } from '../../lib/wiki/types';
 import { SearchResultSkeleton } from './WikiSkeletons';
 import { getFallbackSearchResults } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
+import { getLocalCharacters } from '../../lib/wiki/storage';
 
 interface WikiSearchBarProps {
   placeholder?: string;
@@ -51,15 +53,49 @@ export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/wiki/search?q=${encodeURIComponent(query.trim())}&limit=8`);
-        if (res.ok) {
-          const data = await res.json();
-          setResults(data.results || []);
-        } else {
-          setResults(getFallbackSearchResults(query).slice(0, 8));
-        }
+        let apiResults: WikiSearchResult[] = [];
+        try {
+          const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(query.trim())}&limit=8`));
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && ct.includes('application/json')) {
+            const data = await res.json();
+            apiResults = data.results || [];
+          }
+        } catch {}
+
+        // Search local characters
+        const q = query.toLowerCase().trim();
+        const localMatches = getLocalCharacters()
+          .filter((c) => {
+            const nameMatch = (c.character?.full_name || c.title).toLowerCase().includes(q);
+            const aliasMatch = (c.character?.aliases || []).some((a) => a.toLowerCase().includes(q));
+            const gangMatch = c.character?.gang?.toLowerCase().includes(q);
+            const jobMatch = c.character?.occupation?.toLowerCase().includes(q);
+            const summaryMatch = c.summary?.toLowerCase().includes(q);
+            return nameMatch || aliasMatch || gangMatch || jobMatch || summaryMatch;
+          })
+          .map((c) => ({
+            id: c.id,
+            slug: c.slug,
+            title: c.title,
+            full_name: c.character?.full_name || c.title,
+            aliases: c.character?.aliases || [],
+            avatar_url: c.character?.avatar_url,
+            status: c.status,
+            occupation: c.character?.occupation,
+            gang: c.character?.gang,
+            business: c.character?.business,
+            summary: c.summary,
+            categories: c.categories.map((cat) => cat.name),
+          }));
+
+        // Merge results
+        const resultMap = new Map<string, WikiSearchResult>();
+        for (const r of apiResults) resultMap.set(r.slug.toLowerCase(), r);
+        for (const r of localMatches) resultMap.set(r.slug.toLowerCase(), r);
+        setResults(Array.from(resultMap.values()).slice(0, 8));
       } catch {
-        setResults(getFallbackSearchResults(query).slice(0, 8));
+        setResults([]);
       } finally {
         setLoading(false);
         setSelectedIndex(0);

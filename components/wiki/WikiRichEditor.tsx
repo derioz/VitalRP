@@ -22,6 +22,8 @@ import { uploadWikiImageWithProgress } from '../../lib/wiki/fivemanage';
 import { AutocompleteSkeleton } from './WikiSkeletons';
 import { WikiSearchResult } from '../../lib/wiki/types';
 import { getFallbackSearchResults } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
+import { getLocalCharacters } from '../../lib/wiki/storage';
 
 interface WikiRichEditorProps {
   value: string;
@@ -84,15 +86,45 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/wiki/search?q=${encodeURIComponent(mentionQuery)}&limit=8`);
-        if (res.ok) {
-          const data = await res.json();
-          setMentionResults(data.results || []);
-        } else {
-          setMentionResults(getFallbackSearchResults(mentionQuery).slice(0, 8));
-        }
+        let apiResults: WikiSearchResult[] = [];
+        try {
+          const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(mentionQuery)}&limit=8`));
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && ct.includes('application/json')) {
+            const data = await res.json();
+            apiResults = data.results || [];
+          }
+        } catch {}
+
+        // Search local characters
+        const q = mentionQuery.toLowerCase().trim();
+        const localMatches: WikiSearchResult[] = getLocalCharacters()
+          .filter((c) => {
+            const nameMatch = (c.character?.full_name || c.title).toLowerCase().includes(q);
+            const aliasMatch = (c.character?.aliases || []).some((a) => a.toLowerCase().includes(q));
+            return nameMatch || aliasMatch;
+          })
+          .map((c) => ({
+            id: c.id,
+            slug: c.slug,
+            title: c.title,
+            full_name: c.character?.full_name || c.title,
+            aliases: c.character?.aliases || [],
+            avatar_url: c.character?.avatar_url,
+            status: c.status,
+            occupation: c.character?.occupation,
+            gang: c.character?.gang,
+            business: c.character?.business,
+            summary: c.summary,
+            categories: c.categories.map((cat) => cat.name),
+          }));
+
+        const map = new Map<string, WikiSearchResult>();
+        for (const r of apiResults) map.set(r.slug.toLowerCase(), r);
+        for (const r of localMatches) map.set(r.slug.toLowerCase(), r);
+        setMentionResults(Array.from(map.values()).slice(0, 8));
       } catch {
-        setMentionResults(getFallbackSearchResults(mentionQuery).slice(0, 8));
+        setMentionResults([]);
       } finally {
         setMentionLoading(false);
         setSelectedIndex(0);

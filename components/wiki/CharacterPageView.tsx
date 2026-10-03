@@ -13,6 +13,9 @@ import { CharacterPageSkeleton } from './WikiSkeletons';
 import { WikiCharacterDetail } from '../../lib/wiki/types';
 import { renderRichHtmlWithMentions } from './WikiMentions';
 import { useAuth } from '../AuthProvider';
+import { getApiUrl } from '../../lib/api-config';
+import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
+import { getLocalCharacterBySlug } from '../../lib/wiki/storage';
 import {
   Edit3,
   History,
@@ -26,7 +29,6 @@ import {
   Briefcase,
   Link2,
 } from 'lucide-react';
-import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
 
 interface CharacterPageViewProps {
   slug: string;
@@ -52,11 +54,16 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     }
 
     let isMounted = true;
-    setLoading(true);
+    const localChar = getLocalCharacterBySlug(slug);
+    if (localChar) {
+      setCharacterData(localChar);
+      setLoading(false);
+    }
 
-    fetch(`/api/wiki/characters/${slug}`)
+    fetch(getApiUrl(`/api/wiki/characters/${slug}`))
       .then((res) => {
-        if (!res.ok) throw new Error('Not found');
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || !ct.includes('application/json')) throw new Error('Not found');
         return res.json();
       })
       .then((data) => {
@@ -67,8 +74,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
         if (isMounted) setCharacterData(data);
       })
       .catch(() => {
-        // Fallback
-        const fallback = getFallbackCharacterBySlug(slug);
+        const fallback = localChar || getFallbackCharacterBySlug(slug);
         if (isMounted) setCharacterData(fallback);
       })
       .finally(() => {

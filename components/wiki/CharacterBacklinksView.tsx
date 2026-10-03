@@ -7,6 +7,7 @@ import { BacklinkSkeleton } from './WikiSkeletons';
 import { WikiBacklink } from '../../lib/wiki/types';
 import { ArrowLeft, Link2, ArrowUpRight, Compass } from 'lucide-react';
 import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
 
 interface CharacterBacklinksViewProps {
   slug: string;
@@ -21,8 +22,11 @@ export const CharacterBacklinksView: React.FC<CharacterBacklinksViewProps> = ({ 
     let isMounted = true;
     setLoading(true);
 
-    fetch(`/api/wiki/characters/${slug}/backlinks`)
-      .then((res) => (res.ok ? res.json() : null))
+    fetch(getApiUrl(`/api/wiki/characters/${slug}/backlinks`))
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        return res.ok && ct.includes('application/json') ? res.json() : null;
+      })
       .then((data) => {
         if (isMounted) {
           if (data?.pageTitle) setCharacterName(data.pageTitle);

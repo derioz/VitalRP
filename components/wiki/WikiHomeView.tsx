@@ -27,6 +27,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { FALLBACK_CHARACTERS, FALLBACK_WIKI_CATEGORIES } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
+import { getLocalCharacters } from '../../lib/wiki/storage';
 
 export const WikiHomeView: React.FC = () => {
   const { user, isAdmin, isSuperAdmin } = useAuth();
@@ -47,44 +49,56 @@ export const WikiHomeView: React.FC = () => {
     let isMounted = true;
     async function loadData() {
       try {
+        const localList: CharacterCardData[] = getLocalCharacters().map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          title: c.title,
+          full_name: c.character?.full_name || c.title,
+          aliases: c.character?.aliases || [],
+          avatar_url: c.character?.avatar_url,
+          status: c.status,
+          occupation: c.character?.occupation,
+          gang: c.character?.gang,
+          business: c.character?.business,
+          summary: c.summary,
+          updated_at: c.updated_at,
+        }));
+
         const [catRes, charRes] = await Promise.all([
-          fetch('/api/wiki/categories').catch(() => null),
-          fetch('/api/wiki/characters?limit=12&sort=updated_desc').catch(() => null),
+          fetch(getApiUrl('/api/wiki/categories')).catch(() => null),
+          fetch(getApiUrl('/api/wiki/characters?limit=12&sort=updated_desc')).catch(() => null),
         ]);
 
         if (catRes && catRes.ok) {
-          const catData = await catRes.json();
-          if (isMounted && catData.categories?.length) {
-            setCategories(catData.categories);
+          const ct = catRes.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const catData = await catRes.json();
+            if (isMounted && catData.categories?.length) {
+              setCategories(catData.categories);
+            }
           }
         }
 
+        let apiList: CharacterCardData[] = [];
         if (charRes && charRes.ok) {
-          const charData = await charRes.json();
-          if (isMounted && charData.characters?.length) {
-            setRecentlyUpdated(charData.characters.slice(0, 4));
-            setPopularCharacters(charData.characters.slice(0, 4));
+          const ct = charRes.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const charData = await charRes.json();
+            if (Array.isArray(charData.characters)) {
+              apiList = charData.characters;
+            }
           }
-        } else {
-          // Fallback
-          const mapped = FALLBACK_CHARACTERS.map((c) => ({
-            id: c.id,
-            slug: c.slug,
-            title: c.title,
-            full_name: c.character.full_name,
-            aliases: c.character.aliases,
-            avatar_url: c.character.avatar_url,
-            status: c.status,
-            occupation: c.character.occupation,
-            gang: c.character.gang,
-            business: c.character.business,
-            summary: c.summary,
-            updated_at: c.updated_at,
-          }));
-          if (isMounted) {
-            setRecentlyUpdated(mapped.slice(0, 4));
-            setPopularCharacters(mapped.slice(0, 4));
-          }
+        }
+
+        // Merge API characters with local characters
+        const combinedMap = new Map<string, CharacterCardData>();
+        for (const c of apiList) combinedMap.set(c.slug.toLowerCase(), c);
+        for (const c of localList) combinedMap.set(c.slug.toLowerCase(), c);
+        const combined = Array.from(combinedMap.values());
+
+        if (isMounted) {
+          setRecentlyUpdated(combined.slice(0, 4));
+          setPopularCharacters(combined.slice(0, 4));
         }
       } catch (err) {
         console.warn('Error loading wiki home data:', err);
@@ -251,45 +265,68 @@ export const WikiHomeView: React.FC = () => {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {recentlyUpdated.map((char) => (
-                  <CharacterCard key={char.id} character={char} />
-                ))}
-              </div>
+              {recentlyUpdated.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {recentlyUpdated.map((char) => (
+                    <CharacterCard key={char.id} character={char} />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 rounded-2xl bg-dark-900/40 border border-white/5 text-center space-y-3">
+                  <Users size={32} className="mx-auto text-gray-600" />
+                  <h3 className="text-base font-display font-semibold text-white">No Characters Registered Yet</h3>
+                  <p className="text-xs text-gray-400 max-w-md mx-auto">
+                    The Vital Wiki is clean and ready for players. Whitelist Approved members and staff can create the first character pages!
+                  </p>
+                  {canCreate && (
+                    <div className="pt-2">
+                      <a
+                        href="/wiki/characters/new"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-vital-500/20"
+                      >
+                        <PlusCircle size={14} />
+                        <span>Create First Character</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Popular Characters */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                    <TrendingUp size={18} />
+            {popularCharacters.length > 0 && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                      <TrendingUp size={18} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-display font-bold text-white">
+                        Popular Characters
+                      </h2>
+                      <p className="text-xs text-gray-400">
+                        Most viewed community characters and syndicate leaders
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-display font-bold text-white">
-                      Popular Characters
-                    </h2>
-                    <p className="text-xs text-gray-400">
-                      Most viewed community characters and syndicate leaders
-                    </p>
-                  </div>
+
+                  <a
+                    href="/wiki/characters?sort=popular"
+                    className="flex items-center gap-1 text-xs text-vital-400 hover:text-vital-300 font-tech font-bold uppercase tracking-wider transition-colors"
+                  >
+                    <span>View Directory</span>
+                    <ChevronRight size={14} />
+                  </a>
                 </div>
 
-                <a
-                  href="/wiki/characters?sort=popular"
-                  className="flex items-center gap-1 text-xs text-vital-400 hover:text-vital-300 font-tech font-bold uppercase tracking-wider transition-colors"
-                >
-                  <span>View Directory</span>
-                  <ChevronRight size={14} />
-                </a>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {popularCharacters.map((char) => (
+                    <CharacterCard key={`pop-${char.id}`} character={char} />
+                  ))}
+                </div>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {popularCharacters.map((char) => (
-                  <CharacterCard key={`pop-${char.id}`} character={char} />
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         )}
       </main>

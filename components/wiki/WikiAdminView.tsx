@@ -20,6 +20,9 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { FALLBACK_CHARACTERS } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
+import { supabase } from '../../lib/supabase/client';
+import { getLocalCharacters } from '../../lib/wiki/storage';
 
 export const WikiAdminView: React.FC = () => {
   const { user, isAdmin, isSuperAdmin } = useAuth();
@@ -34,15 +37,23 @@ export const WikiAdminView: React.FC = () => {
     let isMounted = true;
     setLoading(true);
 
-    fetch('/api/wiki/characters?limit=50&sort=updated_desc')
-      .then((res) => (res.ok ? res.json() : null))
+    fetch(getApiUrl('/api/wiki/characters?limit=50&sort=updated_desc'))
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        return res.ok && ct.includes('application/json') ? res.json() : null;
+      })
       .then((data) => {
         if (isMounted) {
-          setCharacters(data?.characters || FALLBACK_CHARACTERS);
+          const apiList = data?.characters || [];
+          const localList = getLocalCharacters();
+          const map = new Map();
+          for (const c of apiList) map.set(c.slug.toLowerCase(), c);
+          for (const c of localList) map.set(c.slug.toLowerCase(), c);
+          setCharacters(Array.from(map.values()));
         }
       })
       .catch(() => {
-        if (isMounted) setCharacters(FALLBACK_CHARACTERS);
+        if (isMounted) setCharacters(getLocalCharacters());
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -57,8 +68,16 @@ export const WikiAdminView: React.FC = () => {
     if (!confirm(`Are you sure you want to archive "${title}"?`)) return;
 
     try {
-      const res = await fetch(`/api/wiki/characters/${slug}`, {
+      const { data: authData } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (authData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${authData.session.access_token}`;
+      }
+
+      const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}`), {
         method: 'DELETE',
+        headers,
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Archive failed');
 
@@ -74,9 +93,18 @@ export const WikiAdminView: React.FC = () => {
 
   const handleUnarchive = async (slug: string, title: string) => {
     try {
-      const res = await fetch(`/api/wiki/characters/${slug}`, {
+      const { data: authData } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${authData.session.access_token}`;
+      }
+
+      const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ status: 'active', edit_summary: 'Unarchived by admin' }),
       });
       if (!res.ok) throw new Error('Unarchive failed');

@@ -10,6 +10,8 @@ import { CharacterDirectorySkeleton } from './WikiSkeletons';
 import { Search, Filter, ArrowUpDown, PlusCircle, Compass } from 'lucide-react';
 import { useAuth } from '../AuthProvider';
 import { FALLBACK_CHARACTERS, FALLBACK_WIKI_CATEGORIES } from '../../data/wiki-fallback';
+import { getApiUrl } from '../../lib/api-config';
+import { getLocalCharacters } from '../../lib/wiki/storage';
 
 const ALPHABET = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 
@@ -62,50 +64,63 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/wiki/characters?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (isCurrent) {
-            setCharacters(data.characters || []);
-            setTotalCount(data.total || 0);
+        let apiCharacters: CharacterCardData[] = [];
+        let apiTotal = 0;
+
+        try {
+          const res = await fetch(getApiUrl(`/api/wiki/characters?${queryParams.toString()}`));
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && ct.includes('application/json')) {
+            const data = await res.json();
+            apiCharacters = data.characters || [];
+            apiTotal = data.total || 0;
           }
-        } else {
-          // Fallback filtering
-          let filtered = [...FALLBACK_CHARACTERS];
-          if (selectedStatus !== 'all') {
-            filtered = filtered.filter((c) => c.status === selectedStatus);
-          }
-          if (selectedLetter !== 'ALL') {
-            filtered = filtered.filter((c) =>
-              c.character.full_name.toUpperCase().startsWith(selectedLetter)
-            );
-          }
-          if (search.trim()) {
-            const q = search.toLowerCase();
-            filtered = filtered.filter(
-              (c) =>
-                c.character.full_name.toLowerCase().includes(q) ||
-                c.character.gang?.toLowerCase().includes(q) ||
-                c.character.occupation?.toLowerCase().includes(q)
-            );
-          }
-          if (isCurrent) {
-            setCharacters(
-              filtered.map((c) => ({
-                id: c.id,
-                slug: c.slug,
-                title: c.title,
-                full_name: c.character.full_name,
-                aliases: c.character.aliases,
-                avatar_url: c.character.avatar_url,
-                status: c.status,
-                occupation: c.character.occupation,
-                gang: c.character.gang,
-                summary: c.summary,
-              }))
-            );
-            setTotalCount(filtered.length);
-          }
+        } catch {
+          // Ignore network error on static host
+        }
+
+        // Apply filters to local characters as well
+        let localList = getLocalCharacters();
+        if (selectedStatus !== 'all') {
+          localList = localList.filter((c) => c.status === selectedStatus);
+        }
+        if (selectedLetter !== 'ALL') {
+          localList = localList.filter((c) =>
+            (c.character?.full_name || c.title).toUpperCase().startsWith(selectedLetter)
+          );
+        }
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          localList = localList.filter(
+            (c) =>
+              (c.character?.full_name || c.title).toLowerCase().includes(q) ||
+              c.character?.gang?.toLowerCase().includes(q) ||
+              c.character?.occupation?.toLowerCase().includes(q)
+          );
+        }
+
+        const mappedLocal: CharacterCardData[] = localList.map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          title: c.title,
+          full_name: c.character?.full_name || c.title,
+          aliases: c.character?.aliases || [],
+          avatar_url: c.character?.avatar_url,
+          status: c.status,
+          occupation: c.character?.occupation,
+          gang: c.character?.gang,
+          summary: c.summary,
+        }));
+
+        // Merge API characters and local characters
+        const map = new Map<string, CharacterCardData>();
+        for (const c of apiCharacters) map.set(c.slug.toLowerCase(), c);
+        for (const c of mappedLocal) map.set(c.slug.toLowerCase(), c);
+        const finalResults = Array.from(map.values());
+
+        if (isCurrent) {
+          setCharacters(finalResults);
+          setTotalCount(finalResults.length || apiTotal);
         }
       } catch {
         // Safe fallback
@@ -274,12 +289,24 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
             ))}
           </div>
         ) : (
-          <div className="p-16 text-center bg-dark-900/40 border border-white/5 rounded-3xl space-y-3">
-            <div className="text-lg font-bold text-white">No characters found</div>
+          <div className="p-16 text-center bg-dark-900/40 border border-white/5 rounded-3xl space-y-4">
+            <div className="text-lg font-bold text-white">No Characters Found</div>
             <p className="text-xs text-gray-400 max-w-md mx-auto">
-              No characters matched your search filters. Try loosening your search criteria or
-              browse all characters.
+              {search || selectedStatus !== 'all' || selectedCategory !== 'all' || selectedLetter !== 'ALL'
+                ? 'No characters matched your active filters. Try loosening your search criteria.'
+                : 'No characters have been registered yet. Whitelist members and staff can create the first entry!'}
             </p>
+            {canCreate && !search && selectedStatus === 'all' && selectedCategory === 'all' && selectedLetter === 'ALL' && (
+              <div className="pt-2">
+                <a
+                  href="/wiki/characters/new"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-vital-500/20"
+                >
+                  <PlusCircle size={15} />
+                  <span>Create First Character</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
       </main>

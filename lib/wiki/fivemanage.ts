@@ -3,6 +3,8 @@
  * Security: FIVEMANAGE_API_KEY is kept strictly on the server side and never exposed to the client.
  */
 
+import { getApiUrl } from '../api-config';
+
 export const ALLOWED_WIKI_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -46,7 +48,8 @@ export function uploadWikiImageWithProgress(
     }
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/wiki/upload', true);
+    xhr.open('POST', getApiUrl('/api/wiki/upload'), true);
+    xhr.withCredentials = true;
 
     if (xhr.upload && onProgress) {
       xhr.upload.onprogress = (e) => {
