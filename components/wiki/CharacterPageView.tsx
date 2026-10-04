@@ -59,7 +59,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
 
     let isMounted = true;
 
-    fetch(getApiUrl(`/api/wiki/characters/${slug}`))
+    fetch(getApiUrl(`/api/wiki/characters/${slug}`), { cache: 'no-store' })
       .then((res) => {
         const ct = res.headers.get('content-type') || '';
         if (!res.ok || !ct.includes('application/json')) throw new Error('Not found');

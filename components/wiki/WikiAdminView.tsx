@@ -77,7 +77,6 @@ export const WikiAdminView: React.FC = () => {
       const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}`), {
         method: 'DELETE',
         headers,
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Archive failed');
 
@@ -104,7 +103,6 @@ export const WikiAdminView: React.FC = () => {
       const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}`), {
         method: 'PUT',
         headers,
-        credentials: 'include',
         body: JSON.stringify({ status: 'active', edit_summary: 'Unarchived by admin' }),
       });
       if (!res.ok) throw new Error('Unarchive failed');

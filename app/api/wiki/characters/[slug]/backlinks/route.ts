@@ -1,11 +1,40 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getFallbackCharacterBySlug } from '@/data/wiki-fallback';
+
+function getCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*';
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (origin !== '*' && origin !== 'null') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const corsHeaders = {
+    ...getCorsHeaders(request),
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  };
+
   const { slug } = await params;
   const supabase = createAdminClient();
 
@@ -62,33 +91,25 @@ export async function GET(
                     id: srcPage.id,
                     slug: srcPage.slug,
                     title: srcPage.title,
+                    status: srcPage.status,
                     full_name: srcChar?.full_name || srcPage.title,
                     avatar_url: srcChar?.avatar_url,
-                    status: srcPage.status,
-                    gang: srcChar?.gang,
                     occupation: srcChar?.occupation,
+                    gang: srcChar?.gang,
                   }
-                : undefined,
+                : null,
             };
-          });
+          }).filter((b: any) => Boolean(b.source));
 
-          return NextResponse.json({
-            pageTitle: page.title,
-            slug: page.slug,
-            backlinks: formatted,
-          });
+          return NextResponse.json({ backlinks: formatted }, { headers: corsHeaders });
         }
       }
-    } catch (err) {
-      console.warn('[Wiki Backlinks API] Supabase error:', err);
+    } catch {
+      // Fallback
     }
   }
 
-  // Fallback
+  // Fallback for mock data / offline
   const fallback = getFallbackCharacterBySlug(slug);
-  return NextResponse.json({
-    pageTitle: fallback?.title || slug,
-    slug,
-    backlinks: fallback?.backlinks || [],
-  });
+  return NextResponse.json({ backlinks: fallback?.backlinks || [] }, { headers: corsHeaders });
 }

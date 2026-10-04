@@ -64,7 +64,9 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
         let apiTotal = 0;
 
         try {
-          const res = await fetch(getApiUrl(`/api/wiki/characters?${queryParams.toString()}`));
+          const res = await fetch(getApiUrl(`/api/wiki/characters?${queryParams.toString()}`), {
+            cache: 'no-store',
+          });
           const ct = res.headers.get('content-type') || '';
           if (res.ok && ct.includes('application/json')) {
             const data = await res.json();

@@ -9,12 +9,16 @@ import { getServerCharacterBySlug } from '@/lib/wiki/server-store';
 
 function getCorsHeaders(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
-  return {
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Max-Age': '86400',
   };
+  if (origin !== '*' && origin !== 'null') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
 }
 
 export async function OPTIONS(request: NextRequest) {

@@ -422,9 +422,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Recover Wiki characters that were previously only saved in this browser.
   React.useEffect(() => {
-    if (!user?.discordId) return;
-    publishLocalCharacters(user.discordId).catch(() => {});
-  }, [user?.discordId]);
+    if (!user) return;
+    publishLocalCharacters(user.discordId || user.id).catch(() => {});
+  }, [user]);
 
   const contextValue = React.useMemo(
     () => ({

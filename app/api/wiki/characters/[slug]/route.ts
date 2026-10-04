@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
 import {
@@ -7,16 +10,24 @@ import {
 } from '@/lib/wiki/server-store';
 import { WikiCharacterDetail } from '@/lib/wiki/types';
 
-export async function OPTIONS(request: NextRequest) {
+function getCorsHeaders(request: NextRequest, methods = 'GET, PUT, DELETE, OPTIONS') {
   const origin = request.headers.get('origin') || '*';
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': methods,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (origin !== '*' && origin !== 'null') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
+}
+
+export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-      'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-      'Access-Control-Max-Age': '86400',
-    },
+    headers: getCorsHeaders(request, 'GET, PUT, DELETE, OPTIONS'),
   });
 }
 
@@ -29,10 +40,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const origin = request.headers.get('origin') || '*';
   const corsHeaders = {
-    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    ...getCorsHeaders(request, 'GET, PUT, DELETE, OPTIONS'),
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
   };
 
   const { slug } = await params;
@@ -77,11 +87,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const origin = request.headers.get('origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  };
+  const corsHeaders = getCorsHeaders(request, 'GET, PUT, DELETE, OPTIONS');
 
   const { slug } = await params;
 
@@ -227,11 +233,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const origin = request.headers.get('origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  };
+  const corsHeaders = getCorsHeaders(request, 'GET, PUT, DELETE, OPTIONS');
 
   const { slug } = await params;
 

@@ -703,16 +703,29 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
       related_characters: [],
     };
 
-    // Always keep a local backup so no work is lost if the request fails.
+    // Keep local backup in case of network interruption
     saveLocalCharacter(localCharDetail);
 
     try {
       const { data: authData } = await supabase.auth.getSession();
+      let token = authData?.session?.access_token;
+      if (!token) {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        token = refreshData?.session?.access_token;
+      }
+
+      if (!token && !user) {
+        setErrorMsg('You must be signed in with Discord to create or edit a Wiki character. Please log in and try again.');
+        setSaving(false);
+        setSaveStatus('idle');
+        return;
+      }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (authData?.session?.access_token) {
-        headers['Authorization'] = `Bearer ${authData.session.access_token}`;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const send = async (method: 'POST' | 'PUT') => {
@@ -723,7 +736,6 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
         const res = await fetch(getApiUrl(endpoint), {
           method,
           headers,
-          credentials: 'include',
           body: JSON.stringify(payload),
         });
         const contentType = res.headers.get('content-type') || '';
@@ -753,10 +765,11 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
       setSaveStatus('saved');
       window.location.href = `/wiki/characters/${finalSlug}`;
     } catch (err: any) {
+      console.error('[CharacterEditorView] Save error:', err);
       setErrorMsg(
         err?.message && err.message !== 'Failed to fetch'
           ? err.message
-          : 'Could not reach the Wiki server. Your changes are backed up on this device — please try again.'
+          : 'Could not connect to the Wiki backend. Please check your network and try again.'
       );
       setSaveStatus('unsaved');
     } finally {

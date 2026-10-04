@@ -1,28 +1,60 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/supabase/admin';
+
+function getCorsHeaders(request: NextRequest, methods = 'GET, POST, OPTIONS') {
+  const origin = request.headers.get('origin') || '*';
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': methods,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (origin !== '*' && origin !== 'null') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request, 'GET, POST, OPTIONS'),
+  });
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const corsHeaders = {
+    ...getCorsHeaders(request, 'GET, POST, OPTIONS'),
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  };
+
   const { slug } = await params;
   const supabase = createAdminClient();
 
   if (!supabase) {
-    return NextResponse.json({
-      revisions: [
-        {
-          id: 'rev-default-1',
-          revision_number: 1,
-          title: slug,
-          summary: 'Initial character profile creation',
-          editor_discord_id: '150580708144840704',
-          editor_name: 'Damon',
-          created_at: '2026-02-01T12:00:00Z',
-        },
-      ],
-    });
+    return NextResponse.json(
+      {
+        revisions: [
+          {
+            id: 'rev-default-1',
+            revision_number: 1,
+            title: slug,
+            summary: 'Initial character profile creation',
+            editor_discord_id: '150580708144840704',
+            editor_name: 'Damon',
+            created_at: '2026-02-01T12:00:00Z',
+          },
+        ],
+      },
+      { headers: corsHeaders }
+    );
   }
 
   try {
@@ -33,7 +65,7 @@ export async function GET(
       .single();
 
     if (!page) {
-      return NextResponse.json({ error: 'Character not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Character not found.' }, { status: 404, headers: corsHeaders });
     }
 
     const { data: revisions, error } = await supabase
@@ -44,13 +76,16 @@ export async function GET(
 
     if (error) throw error;
 
-    return NextResponse.json({
-      pageTitle: page.title,
-      slug: page.slug,
-      revisions: revisions || [],
-    });
+    return NextResponse.json(
+      {
+        pageTitle: page.title,
+        slug: page.slug,
+        revisions: revisions || [],
+      },
+      { headers: corsHeaders }
+    );
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -58,6 +93,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const corsHeaders = getCorsHeaders(request, 'GET, POST, OPTIONS');
   const { slug } = await params;
 
   // Restore revision requires Admin or Super Admin
@@ -66,18 +102,18 @@ export async function POST(
   const session = await getCurrentSession(token);
 
   if (!session || (!session.isAdmin && !session.isSuperAdmin && !session.effectivePermissions.includes('wiki.moderate'))) {
-    return NextResponse.json({ error: 'Forbidden: Only administrators can rollback revisions.' }, { status: 403 });
+    return NextResponse.json({ error: 'Forbidden: Only administrators can rollback revisions.' }, { status: 403, headers: corsHeaders });
   }
 
   const supabase = createAdminClient();
   if (!supabase) {
-    return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
+    return NextResponse.json({ error: 'Database service unavailable' }, { status: 503, headers: corsHeaders });
   }
 
   try {
     const { revisionId } = await request.json();
     if (!revisionId) {
-      return NextResponse.json({ error: 'Revision ID is required.' }, { status: 400 });
+      return NextResponse.json({ error: 'Revision ID is required.' }, { status: 400, headers: corsHeaders });
     }
 
     const { data: rev, error: revErr } = await supabase
@@ -87,12 +123,12 @@ export async function POST(
       .single();
 
     if (revErr || !rev) {
-      return NextResponse.json({ error: 'Revision snapshot not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Revision snapshot not found.' }, { status: 404, headers: corsHeaders });
     }
 
     const snapshot = rev.snapshot_data;
     if (!snapshot) {
-      return NextResponse.json({ error: 'Revision snapshot data is empty.' }, { status: 400 });
+      return NextResponse.json({ error: 'Revision snapshot data is empty.' }, { status: 400, headers: corsHeaders });
     }
 
     // Restore sections
@@ -127,8 +163,8 @@ export async function POST(
       editor_name: session.displayName || session.username,
     });
 
-    return NextResponse.json({ success: true, message: `Restored to revision #${rev.revision_number}` });
+    return NextResponse.json({ success: true, message: `Restored to revision #${rev.revision_number}` }, { headers: corsHeaders });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
   }
 }

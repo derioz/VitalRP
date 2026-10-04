@@ -266,15 +266,19 @@ export async function getEffectiveAuth(
   forceRefresh = false
 ): Promise<EffectiveAuthResult> {
   if (!discordId || !/^\d{17,20}$/.test(discordId)) {
+    const baseWikiPerms: AppPermission[] = ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
     return {
       discordId: discordId || '',
       isSuperAdmin: false,
       isAdmin: false,
       role: 'user',
-      permissions: [],
+      permissions: baseWikiPerms,
       discordRoles: [],
-      roleBreakdown: {},
-      matchedRoleNames: [],
+      roleBreakdown: baseWikiPerms.reduce((acc, p) => {
+        acc[p] = ['Authenticated Member'];
+        return acc;
+      }, {} as Record<string, string[]>),
+      matchedRoleNames: ['Member'],
     };
   }
 

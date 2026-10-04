@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
 import {
@@ -17,16 +20,24 @@ function generateSlug(name: string): string {
     .replace(/-+/g, '-');
 }
 
-export async function OPTIONS(request: NextRequest) {
+function getCorsHeaders(request: NextRequest, methods = 'GET, POST, OPTIONS') {
   const origin = request.headers.get('origin') || '*';
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
+    'Access-Control-Allow-Methods': methods,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Max-Age': '86400',
+  };
+  if (origin !== '*' && origin !== 'null') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
+}
+
+export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-      'Access-Control-Max-Age': '86400',
-    },
+    headers: getCorsHeaders(request, 'GET, POST, OPTIONS'),
   });
 }
 
@@ -36,11 +47,7 @@ export async function OPTIONS(request: NextRequest) {
  * Returns only published characters.
  */
 export async function GET(request: NextRequest) {
-  const origin = request.headers.get('origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  };
+  const corsHeaders = getCorsHeaders(request, 'GET, POST, OPTIONS');
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q') || '';
@@ -62,7 +69,11 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json(res, {
-    headers: { ...corsHeaders, 'X-Wiki-Storage': isWikiStorageConfigured() ? 'ok' : 'unavailable' },
+    headers: {
+      ...corsHeaders,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'X-Wiki-Storage': isWikiStorageConfigured() ? 'ok' : 'unavailable',
+    },
   });
 }
 
@@ -72,11 +83,7 @@ export async function GET(request: NextRequest) {
  * Strictly binds created_by_discord_id and created_by_user_id to the verified session to guarantee reliable ownership.
  */
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin') || '*';
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': origin === 'null' ? '*' : origin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  };
+  const corsHeaders = getCorsHeaders(request, 'GET, POST, OPTIONS');
 
   // 1. Authoritative Server-Side Auth Check: Any logged-in user can create a character
   const authHeader = request.headers.get('authorization');
@@ -199,9 +206,9 @@ export async function POST(request: NextRequest) {
       is_archived: false,
       is_draft: false,
       page_views: 0,
-      created_by_discord_id: session.discordId, // Server authoritative owner
-      created_by_user_id: session.id || session.discordId,
-      updated_by_discord_id: session.discordId,
+      created_by_discord_id: session.discordId || session.id || '', // Server authoritative owner
+      created_by_user_id: session.id || session.discordId || '',
+      updated_by_discord_id: session.discordId || session.id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       character: {

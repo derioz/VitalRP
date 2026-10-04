@@ -64,7 +64,6 @@ export const CharacterHistoryView: React.FC<CharacterHistoryViewProps> = ({ slug
       const res = await fetch(getApiUrl(`/api/wiki/characters/${slug}/history`), {
         method: 'POST',
         headers,
-        credentials: 'include',
         body: JSON.stringify({ revisionId }),
       });
 

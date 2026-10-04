@@ -60,8 +60,8 @@ export const WikiHomeView: React.FC = () => {
         }));
 
         const [catRes, charRes] = await Promise.all([
-          fetch(getApiUrl('/api/wiki/categories')).catch(() => null),
-          fetch(getApiUrl('/api/wiki/characters?limit=12&sort=updated_desc')).catch(() => null),
+          fetch(getApiUrl('/api/wiki/categories'), { cache: 'no-store' }).catch(() => null),
+          fetch(getApiUrl('/api/wiki/characters?limit=12&sort=updated_desc'), { cache: 'no-store' }).catch(() => null),
         ]);
 
         if (catRes && catRes.ok) {
