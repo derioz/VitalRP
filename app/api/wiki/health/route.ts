@@ -19,9 +19,6 @@ export async function GET() {
       hasServiceKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
       testStatus: 'untested',
     },
-    envKeysPresent: Object.keys(process.env).filter(
-      (k) => !k.startsWith('npm_') && !k.startsWith('__') && !k.includes('TOKEN') && !k.includes('SECRET') && !k.includes('KEY')
-    ),
   };
 
   if (adminDb) {
