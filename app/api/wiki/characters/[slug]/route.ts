@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
-import { isWhitelistApproved } from '@/lib/auth/vital-admin';
 import {
   getServerCharacterBySlug,
   saveServerCharacter,
@@ -71,8 +70,8 @@ export async function GET(
 
 /**
  * Character Editing / Updating:
- * Requires authenticated Discord login + Whitelist Approved role + Ownership (or Admin override).
- * A Whitelist Approved user cannot edit another user's character.
+ * Requires authenticated Discord login + Ownership (or Admin override).
+ * A user cannot edit another user's character.
  */
 export async function PUT(
   request: NextRequest,
@@ -106,25 +105,28 @@ export async function PUT(
     );
   }
 
-  // 2. Strict Permission Check:
+  // 2. Strict Ownership / Admin Check:
   // - Admin or SuperAdmin can always moderate / edit.
-  // - Whitelist Approved users can ONLY edit characters they personally created/own.
+  // - Logged in users can edit characters they personally created/own.
   const isCreator = Boolean(
-    existing.created_by_discord_id &&
-    session.discordId &&
-    existing.created_by_discord_id === session.discordId
+    (existing.created_by_discord_id &&
+      session.discordId &&
+      existing.created_by_discord_id === session.discordId) ||
+    (existing.created_by_user_id &&
+      session.id &&
+      existing.created_by_user_id === session.id) ||
+    (existing.character?.player_name &&
+      (session.displayName || session.username) &&
+      existing.character.player_name.trim().toLowerCase() === (session.displayName || session.username || '').trim().toLowerCase())
   );
-  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
   const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
 
-  const canEdit = isAdmin || (isWhitelisted && isCreator);
+  const canEdit = isAdmin || isCreator;
 
   if (!canEdit) {
     return NextResponse.json(
       {
-        error: isWhitelisted
-          ? 'Forbidden: You do not own this character profile. Only the character creator or staff administrators can modify it.'
-          : 'Forbidden: The Whitelist Approved Discord role is required to edit character profiles.',
+        error: 'Forbidden: You do not own this character profile. Only the character creator or staff administrators can modify it.',
       },
       { status: 403, headers: corsHeaders }
     );
@@ -254,14 +256,19 @@ export async function DELETE(
   }
 
   const isCreator = Boolean(
-    existing.created_by_discord_id &&
-    session.discordId &&
-    existing.created_by_discord_id === session.discordId
+    (existing.created_by_discord_id &&
+      session.discordId &&
+      existing.created_by_discord_id === session.discordId) ||
+    (existing.created_by_user_id &&
+      session.id &&
+      existing.created_by_user_id === session.id) ||
+    (existing.character?.player_name &&
+      (session.displayName || session.username) &&
+      existing.character.player_name.trim().toLowerCase() === (session.displayName || session.username || '').trim().toLowerCase())
   );
-  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
   const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
 
-  const canDelete = isAdmin || (isWhitelisted && isCreator);
+  const canDelete = isAdmin || isCreator;
 
   if (!canDelete) {
     return NextResponse.json(

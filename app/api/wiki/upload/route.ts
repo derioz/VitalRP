@@ -5,7 +5,6 @@ import { getCurrentSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ALLOWED_WIKI_IMAGE_MIME_TYPES, MAX_WIKI_IMAGE_SIZE_BYTES } from '@/lib/wiki/fivemanage';
 
-import { isWhitelistApproved } from '@/lib/auth/vital-admin';
 import { getServerCharacterBySlug } from '@/lib/wiki/server-store';
 
 function getCorsHeaders(request: NextRequest) {
@@ -40,16 +39,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2. Authorization Check: Whitelist Approved role or staff permission required
-  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.upload') || session.effectivePermissions.includes('wiki.create');
+  // 2. Authorization Check: Any authenticated user can upload wiki images (avatar, gallery).
   const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
-
-  if (!isWhitelisted && !isAdmin) {
-    return NextResponse.json(
-      { error: 'Forbidden: You must have the Whitelist Approved Discord role to upload Wiki images.' },
-      { status: 403, headers: corsHeaders }
-    );
-  }
 
   // 3. FiveManage API Key check (with server fallback if not yet set in Vercel project settings)
   const apiKey = process.env.FIVEMANAGE_API_KEY || 'eZgUsaWmqR3G146rqypFtL8DIHSOD0vv';
@@ -67,7 +58,14 @@ export async function POST(request: NextRequest) {
 
     if (pageId && !isAdmin) {
       const existingChar = await getServerCharacterBySlug(pageId, { isAdmin: true });
-      if (existingChar && existingChar.created_by_discord_id && existingChar.created_by_discord_id !== session.discordId) {
+      const isCreator = Boolean(
+        (existingChar?.created_by_discord_id && existingChar.created_by_discord_id === session.discordId) ||
+        (existingChar?.created_by_user_id && existingChar.created_by_user_id === session.id) ||
+        (existingChar?.character?.player_name &&
+          (session.displayName || session.username) &&
+          existingChar.character.player_name.trim().toLowerCase() === (session.displayName || session.username || '').trim().toLowerCase())
+      );
+      if (existingChar && !isCreator) {
         return NextResponse.json(
           { error: 'Forbidden: You do not own this character and cannot upload images for it.' },
           { status: 403, headers: corsHeaders }

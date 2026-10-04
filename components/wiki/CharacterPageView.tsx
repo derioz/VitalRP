@@ -94,23 +94,22 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     }
   };
 
+  // Ownership check: matches Discord ID, User ID, or registered player name
   const isCreator = Boolean(
-    characterData?.created_by_discord_id &&
-    user?.discordId &&
-    characterData.created_by_discord_id === user.discordId
-  );
-
-  const isWhitelisted = Boolean(
     user &&
-    (user.effectivePermissions?.includes('wiki.create') ||
-      user.effectivePermissions?.includes('wiki.edit') ||
-      user.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
-      user.discordRoles?.some((r) =>
-        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
-      ))
+      ((characterData?.created_by_discord_id &&
+        user.discordId &&
+        characterData.created_by_discord_id === user.discordId) ||
+        ((characterData as any)?.created_by_user_id &&
+          user.id &&
+          (characterData as any).created_by_user_id === user.id) ||
+        (characterData?.character?.player_name &&
+          (user.displayName || user.username) &&
+          characterData.character.player_name.trim().toLowerCase() ===
+            (user.displayName || user.username || '').trim().toLowerCase()))
   );
 
-  // Exact rule from user:
+  // Exact rule:
   // "When somebody views a character profile, only show the Edit Character button if they actually have permission to edit that character.
   // If the visitor is logged out, do not show editing controls.
   // If the visitor is logged in but does not own the character, do not show editing controls.
@@ -120,7 +119,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     (isSuperAdmin ||
       isAdmin ||
       user.effectivePermissions?.includes('wiki.moderate') ||
-      (isWhitelisted && isCreator))
+      isCreator)
   );
 
   if (loading) {

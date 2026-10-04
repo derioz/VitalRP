@@ -43,15 +43,8 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const canCreate =
-    Boolean(user) &&
-    (isSuperAdmin ||
-      isAdmin ||
-      user?.effectivePermissions?.includes('wiki.create') ||
-      user?.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
-      user?.discordRoles?.some((r) =>
-        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
-      ));
+  // Logged-in users can create Wiki characters
+  const canCreate = Boolean(user);
 
   useEffect(() => {
     let isCurrent = true;
@@ -159,10 +152,19 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
             </p>
           </div>
 
-          {canCreate && (
+          {user ? (
             <a
               href="/wiki/characters/new"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 transition-all self-start sm:self-auto"
+            >
+              <PlusCircle size={15} />
+              <span>Create Character</span>
+            </a>
+          ) : (
+            <a
+              href="/wiki/characters/new"
+              title="Log in to create your character"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-white/10 font-tech font-bold text-xs uppercase tracking-wider transition-colors self-start sm:self-auto"
             >
               <PlusCircle size={15} />
               <span>Create Character</span>
@@ -297,9 +299,9 @@ export const CharacterDirectoryView: React.FC<{ initialCategory?: string }> = ({
             <p className="text-xs text-gray-400 max-w-md mx-auto">
               {search || selectedStatus !== 'all' || selectedCategory !== 'all' || selectedLetter !== 'ALL'
                 ? 'No characters matched your active filters. Try loosening your search criteria.'
-                : 'No characters have been registered yet. Whitelist members and staff can create the first entry!'}
+                : 'No characters have been registered yet. Log in to create the first entry!'}
             </p>
-            {canCreate && !search && selectedStatus === 'all' && selectedCategory === 'all' && selectedLetter === 'ALL' && (
+            {!search && selectedStatus === 'all' && selectedCategory === 'all' && selectedLetter === 'ALL' && (
               <div className="pt-2">
                 <a
                   href="/wiki/characters/new"

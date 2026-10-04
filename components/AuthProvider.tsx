@@ -123,8 +123,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'settings.manage',
             'merch.view',
             'merch.manage',
+            'wiki.view',
+            'wiki.create',
+            'wiki.edit',
+            'wiki.upload',
+            'wiki.moderate',
           ]
-        : [];
+        : ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
       let discordRoles: string[] = [];
       let matchedRoleNames: string[] = userIsSuperAdmin
         ? ['Super Admin']
@@ -321,6 +326,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (permission: AppPermission): boolean => {
       if (isSuperAdmin || user?.isSuperAdmin) return true;
       if (!user) return false;
+      if (
+        permission === 'wiki.view' ||
+        permission === 'wiki.create' ||
+        permission === 'wiki.edit' ||
+        permission === 'wiki.upload'
+      ) {
+        return true;
+      }
       if ((isAdmin || user?.isAdmin) && (permission === 'merch.view' || permission === 'merch.manage')) {
         return true;
       }

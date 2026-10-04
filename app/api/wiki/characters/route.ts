@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/session';
-import { isWhitelistApproved } from '@/lib/auth/vital-admin';
 import {
   saveServerCharacter,
   listServerCharacters,
@@ -69,8 +68,8 @@ export async function GET(request: NextRequest) {
 
 /**
  * Character Creation API:
- * Protected route: requires authenticated Discord session + Whitelist Approved role (or Admin).
- * Strictly binds created_by_discord_id to the verified session to guarantee reliable ownership.
+ * Protected route: requires authenticated Discord session.
+ * Strictly binds created_by_discord_id and created_by_user_id to the verified session to guarantee reliable ownership.
  */
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -79,7 +78,7 @@ export async function POST(request: NextRequest) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   };
 
-  // 1. Authoritative Server-Side Auth Check
+  // 1. Authoritative Server-Side Auth Check: Any logged-in user can create a character
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
   const session = await getCurrentSession(token);
@@ -88,16 +87,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: 'Unauthorized: Discord login is required to create a Wiki character.' },
       { status: 401, headers: corsHeaders }
-    );
-  }
-
-  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
-  const canCreate = session.isSuperAdmin || session.isAdmin || isWhitelisted;
-
-  if (!canCreate) {
-    return NextResponse.json(
-      { error: 'Forbidden: The Whitelist Approved Discord role or staff permission is required to create Wiki characters.' },
-      { status: 403, headers: corsHeaders }
     );
   }
 

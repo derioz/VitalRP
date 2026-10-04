@@ -400,23 +400,20 @@ export async function getEffectiveAuth(
   }
 
   // Authoritative Whitelist Role Check:
-  // If the member has any recognized Whitelist Discord role, grant wiki permissions
   if (isWhitelistApproved(memberRoles)) {
     if (!matchedRoleNames.includes('Whitelist Approved')) {
       matchedRoleNames.push('Whitelist Approved');
     }
-    const wlPerms: AppPermission[] = ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
-    for (const p of wlPerms) {
-      permissionsSet.add(p);
-      roleBreakdown[p] = roleBreakdown[p] || [];
-      if (!roleBreakdown[p].includes('Whitelist Approved')) {
-        roleBreakdown[p].push('Whitelist Approved');
-      }
-    }
+  }
+
+  // All authenticated community members can view the wiki, create characters, edit characters they own, and upload wiki images
+  const baseWikiPerms: AppPermission[] = ['wiki.view', 'wiki.create', 'wiki.edit', 'wiki.upload'];
+  for (const p of baseWikiPerms) {
+    permissionsSet.add(p);
   }
 
   const permissions = Array.from(permissionsSet);
-  const isAdmin = permissions.includes('admin.access') || permissions.length > 0 || staffRoleRes.isStaff || isKnownAdmin(discordId);
+  const isAdmin = permissions.includes('admin.access') || staffRoleRes.isStaff || isKnownAdmin(discordId);
   const role = staffRoleRes.primaryRole || (matchedRoleNames[0] || (isAdmin ? 'admin' : 'user'));
 
   const result: EffectiveAuthResult = {

@@ -171,16 +171,6 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
 }) => {
   const { user, isAdmin, isSuperAdmin, loading: authLoading, login } = useAuth();
 
-  const isWhitelisted = Boolean(
-    user &&
-    (isSuperAdmin ||
-      isAdmin ||
-      user.effectivePermissions?.includes('wiki.create') ||
-      user.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
-      user.discordRoles?.some((r) =>
-        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
-      ))
-  );
 
   const [serverCharacter, setServerCharacter] = useState<WikiCharacterDetail | null>(null);
 
@@ -781,18 +771,27 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
     .replace(/-+/g, '-');
 
   const isCreator = Boolean(
-    (serverCharacter?.created_by_discord_id && user?.discordId && serverCharacter.created_by_discord_id === user.discordId) ||
-    ((serverCharacter as any)?.created_by_user_id && user?.id && (serverCharacter as any).created_by_user_id === user.id)
+    user &&
+      ((serverCharacter?.created_by_discord_id &&
+        user.discordId &&
+        serverCharacter.created_by_discord_id === user.discordId) ||
+        ((serverCharacter as any)?.created_by_user_id &&
+          user.id &&
+          (serverCharacter as any).created_by_user_id === user.id) ||
+        (serverCharacter?.character?.player_name &&
+          (user.displayName || user.username) &&
+          serverCharacter.character.player_name.trim().toLowerCase() ===
+            (user.displayName || user.username || '').trim().toLowerCase()))
   );
 
   const canEditThisCharacter = isNew
-    ? isWhitelisted
+    ? Boolean(user)
     : Boolean(
         user &&
         (isSuperAdmin ||
           isAdmin ||
           user.effectivePermissions?.includes('wiki.moderate') ||
-          (isWhitelisted && isCreator))
+          isCreator)
       );
 
   if (authLoading || (!isNew && loadingInitial)) {
@@ -805,7 +804,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
             {isNew ? 'Verifying Authorization...' : 'Loading Character Dossier...'}
           </h2>
           <p className="text-sm text-gray-400 font-tech">
-            {isNew ? 'Checking Discord Whitelist permissions' : 'Retrieving saved information and character history'}
+            {isNew ? 'Verifying account permissions' : 'Retrieving saved information and character history'}
           </p>
         </main>
         <Footer />
@@ -827,7 +826,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
               Authentication Required
             </h1>
             <p className="text-sm text-gray-400 max-w-md">
-              You must be logged in with Discord and hold the Whitelist Approved role to create new character profiles on the Vital RP Wiki.
+              You must be logged in with Discord to create new character profiles on the Vital RP Wiki.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -851,42 +850,6 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
     );
   }
 
-  if (isNew && !isWhitelisted) {
-    return (
-      <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white flex flex-col justify-between">
-        <Navbar />
-        <main className="flex-1 max-w-2xl mx-auto px-4 pt-36 pb-20 flex flex-col items-center justify-center text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/10">
-            <AlertTriangle size={32} />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-display font-extrabold text-white">
-              Whitelist Required
-            </h1>
-            <p className="text-sm text-gray-400 max-w-md">
-              Character creation is reserved for Whitelist Approved community members. You are currently logged in as <span className="text-white font-semibold">{user?.displayName || user?.username || 'Community Member'}</span>, but your account does not have the Whitelist Approved Discord role.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/apply"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 transition-all"
-            >
-              <span>Apply for Whitelist</span>
-            </a>
-            <a
-              href="/wiki/characters"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-300 hover:text-white border border-white/10 font-tech font-bold text-xs uppercase tracking-wider transition-colors"
-            >
-              <ArrowLeft size={14} />
-              <span>Browse Characters</span>
-            </a>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   // 2. Existing character edit access guards
   if (!isNew && !user) {
@@ -939,9 +902,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
               Access Restricted
             </h1>
             <p className="text-sm text-gray-400 max-w-md">
-              {!isWhitelisted
-                ? 'The Whitelist Approved Discord role is required to edit character profiles on the Vital RP Wiki.'
-                : 'You do not have permission to edit this character profile because you do not own it. Only the character creator or staff administrators may modify this page.'}
+              You do not have permission to edit this character profile because you do not own it. Only the character creator or staff administrators may modify this page.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -1073,7 +1034,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
             <div className="flex items-center gap-2.5">
               <AlertTriangle size={16} className="text-amber-400 shrink-0" />
               <span>
-                <strong>Notice:</strong> You are not logged in. You can draft your character below, but saving/publishing requires logging in with your approved Whitelist Discord account.
+                <strong>Notice:</strong> You are not logged in. You can draft your character below, but saving and publishing requires logging in with your Discord account.
               </span>
             </div>
             <a
@@ -1082,15 +1043,6 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
             >
               Login with Discord
             </a>
-          </div>
-        )}
-
-        {user && !isWhitelisted && isNew && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-2.5">
-            <AlertTriangle size={16} className="text-amber-400 shrink-0" />
-            <span>
-              <strong>Notice:</strong> Your Discord account (@{user.username || user.displayName}) is signed in, but does not have the <strong>Whitelist Approved</strong> role in the Vital RP Discord server.
-            </span>
           </div>
         )}
 

@@ -37,16 +37,8 @@ export const WikiHomeView: React.FC = () => {
   const [popularCharacters, setPopularCharacters] = useState<CharacterCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Check if current user is authorized to create characters (Whitelist, Staff, Admin)
-  const canCreate =
-    Boolean(user) &&
-    (isSuperAdmin ||
-      isAdmin ||
-      user?.effectivePermissions?.includes('wiki.create') ||
-      user?.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
-      user?.discordRoles?.some((r) =>
-        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
-      ));
+  // Logged-in users can create Wiki characters
+  const canCreate = Boolean(user);
 
   useEffect(() => {
     let isMounted = true;
@@ -197,7 +189,7 @@ export const WikiHomeView: React.FC = () => {
                   <span>Random Character</span>
                 </button>
 
-                {canCreate ? (
+                {user ? (
                   <a
                     href="/wiki/characters/new"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 transition-all hover:scale-105"
@@ -206,13 +198,14 @@ export const WikiHomeView: React.FC = () => {
                     <span>Create Character</span>
                   </a>
                 ) : (
-                  <span
-                    title="Login with an approved Whitelist Discord account to create a Wiki page"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-900/40 text-gray-500 font-tech text-xs uppercase tracking-wider border border-white/5 cursor-not-allowed"
+                  <a
+                    href="/wiki/characters/new"
+                    title="Log in to create your character"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-dark-800/80 hover:bg-dark-800 text-gray-300 hover:text-white font-tech font-bold text-xs uppercase tracking-wider border border-white/10 transition-colors"
                   >
                     <PlusCircle size={15} />
-                    <span>Create Character (Whitelist)</span>
-                  </span>
+                    <span>Create Character</span>
+                  </a>
                 )}
               </div>
             </div>
@@ -279,19 +272,17 @@ export const WikiHomeView: React.FC = () => {
                   <Users size={32} className="mx-auto text-gray-600" />
                   <h3 className="text-base font-display font-semibold text-white">No Characters Registered Yet</h3>
                   <p className="text-xs text-gray-400 max-w-md mx-auto">
-                    The Vital Wiki is clean and ready for players. Whitelist Approved members and staff can create the first character pages!
+                    The Vital Wiki is clean and ready for players. Log in to create the first character pages!
                   </p>
-                  {canCreate && (
-                    <div className="pt-2">
-                      <a
-                        href="/wiki/characters/new"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-vital-500/20"
-                      >
-                        <PlusCircle size={14} />
-                        <span>Create First Character</span>
-                      </a>
-                    </div>
-                  )}
+                  <div className="pt-2">
+                    <a
+                      href="/wiki/characters/new"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-vital-500/20"
+                    >
+                      <PlusCircle size={14} />
+                      <span>Create First Character</span>
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
