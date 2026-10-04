@@ -5,6 +5,9 @@ import { getCurrentSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ALLOWED_WIKI_IMAGE_MIME_TYPES, MAX_WIKI_IMAGE_SIZE_BYTES } from '@/lib/wiki/fivemanage';
 
+import { isWhitelistApproved } from '@/lib/auth/vital-admin';
+import { getServerCharacterBySlug } from '@/lib/wiki/server-store';
+
 function getCorsHeaders(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
   return {
@@ -25,51 +28,27 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const corsHeaders = getCorsHeaders(request);
 
-  // 1. Authentication Check
+  // 1. Authoritative Server-Side Auth Check
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
   const session = await getCurrentSession(token);
 
-  // 2. Authorization Check: Must be authenticated
   if (!session) {
-    // If session verification fails, also check if valid Supabase user token
-    let isAuthedUser = false;
-    let userId = 'anonymous';
-    if (token) {
-      const adminClient = createAdminClient();
-      if (adminClient) {
-        const { data: uData } = await adminClient.auth.getUser(token);
-        if (uData?.user) {
-          isAuthedUser = true;
-          userId = uData.user.id;
-        }
-      }
-    }
-
-    if (!isAuthedUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Discord login is required to upload images.' },
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    return NextResponse.json(
+      { error: 'Unauthorized: Discord login is required to upload images.' },
+      { status: 401, headers: corsHeaders }
+    );
   }
 
-  // Check upload permissions if session resolved
-  if (session) {
-    const canUpload =
-      session.isSuperAdmin ||
-      session.isAdmin ||
-      session.effectivePermissions.includes('wiki.upload') ||
-      session.effectivePermissions.includes('wiki.create') ||
-      session.matchedRoleNames.some((r) => r.toLowerCase().includes('whitelist')) ||
-      Boolean(session.discordId);
+  // 2. Authorization Check: Whitelist Approved role or staff permission required
+  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.upload') || session.effectivePermissions.includes('wiki.create');
+  const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
 
-    if (!canUpload) {
-      return NextResponse.json(
-        { error: 'Forbidden: You must have the Whitelist Approved role or staff permissions to upload Wiki images.' },
-        { status: 403, headers: corsHeaders }
-      );
-    }
+  if (!isWhitelisted && !isAdmin) {
+    return NextResponse.json(
+      { error: 'Forbidden: You must have the Whitelist Approved Discord role to upload Wiki images.' },
+      { status: 403, headers: corsHeaders }
+    );
   }
 
   // 3. FiveManage API Key check (with server fallback if not yet set in Vercel project settings)
@@ -85,6 +64,16 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file');
     const pageId = formData.get('pageId') as string | null;
+
+    if (pageId && !isAdmin) {
+      const existingChar = await getServerCharacterBySlug(pageId, { isAdmin: true });
+      if (existingChar && existingChar.created_by_discord_id && existingChar.created_by_discord_id !== session.discordId) {
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own this character and cannot upload images for it.' },
+          { status: 403, headers: corsHeaders }
+        );
+      }
+    }
 
     if (!file || !(file instanceof Blob)) {
       return NextResponse.json({ error: 'No valid image file provided.' }, { status: 400, headers: corsHeaders });

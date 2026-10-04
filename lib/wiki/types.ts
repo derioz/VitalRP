@@ -12,7 +12,9 @@ export interface WikiPage {
   is_archived: boolean;
   page_views: number;
   created_by_discord_id: string;
+  created_by_user_id?: string;
   updated_by_discord_id?: string;
+  is_draft?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -23,7 +23,8 @@ export async function OPTIONS(request: NextRequest) {
 
 /**
  * Public Character Detail View:
- * Accessible to everyone across the internet (logged in or logged out).
+ * Completely public and accessible to everyone across the internet (logged in or logged out).
+ * Anonymous visitors can view biographies, relationships, galleries, backlinks, etc.
  */
 export async function GET(
   request: NextRequest,
@@ -38,7 +39,15 @@ export async function GET(
   const { slug } = await params;
   const isPreview = request.nextUrl.searchParams.get('preview') === 'true';
 
-  const character = await getServerCharacterBySlug(slug);
+  // Optional session lookup for draft/owner check without requiring authentication
+  const authHeader = request.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+  const session = token ? await getCurrentSession(token).catch(() => null) : null;
+
+  const character = await getServerCharacterBySlug(slug, {
+    viewerDiscordId: session?.discordId,
+    isAdmin: Boolean(session?.isAdmin || session?.isSuperAdmin),
+  });
 
   if (!character) {
     return NextResponse.json({ error: 'Character not found.' }, { status: 404, headers: corsHeaders });
@@ -62,7 +71,8 @@ export async function GET(
 
 /**
  * Character Editing / Updating:
- * Allowed for original creator, Whitelist Approved members, and Admins.
+ * Requires authenticated Discord login + Whitelist Approved role + Ownership (or Admin override).
+ * A Whitelist Approved user cannot edit another user's character.
  */
 export async function PUT(
   request: NextRequest,
@@ -88,7 +98,7 @@ export async function PUT(
     );
   }
 
-  const existing = await getServerCharacterBySlug(slug);
+  const existing = await getServerCharacterBySlug(slug, { isAdmin: true });
   if (!existing) {
     return NextResponse.json(
       { error: 'Character not found to edit.' },
@@ -96,19 +106,26 @@ export async function PUT(
     );
   }
 
-  // 2. Permission check
-  const isCreator = existing.created_by_discord_id === session.discordId;
-  const isWhitelisted = isWhitelistApproved(session.discordRoles);
-  const canEdit =
-    session.isSuperAdmin ||
-    session.isAdmin ||
-    session.effectivePermissions.includes('wiki.edit') ||
-    isWhitelisted ||
-    isCreator;
+  // 2. Strict Permission Check:
+  // - Admin or SuperAdmin can always moderate / edit.
+  // - Whitelist Approved users can ONLY edit characters they personally created/own.
+  const isCreator = Boolean(
+    existing.created_by_discord_id &&
+    session.discordId &&
+    existing.created_by_discord_id === session.discordId
+  );
+  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
+  const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
+
+  const canEdit = isAdmin || (isWhitelisted && isCreator);
 
   if (!canEdit) {
     return NextResponse.json(
-      { error: 'Forbidden: You do not have permission to edit this character.' },
+      {
+        error: isWhitelisted
+          ? 'Forbidden: You do not own this character profile. Only the character creator or staff administrators can modify it.'
+          : 'Forbidden: The Whitelist Approved Discord role is required to edit character profiles.',
+      },
       { status: 403, headers: corsHeaders }
     );
   }
@@ -146,6 +163,8 @@ export async function PUT(
       title: trimmedName,
       summary: summary !== undefined ? summary : existing.summary,
       status: status || existing.status,
+      created_by_discord_id: existing.created_by_discord_id, // Immutable owner
+      created_by_user_id: existing.created_by_user_id || session.id,
       updated_by_discord_id: session.discordId,
       updated_at: new Date().toISOString(),
       character: {
@@ -194,7 +213,7 @@ export async function PUT(
 
 /**
  * Character Deletion:
- * Allowed for original author, Super Admin, and Admins.
+ * Requires creator ownership or Administrator permissions.
  */
 export async function DELETE(
   request: NextRequest,
@@ -220,7 +239,7 @@ export async function DELETE(
     );
   }
 
-  const existing = await getServerCharacterBySlug(slug);
+  const existing = await getServerCharacterBySlug(slug, { isAdmin: true });
   if (!existing) {
     return NextResponse.json(
       { error: 'Character not found.' },
@@ -228,8 +247,15 @@ export async function DELETE(
     );
   }
 
-  const isCreator = existing.created_by_discord_id === session.discordId;
-  const canDelete = session.isSuperAdmin || session.isAdmin || isCreator;
+  const isCreator = Boolean(
+    existing.created_by_discord_id &&
+    session.discordId &&
+    existing.created_by_discord_id === session.discordId
+  );
+  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
+  const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
+
+  const canDelete = isAdmin || (isWhitelisted && isCreator);
 
   if (!canDelete) {
     return NextResponse.json(

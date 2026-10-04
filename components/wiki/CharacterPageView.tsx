@@ -54,11 +54,6 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     }
 
     let isMounted = true;
-    const localChar = getLocalCharacterBySlug(slug);
-    if (localChar) {
-      setCharacterData(localChar);
-      setLoading(false);
-    }
 
     fetch(getApiUrl(`/api/wiki/characters/${slug}`))
       .then((res) => {
@@ -74,8 +69,8 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
         if (isMounted) setCharacterData(data);
       })
       .catch(() => {
-        const fallback = localChar || getFallbackCharacterBySlug(slug);
-        if (isMounted) setCharacterData(fallback);
+        const fallback = getFallbackCharacterBySlug(slug);
+        if (isMounted) setCharacterData(fallback || null);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -94,20 +89,34 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     }
   };
 
-  const isCreator =
+  const isCreator = Boolean(
     characterData?.created_by_discord_id &&
-    characterData.created_by_discord_id === user?.discordId;
+    user?.discordId &&
+    characterData.created_by_discord_id === user.discordId
+  );
 
-  const canEdit =
-    Boolean(user) &&
+  const isWhitelisted = Boolean(
+    user &&
+    (user.effectivePermissions?.includes('wiki.create') ||
+      user.effectivePermissions?.includes('wiki.edit') ||
+      user.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
+      user.discordRoles?.some((r) =>
+        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
+      ))
+  );
+
+  // Exact rule from user:
+  // "When somebody views a character profile, only show the Edit Character button if they actually have permission to edit that character.
+  // If the visitor is logged out, do not show editing controls.
+  // If the visitor is logged in but does not own the character, do not show editing controls.
+  // The character profile itself must still remain completely visible in both cases."
+  const canEdit = Boolean(
+    user &&
     (isSuperAdmin ||
       isAdmin ||
-      isCreator ||
-      user?.effectivePermissions?.includes('wiki.edit') ||
-      user?.matchedRoleNames?.some((r) => /whitelist/i.test(r)) ||
-      user?.discordRoles?.some((r) =>
-        ['1241050651677556806', '1315051212072161340', '1392591587434955015', '1241050904887824444'].includes(r)
-      ));
+      user.effectivePermissions?.includes('wiki.moderate') ||
+      (isWhitelisted && isCreator))
+  );
 
   if (loading) {
     return (

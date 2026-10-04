@@ -191,10 +191,10 @@ ALTER TABLE public.wiki_revisions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wiki_slug_redirects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wiki_drafts ENABLE ROW LEVEL SECURITY;
 
--- Public read policies (anyone can read wiki pages)
-CREATE POLICY "Public read wiki_pages" ON public.wiki_pages FOR SELECT USING (true);
+-- Public read policies (anyone can read published wiki pages and public entities)
+CREATE POLICY "Public read wiki_pages" ON public.wiki_pages FOR SELECT USING (is_archived = false);
 CREATE POLICY "Public read wiki_characters" ON public.wiki_characters FOR SELECT USING (true);
-CREATE POLICY "Public read wiki_sections" ON public.wiki_sections FOR SELECT USING (true);
+CREATE POLICY "Public read wiki_sections" ON public.wiki_sections FOR SELECT USING (is_hidden = false);
 CREATE POLICY "Public read wiki_links" ON public.wiki_links FOR SELECT USING (true);
 CREATE POLICY "Public read wiki_relationships" ON public.wiki_relationships FOR SELECT USING (true);
 CREATE POLICY "Public read wiki_categories" ON public.wiki_categories FOR SELECT USING (true);
@@ -202,6 +202,8 @@ CREATE POLICY "Public read wiki_page_categories" ON public.wiki_page_categories 
 CREATE POLICY "Public read wiki_images" ON public.wiki_images FOR SELECT USING (true);
 CREATE POLICY "Public read wiki_revisions" ON public.wiki_revisions FOR SELECT USING (true);
 CREATE POLICY "Public read wiki_slug_redirects" ON public.wiki_slug_redirects FOR SELECT USING (true);
+-- Drafts are strictly private to the authenticated creator
+CREATE POLICY "Owner read wiki_drafts" ON public.wiki_drafts FOR SELECT USING (auth.uid()::text = user_discord_id);
 
 -- Seed System Default Categories
 INSERT INTO public.wiki_categories (id, slug, name, description, icon, is_system)

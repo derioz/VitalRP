@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { CharacterPageView } from '@/components/wiki/CharacterPageView';
 import { getFallbackCharacterBySlug } from '@/data/wiki-fallback';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getServerCharacterBySlug } from '@/lib/wiki/server-store';
 
 export async function generateMetadata({
   params,
@@ -13,33 +13,15 @@ export async function generateMetadata({
   let charSummary = 'Citizen of Los Santos on Vital Roleplay.';
   let avatarUrl = 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png';
 
-  const supabase = createAdminClient();
-  if (supabase) {
-    try {
-      const { data: page } = await supabase
-        .from('wiki_pages')
-        .select(`
-          title,
-          summary,
-          wiki_characters (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('slug', slug.toLowerCase())
-        .maybeSingle();
-
-      if (page) {
-        const char = Array.isArray(page.wiki_characters)
-          ? page.wiki_characters[0]
-          : page.wiki_characters;
-        charName = char?.full_name || page.title;
-        charSummary = page.summary || charSummary;
-        avatarUrl = char?.avatar_url || avatarUrl;
-      }
-    } catch {
-      // Fallback
+  try {
+    const serverChar = await getServerCharacterBySlug(slug);
+    if (serverChar) {
+      charName = serverChar.character?.full_name || serverChar.title || charName;
+      charSummary = serverChar.summary || charSummary;
+      avatarUrl = serverChar.character?.avatar_url || avatarUrl;
     }
+  } catch {
+    // Fallback
   }
 
   if (charName === slug) {

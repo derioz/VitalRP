@@ -57,6 +57,20 @@ export async function saveServerCharacter(character: WikiCharacterDetail): Promi
     try {
       const sanitized = sanitizeForFirestore(character);
       const docRef = adminDb.collection('wiki_characters').doc(character.slug);
+      const existingSnap = await docRef.get();
+      if (existingSnap.exists) {
+        const existingData = existingSnap.data();
+        // Protect original ownership and creation timestamp from being modified
+        if (existingData?.created_by_discord_id) {
+          sanitized.created_by_discord_id = existingData.created_by_discord_id;
+        }
+        if (existingData?.created_by_user_id) {
+          sanitized.created_by_user_id = existingData.created_by_user_id;
+        }
+        if (existingData?.created_at) {
+          sanitized.created_at = existingData.created_at;
+        }
+      }
       await docRef.set(sanitized, { merge: true });
       saved = true;
     } catch (err) {
@@ -125,8 +139,12 @@ export async function saveServerCharacter(character: WikiCharacterDetail): Promi
 
 /**
  * Fetch a single character by slug from Firestore, Supabase, or Fallback.
+ * Enforces draft and archive privacy so anonymous visitors only see published profiles.
  */
-export async function getServerCharacterBySlug(slug: string): Promise<WikiCharacterDetail | null> {
+export async function getServerCharacterBySlug(
+  slug: string,
+  options?: { viewerDiscordId?: string; isAdmin?: boolean }
+): Promise<WikiCharacterDetail | null> {
   const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
 
   // 1. Fetch from Firebase Firestore
@@ -135,7 +153,15 @@ export async function getServerCharacterBySlug(slug: string): Promise<WikiCharac
       const docRef = adminDb.collection('wiki_characters').doc(cleanSlug);
       const snap = await docRef.get();
       if (snap.exists) {
-        return snap.data() as WikiCharacterDetail;
+        const data = snap.data() as WikiCharacterDetail;
+        // Verify privacy: if draft or archived, only creator or admin can view
+        if (data.is_draft || data.is_archived || data.status === 'archived') {
+          const isOwner = Boolean(options?.viewerDiscordId && options.viewerDiscordId === data.created_by_discord_id);
+          if (!options?.isAdmin && !isOwner) {
+            return null;
+          }
+        }
+        return data;
       }
 
       // Query by slug field or id in case of case-mismatch
@@ -146,7 +172,14 @@ export async function getServerCharacterBySlug(slug: string): Promise<WikiCharac
         .get();
 
       if (!qSnap.empty) {
-        return qSnap.docs[0].data() as WikiCharacterDetail;
+        const data = qSnap.docs[0].data() as WikiCharacterDetail;
+        if (data.is_draft || data.is_archived || data.status === 'archived') {
+          const isOwner = Boolean(options?.viewerDiscordId && options.viewerDiscordId === data.created_by_discord_id);
+          if (!options?.isAdmin && !isOwner) {
+            return null;
+          }
+        }
+        return data;
       }
     } catch (err) {
       console.warn('[Wiki Server Store] Firestore get error:', err);
@@ -230,6 +263,10 @@ export async function listServerCharacters(filter: WikiDirectoryFilter = {}): Pr
       const snap = await adminDb.collection('wiki_characters').get();
       snap.forEach((doc) => {
         const d = doc.data() as any;
+        // Skip drafts and archived characters from public directory
+        if (d.is_draft === true || d.is_archived === true || d.status === 'archived') {
+          return;
+        }
         const char = d.character || {};
         allCharacters.push({
           id: d.id || doc.id,

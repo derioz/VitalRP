@@ -32,7 +32,8 @@ export async function OPTIONS(request: NextRequest) {
 
 /**
  * Public Character Listing API:
- * Available to everyone across the internet (logged in or logged out).
+ * Completely public and available to everyone (logged in or logged out).
+ * Returns only published characters.
  */
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -65,8 +66,8 @@ export async function GET(request: NextRequest) {
 
 /**
  * Character Creation API:
- * Authorizes Whitelist Approved Discord roles, Staff, and Admins.
- * Persists created character to Firestore & Supabase for universal public visibility.
+ * Protected route: requires authenticated Discord session + Whitelist Approved role (or Admin).
+ * Strictly binds created_by_discord_id to the verified session to guarantee reliable ownership.
  */
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   };
 
-  // 1. Authoritative Auth Check
+  // 1. Authoritative Server-Side Auth Check
   const authHeader = request.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
   const session = await getCurrentSession(token);
@@ -87,17 +88,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const isWhitelisted = isWhitelistApproved(session.discordRoles);
-  const canCreate =
-    session.isSuperAdmin ||
-    session.isAdmin ||
-    session.effectivePermissions.includes('wiki.create') ||
-    isWhitelisted ||
-    session.matchedRoleNames.some((r) => r.toLowerCase().includes('whitelist'));
+  const isWhitelisted = isWhitelistApproved(session.discordRoles) || session.effectivePermissions.includes('wiki.create');
+  const canCreate = session.isSuperAdmin || session.isAdmin || isWhitelisted;
 
   if (!canCreate) {
     return NextResponse.json(
-      { error: 'Forbidden: Whitelist Approved role or staff permission is required to create Wiki characters.' },
+      { error: 'Forbidden: The Whitelist Approved Discord role or staff permission is required to create Wiki characters.' },
       { status: 403, headers: corsHeaders }
     );
   }
@@ -200,16 +196,19 @@ export async function POST(request: NextRequest) {
       return cat;
     });
 
+    // Reliably store the authenticated Discord ID as the immutable character owner
     const characterPayload: WikiCharacterDetail = {
       id: createdPageId,
       slug: finalSlug,
       title: trimmedName,
       entity_type: 'character',
       summary: summary || `${trimmedName} is a citizen of Los Santos.`,
-      status,
+      status: (status as any) || 'active',
       is_archived: false,
+      is_draft: false,
       page_views: 0,
-      created_by_discord_id: session.discordId,
+      created_by_discord_id: session.discordId, // Server authoritative owner
+      created_by_user_id: session.id || session.discordId,
       updated_by_discord_id: session.discordId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
