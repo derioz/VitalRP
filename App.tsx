@@ -26,6 +26,10 @@ import { WikiCharacterBacklinks } from './spa/pages/wiki/WikiCharacterBacklinks'
 import { WikiCharacterHistory } from './spa/pages/wiki/WikiCharacterHistory';
 import { WikiCategory } from './spa/pages/wiki/WikiCategory';
 import { WikiAdmin } from './spa/pages/wiki/WikiAdmin';
+import { WikiWantedView } from './components/wiki/WikiWantedView';
+import { WikiEntityDirectory } from './components/wiki/WikiEntityDirectory';
+import { WikiEntityView } from './components/wiki/WikiEntityView';
+import { WikiEntityRoute } from './spa/pages/wiki/WikiEntityRoute';
 
 function ScrollToTopOnNavigate() {
   const { pathname } = useLocation();
@@ -60,6 +64,10 @@ function App() {
           <Route path="/wiki/characters/:slug/history" element={<WikiCharacterHistory />} />
           <Route path="/wiki/categories/:slug" element={<WikiCategory />} />
           <Route path="/wiki/admin" element={<WikiAdmin />} />
+          <Route path="/wiki/wanted" element={<WikiWantedView />} />
+          <Route path="/wiki/entities" element={<WikiEntityDirectory />} />
+          <Route path="/wiki/entities/new" element={<WikiEntityView creating />} />
+          <Route path="/wiki/:collection/:id" element={<WikiEntityRoute />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

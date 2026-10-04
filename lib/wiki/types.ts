@@ -1,6 +1,6 @@
 export type CharacterStatus = 'active' | 'inactive' | 'deceased' | 'archived';
 
-export type WikiEntityType = 'character' | 'gang' | 'business' | 'government' | 'organization' | 'location' | 'event';
+export type WikiEntityType = 'character' | 'gang' | 'business' | 'government' | 'organization' | 'faction' | 'department' | 'location' | 'event' | (string & {});
 
 export interface WikiPage {
   id: string;
@@ -17,6 +17,8 @@ export interface WikiPage {
   is_draft?: boolean;
   created_at: string;
   updated_at: string;
+  aliases?: string[];
+  editor_user_ids?: string[];
 }
 
 export interface WikiCharacter {
@@ -116,6 +118,7 @@ export interface WikiBacklink {
   section_key: string;
   context_snippet: string;
   created_at: string;
+  updated_at?: string;
   source?: {
     id: string;
     slug: string;
@@ -125,6 +128,7 @@ export interface WikiBacklink {
     status: CharacterStatus;
     gang?: string;
     occupation?: string;
+    entity_type?: WikiEntityType;
   };
 }
 
@@ -136,6 +140,49 @@ export interface WikiCharacterDetail extends WikiPage {
   gallery: WikiImage[];
   backlinks?: WikiBacklink[];
   related_characters?: WikiRelationshipTarget[];
+  wiki_links?: WikiLink[];
+}
+
+export interface WikiEntityDetail extends WikiPage {
+  sections: WikiSection[];
+  wiki_links?: WikiLink[];
+  backlinks?: WikiBacklink[];
+  character?: WikiCharacter;
+}
+
+export interface WikiLink {
+  id: string;
+  source_page_id: string;
+  display_name: string;
+  normalized_name: string;
+  expected_entity_type: WikiEntityType | null;
+  section_key: string;
+  section_title: string;
+  original_mention_text: string;
+  context_snippet: string;
+  created_at: string;
+  updated_at: string;
+  target_page_id: string | null;
+  status: 'unresolved' | 'resolved' | 'broken';
+  resolution_method: 'automatic' | 'manual' | null;
+  resolved_by_user_id: string | null;
+  resolved_at: string | null;
+  source_public: boolean;
+  section_hidden: boolean;
+  target?: Pick<WikiPage, 'id' | 'slug' | 'title' | 'entity_type'> | null;
+  source?: Pick<WikiPage, 'id' | 'slug' | 'title' | 'entity_type'>;
+  potential_matches?: WikiSearchResult[];
+}
+
+export interface WikiLinkAudit {
+  link_id: string;
+  source_page_id: string;
+  previous_unresolved_text: string;
+  previous_target_page_id: string | null;
+  resolved_entity_id: string | null;
+  method: 'automatic' | 'manual' | 'broken' | 'removed';
+  resolved_by_user_id: string | null;
+  resolved_at: string;
 }
 
 export interface WikiSearchResult {
@@ -152,6 +199,7 @@ export interface WikiSearchResult {
   summary?: string;
   matched_field?: string;
   categories?: string[];
+  entity_type?: WikiEntityType;
 }
 
 export interface WikiDirectoryFilter {

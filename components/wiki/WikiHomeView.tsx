@@ -172,6 +172,8 @@ export const WikiHomeView: React.FC = () => {
 
               {/* Quick Actions */}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="/wiki/entities" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white text-xs font-tech font-bold uppercase border border-white/10">All Wiki Entities</a>
+                <a href="/wiki/wanted" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/10 text-amber-200 text-xs font-tech font-bold uppercase border border-amber-500/20">Wanted Pages</a>
                 <a
                   href="/wiki/characters"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-tech font-bold text-xs uppercase tracking-wider border border-white/10 transition-colors shadow-lg"

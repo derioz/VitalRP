@@ -24,6 +24,9 @@ import { WikiSearchResult } from '../../lib/wiki/types';
 import { getFallbackSearchResults } from '../../data/wiki-fallback';
 import { getApiUrl } from '../../lib/api-config';
 import { getLocalCharacters } from '../../lib/wiki/storage';
+import { WIKI_ENTITY_TYPES, normalizeWikiName } from '../../lib/wiki/link-core';
+import { WikiEntitySearch } from './WikiEntitySearch';
+import { wikiFetch } from '../../lib/wiki/client-api';
 
 interface WikiRichEditorProps {
   value: string;
@@ -36,7 +39,7 @@ interface WikiRichEditorProps {
 export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
   value,
   onChange,
-  placeholder = 'Write content here... Type @ to mention a character, or / for commands...',
+  placeholder = 'Write content here... Type @ to link a Wiki page, including a future page...',
   className = '',
   pageId,
 }) => {
@@ -52,6 +55,12 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionCoords, setMentionCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const mentionRangeRef = useRef<Range | null>(null);
+  const [expectedType, setExpectedType] = useState('');
+  const [editingLink, setEditingLink] = useState<HTMLElement | null>(null);
+  const [visibleText, setVisibleText] = useState('');
+  const [linkedEntityName, setLinkedEntityName] = useState('Future page');
+  const canCreateFuture = Boolean(mentionQuery.trim()) && !mentionResults.some(r => normalizeWikiName(r.full_name || r.title) === normalizeWikiName(mentionQuery) && (!expectedType || (r.entity_type || 'character') === expectedType));
+  const choiceCount = mentionResults.length + (canCreateFuture ? 1 : 0);
 
   // Slash Command Palette state
   const [slashOpen, setSlashOpen] = useState(false);
@@ -84,11 +93,12 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
     if (!mentionOpen) return;
     setMentionLoading(true);
 
+    let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         let apiResults: WikiSearchResult[] = [];
         try {
-          const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(mentionQuery)}&limit=8`));
+          const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(mentionQuery)}&limit=8&type=${encodeURIComponent(expectedType)}`));
           const ct = res.headers.get('content-type') || '';
           if (res.ok && ct.includes('application/json')) {
             const data = await res.json();
@@ -120,19 +130,19 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
           }));
 
         const map = new Map<string, WikiSearchResult>();
-        for (const r of apiResults) map.set(r.slug.toLowerCase(), r);
-        for (const r of localMatches) map.set(r.slug.toLowerCase(), r);
-        setMentionResults(Array.from(map.values()).slice(0, 8));
+        for (const r of apiResults) map.set(r.id, r);
+        // Only server-published entities have permanent graph targets. Browser-only
+        // backups can be linked through the future-page option until published.
+        if (!cancelled) setMentionResults(Array.from(map.values()).slice(0, 8));
       } catch {
-        setMentionResults([]);
+        if (!cancelled) setMentionResults([]);
       } finally {
-        setMentionLoading(false);
-        setSelectedIndex(0);
+        if (!cancelled) { setMentionLoading(false); setSelectedIndex(0); }
       }
     }, 180);
 
-    return () => clearTimeout(timer);
-  }, [mentionQuery, mentionOpen]);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [mentionQuery, mentionOpen, expectedType]);
 
   // Handle keydown for @ mention trigger & slash commands
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -140,13 +150,13 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
     if (mentionOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => (mentionResults.length ? (prev + 1) % mentionResults.length : 0));
+        setSelectedIndex((prev) => choiceCount ? (prev + 1) % choiceCount : 0);
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex((prev) =>
-          mentionResults.length ? (prev - 1 + mentionResults.length) % mentionResults.length : 0
+          choiceCount ? (prev - 1 + choiceCount) % choiceCount : 0
         );
         return;
       }
@@ -154,6 +164,8 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
         e.preventDefault();
         if (mentionResults[selectedIndex]) {
           insertMention(mentionResults[selectedIndex]);
+        } else if (canCreateFuture && !mentionLoading) {
+          insertMention(null);
         }
         return;
       }
@@ -203,8 +215,8 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
         mentionRangeRef.current = range;
         const rect = range.getBoundingClientRect();
         setMentionCoords({
-          top: rect.bottom + window.scrollY + 6,
-          left: Math.max(16, rect.left + window.scrollX - 40),
+          top: Math.max(16, Math.min(rect.bottom + 6, window.innerHeight - 380)),
+          left: Math.max(16, Math.min(rect.left - 40, window.innerWidth - 310)),
         });
         setMentionOpen(true);
         setMentionQuery('');
@@ -241,7 +253,7 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
       if (atIndex !== -1 && atIndex <= selection.anchorOffset) {
         const query = text.slice(atIndex + 1, selection.anchorOffset);
         // If query has spaces greater than 20 chars, close mention
-        if (query.includes('\n') || query.length > 25) {
+        if (query.includes('\n') || query.length > 120) {
           setMentionOpen(false);
         } else {
           setMentionQuery(query);
@@ -252,7 +264,7 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
     }
   };
 
-  const insertMention = (char: WikiSearchResult) => {
+  const insertMention = (char: WikiSearchResult | null) => {
     setMentionOpen(false);
     editorRef.current?.focus();
 
@@ -260,10 +272,10 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
     if (!selection || !mentionRangeRef.current) return;
 
     // Select the text including the @ and typed query
-    const range = selection.getRangeAt(0);
+    const range = selection.rangeCount ? selection.getRangeAt(0) : mentionRangeRef.current;
     const node = range.startContainer;
     if (node && node.textContent) {
-      const atIdx = node.textContent.lastIndexOf('@');
+      const atIdx = node.textContent.slice(0, range.endOffset).lastIndexOf('@');
       if (atIdx !== -1) {
         range.setStart(node, atIdx);
         range.setEnd(node, range.endOffset);
@@ -272,12 +284,14 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
 
     // Insert clean persistent mention node
     const span = document.createElement('span');
-    span.setAttribute('data-character-id', char.id);
-    span.setAttribute('data-character-name', char.full_name);
-    span.setAttribute('data-character-slug', char.slug);
-    span.className = 'vital-mention inline-flex items-center text-vital-400 font-semibold bg-vital-500/10 px-1 py-0.5 rounded cursor-pointer mx-0.5';
+    const name = char?.full_name || char?.title || mentionQuery.trim();
+    span.setAttribute('data-wiki-link-id', crypto.randomUUID());
+    span.setAttribute('data-entity-id', char?.id || '');
+    span.setAttribute('data-entity-type', char?.entity_type || (char ? 'character' : expectedType));
+    span.setAttribute('data-mention-name', name);
+    span.className = `vital-mention inline-flex items-center font-semibold px-1 py-0.5 rounded cursor-pointer mx-0.5 ${char ? 'text-vital-400 bg-vital-500/10' : 'text-amber-300/80 underline decoration-dotted underline-offset-4'}`;
     span.contentEditable = 'false';
-    span.textContent = `@${char.full_name}`;
+    span.textContent = name;
 
     range.deleteContents();
     range.insertNode(span);
@@ -436,7 +450,7 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
             }
           }}
           className="p-1.5 rounded-lg hover:bg-vital-500/10 hover:text-vital-400 text-vital-500/80 font-tech font-bold text-xs flex items-center gap-1 transition-colors"
-          title="Mention Character (@)"
+          title="Link Wiki Entity (@)"
         >
           <span>@ Mention</span>
         </button>
@@ -468,6 +482,15 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
+        onClick={e => {
+          const node = (e.target as HTMLElement).closest<HTMLElement>('[data-wiki-link-id], [data-character-id]');
+          if (node && editorRef.current?.contains(node)) {
+            setEditingLink(node); setVisibleText((node.textContent || '').replace(/^@/, '')); setMentionOpen(false);
+            const entityId = node.getAttribute('data-entity-id') || node.getAttribute('data-character-id');
+            setLinkedEntityName(entityId ? 'Loading current target…' : 'Future page');
+            if (entityId) wikiFetch(`/api/wiki/entities/${encodeURIComponent(entityId)}?preview=true`).then(entity => setLinkedEntityName(`${entity.title} (${entity.entity_type})`)).catch(() => setLinkedEntityName('Target unavailable'));
+          }
+        }}
         data-placeholder={placeholder}
         className="min-h-[160px] p-5 text-gray-200 text-sm leading-relaxed focus:outline-none focus:ring-0 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500 empty:before:pointer-events-none prose prose-invert max-w-none"
       />
@@ -480,9 +503,12 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
         >
           <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-white/5 mb-1.5 text-xs text-gray-400">
             <Search size={12} className="text-vital-400" />
-            <span className="font-tech uppercase tracking-wider text-[10px]">Mention Character:</span>
+            <span className="font-tech uppercase tracking-wider text-[10px]">Link Wiki page:</span>
             <span className="font-bold text-white truncate">@{mentionQuery || '...'}</span>
           </div>
+          <select aria-label="Expected entity type" value={expectedType} onChange={e => setExpectedType(e.target.value)} className="w-full bg-dark-950 rounded-lg text-xs p-2 mb-2 text-gray-300">
+            <option value="">Any entity type</option>{WIKI_ENTITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
 
           {mentionLoading ? (
             <AutocompleteSkeleton />
@@ -518,6 +544,7 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
                       <div className="text-xs font-bold font-display truncate">
                         {char.full_name}
                       </div>
+                      <div className="text-[10px] text-gray-400 capitalize">{char.entity_type || 'character'}</div>
                       {char.gang ? (
                         <div className="text-[10px] text-vital-400 truncate">
                           {char.gang}
@@ -534,11 +561,29 @@ export const WikiRichEditor: React.FC<WikiRichEditorProps> = ({
             </div>
           ) : (
             <div className="p-3 text-center text-xs text-gray-400">
-              No matching character found.
+              No matching Wiki page found.
             </div>
           )}
+          {!mentionLoading && canCreateFuture && <button type="button" onMouseDown={e => { e.preventDefault(); insertMention(null); }} onMouseEnter={() => setSelectedIndex(mentionResults.length)} className={`w-full text-left p-3 rounded-xl text-xs text-amber-200 ${selectedIndex === mentionResults.length ? 'bg-amber-500/15' : 'hover:bg-white/5'}`}>
+            Link to future {expectedType || 'page'}: “{mentionQuery.trim()}”
+          </button>}
         </div>
       )}
+      {editingLink && <div role="dialog" aria-label="Edit Wiki link" className="p-4 border-t border-white/10 space-y-3 bg-dark-950">
+        <div className="flex justify-between"><strong className="text-white text-sm">Edit Link</strong><button type="button" onClick={() => setEditingLink(null)} className="text-gray-400 text-xs">Close</button></div>
+        <p className="text-xs text-gray-400">Currently linked: {linkedEntityName}</p>
+        <label className="block text-xs text-gray-400">Visible text<input value={visibleText} onChange={e => setVisibleText(e.target.value)} className="block w-full mt-1 bg-dark-900 rounded-lg p-2 text-white" /></label>
+        <WikiEntitySearch onSelect={entity => {
+          editingLink.removeAttribute('data-character-id');
+          editingLink.setAttribute('data-wiki-link-id', editingLink.getAttribute('data-wiki-link-id') || crypto.randomUUID());
+          editingLink.setAttribute('data-entity-id', entity.id);
+          editingLink.setAttribute('data-entity-type', entity.entity_type || 'character');
+          editingLink.setAttribute('data-mention-name', entity.full_name || entity.title);
+          editingLink.textContent = visibleText.trim() || entity.full_name || entity.title;
+          handleInput(); setEditingLink(null);
+        }} />
+        <div className="flex gap-3 text-xs"><button type="button" className="text-vital-400" onClick={() => { if (visibleText.trim()) { editingLink.textContent = visibleText.trim(); handleInput(); setEditingLink(null); } }}>Save visible text</button><button type="button" className="text-red-400" onClick={() => { editingLink.replaceWith(document.createTextNode(visibleText)); handleInput(); setEditingLink(null); }}>Remove Link</button></div>
+      </div>}
 
       {/* Slash Command Palette */}
       {slashOpen && (

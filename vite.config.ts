@@ -8,6 +8,9 @@ export default defineConfig({
   base: '/',
   resolve: {
     alias: {
+      'next/link': path.resolve(__dirname, './spa/compat/NextLink.tsx'),
+      'next/image': path.resolve(__dirname, './spa/compat/NextImage.tsx'),
+      'next/navigation': path.resolve(__dirname, './spa/compat/NextNavigation.ts'),
       '@': path.resolve(__dirname, './'),
     },
   },

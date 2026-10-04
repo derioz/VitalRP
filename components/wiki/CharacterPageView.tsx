@@ -13,6 +13,9 @@ import { CharacterPageSkeleton } from './WikiSkeletons';
 import { WikiCharacterDetail } from '../../lib/wiki/types';
 import { renderRichHtmlWithMentions } from './WikiMentions';
 import { useAuth } from '../AuthProvider';
+import { canEditWikiPage } from '../../lib/wiki/permissions';
+import { WikiLinkManager } from './WikiLinkManager';
+import { wikiFetch } from '../../lib/wiki/client-api';
 import { getApiUrl } from '../../lib/api-config';
 import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
 import { getLocalCharacterBySlug } from '../../lib/wiki/storage';
@@ -59,12 +62,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
 
     let isMounted = true;
 
-    fetch(getApiUrl(`/api/wiki/characters/${slug}`), { cache: 'no-store' })
-      .then((res) => {
-        const ct = res.headers.get('content-type') || '';
-        if (!res.ok || !ct.includes('application/json')) throw new Error('Not found');
-        return res.json();
-      })
+    wikiFetch(`/api/wiki/characters/${slug}`)
       .then((data) => {
         if (data.redirect && data.newSlug) {
           window.location.replace(`/wiki/characters/${data.newSlug}`);
@@ -84,7 +82,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [slug, initialData]);
+  }, [slug, initialData, user?.id]);
 
   const handleShare = () => {
     if (navigator.clipboard) {
@@ -119,7 +117,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
     (isSuperAdmin ||
       isAdmin ||
       user.effectivePermissions?.includes('wiki.moderate') ||
-      isCreator)
+      (characterData && canEditWikiPage(user, characterData)))
   );
 
   if (loading) {
@@ -261,7 +259,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
                       {sec.title}
                     </h2>
                     <div className="text-gray-300 text-sm sm:text-base leading-relaxed prose prose-invert max-w-none space-y-3">
-                      {renderRichHtmlWithMentions(sec.content_html)}
+                      {renderRichHtmlWithMentions(sec.content_html, undefined, characterData.wiki_links || [])}
                     </div>
                   </section>
                 ))
@@ -302,6 +300,7 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
                 characterName={character.full_name}
               />
             </section>
+            {canEdit && <section className="bg-dark-900/40 border border-white/5 rounded-3xl p-6 sm:p-8 space-y-5"><h2 className="text-xl font-bold text-white">Wiki Links</h2><WikiLinkManager sourceId={characterData.id} onUpdated={() => window.location.reload()} /></section>}
 
             {/* Related / Connected Characters */}
             {related_characters && related_characters.length > 0 && (

@@ -8,6 +8,7 @@ import { WikiBacklink } from '../../lib/wiki/types';
 import { ArrowLeft, Link2, ArrowUpRight, Compass } from 'lucide-react';
 import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
 import { getApiUrl } from '../../lib/api-config';
+import { wikiEntityHref } from '../../lib/wiki/link-core';
 
 interface CharacterBacklinksViewProps {
   slug: string;
@@ -93,7 +94,7 @@ export const CharacterBacklinksView: React.FC<CharacterBacklinksViewProps> = ({ 
               return (
                 <a
                   key={b.id}
-                  href={`/wiki/characters/${srcSlug}`}
+                  href={src ? wikiEntityHref({ ...src, entity_type: src.entity_type || 'character' }) : '#'}
                   className="group block bg-dark-900/60 hover:bg-dark-900/90 border border-white/5 hover:border-vital-500/30 rounded-2xl p-5 transition-all shadow-md"
                 >
                   <div className="flex items-start justify-between gap-4">

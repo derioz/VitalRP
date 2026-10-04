@@ -8,6 +8,8 @@ import {
   WikiDirectoryFilter,
 } from './types';
 import { FALLBACK_CHARACTERS, getFallbackCharacterBySlug, getFallbackSearchResults } from '@/data/wiki-fallback';
+import { commitWikiPage, getWikiBacklinks, getWikiLinks } from './graph-store';
+import { mentionMarker } from './link-core';
 
 export interface CharacterCardItem {
   id: string;
@@ -54,94 +56,12 @@ export function isWikiStorageConfigured(): boolean {
 }
 
 /**
- * Save or update a character in Firestore (and Supabase if migrated).
+ * Save the character and its Wiki graph together in the primary Firestore store.
  */
-export async function saveServerCharacter(character: WikiCharacterDetail): Promise<boolean> {
-  let saved = false;
-
-  // 1. Primary: Save to Firebase Firestore
-  if (adminDb) {
-    try {
-      const sanitized = sanitizeForFirestore(character);
-      const docRef = adminDb.collection('wiki_characters').doc(character.slug);
-      const existingSnap = await docRef.get();
-      if (existingSnap.exists) {
-        const existingData = existingSnap.data();
-        // Protect original ownership and creation timestamp from being modified
-        if (existingData?.created_by_discord_id) {
-          sanitized.created_by_discord_id = existingData.created_by_discord_id;
-        }
-        if (existingData?.created_by_user_id) {
-          sanitized.created_by_user_id = existingData.created_by_user_id;
-        }
-        if (existingData?.created_at) {
-          sanitized.created_at = existingData.created_at;
-        }
-      }
-      await docRef.set(sanitized, { merge: true });
-      saved = true;
-    } catch (err) {
-      console.error('[Wiki Server Store] Firestore save error:', err);
-    }
-  }
-
-  // 2. Secondary: Attempt Supabase save if wiki_pages table exists
-  const supabase = createAdminClient();
-  if (supabase) {
-    try {
-      const { data: pageRow } = await supabase
-        .from('wiki_pages')
-        .upsert(
-          {
-            slug: character.slug,
-            title: character.title || character.character?.full_name,
-            entity_type: 'character',
-            summary: character.summary || '',
-            status: character.status || 'active',
-            created_by_discord_id: character.created_by_discord_id,
-            updated_by_discord_id: character.updated_by_discord_id,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'slug' }
-        )
-        .select('id')
-        .maybeSingle();
-
-      if (pageRow?.id) {
-        saved = true;
-        const c = character.character;
-        if (c) {
-          await supabase
-            .from('wiki_characters')
-            .upsert(
-              {
-                page_id: pageRow.id,
-                full_name: c.full_name,
-                aliases: c.aliases || [],
-                avatar_url: c.avatar_url || '',
-                date_of_birth: c.date_of_birth || null,
-                pronouns: c.pronouns || null,
-                gender: c.gender || null,
-                nationality: c.nationality || null,
-                occupation: c.occupation || null,
-                employer: c.employer || null,
-                gang: c.gang || null,
-                business: c.business || null,
-                residence: c.residence || null,
-                relationship_status: c.relationship_status || null,
-                player_name: c.player_name || null,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: 'page_id' }
-            );
-        }
-      }
-    } catch {
-      // Supabase tables might not be migrated yet; ignore
-    }
-  }
-
-  return saved;
+export async function saveServerCharacter(character: WikiCharacterDetail, options: { create?: boolean; actor?: string } = {}): Promise<boolean> {
+  if (!adminDb) return false;
+  await commitWikiPage(adminDb, character, options.actor || character.updated_by_discord_id || null, options);
+  return true;
 }
 
 /**
@@ -168,15 +88,16 @@ export async function getServerCharacterBySlug(
             return null;
           }
         }
-        return data;
+        return { ...data, wiki_links: await getWikiLinks(adminDb, data.id), backlinks: await getWikiBacklinks(adminDb, data.id) };
       }
 
       // Query by slug field or id in case of case-mismatch
-      const qSnap = await adminDb
+      let qSnap = await adminDb
         .collection('wiki_characters')
         .where('slug', '==', cleanSlug)
         .limit(1)
         .get();
+      if (qSnap.empty) qSnap = await adminDb.collection('wiki_characters').where('id', '==', cleanSlug).limit(1).get();
 
       if (!qSnap.empty) {
         const data = qSnap.docs[0].data() as WikiCharacterDetail;
@@ -186,7 +107,7 @@ export async function getServerCharacterBySlug(
             return null;
           }
         }
-        return data;
+        return { ...data, wiki_links: await getWikiLinks(adminDb, data.id), backlinks: await getWikiBacklinks(adminDb, data.id) };
       }
     } catch (err) {
       console.warn('[Wiki Server Store] Firestore get error:', err);
@@ -204,6 +125,7 @@ export async function getServerCharacterBySlug(
         .maybeSingle();
 
       if (page) {
+        if ((page.is_draft || page.is_archived || page.status === 'archived') && !options?.isAdmin && page.created_by_discord_id !== options?.viewerDiscordId) return null;
         const { data: charRow } = await supabase
           .from('wiki_characters')
           .select('*')
@@ -465,28 +387,10 @@ export async function searchServerCharacters(q: string, limit = 8): Promise<Wiki
 /**
  * Delete a character by slug from Firestore and Supabase.
  */
-export async function deleteServerCharacter(slug: string): Promise<boolean> {
-  const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
-  let deleted = false;
-
-  if (adminDb) {
-    try {
-      await adminDb.collection('wiki_characters').doc(cleanSlug).delete();
-      deleted = true;
-    } catch (err) {
-      console.error('[Wiki Server Store] Firestore delete error:', err);
-    }
-  }
-
-  const supabase = createAdminClient();
-  if (supabase) {
-    try {
-      await supabase.from('wiki_pages').delete().eq('slug', cleanSlug);
-      deleted = true;
-    } catch {
-      // Ignore
-    }
-  }
-
-  return deleted;
+export async function deleteServerCharacter(slug: string, actor: string | null = null): Promise<boolean> {
+  if (!adminDb) return false;
+  const page = await getServerCharacterBySlug(slug, { isAdmin: true });
+  if (!page) return false;
+  await commitWikiPage(adminDb, page, actor, { deleting: true });
+  return true;
 }

@@ -10,6 +10,7 @@ import {
   isWikiStorageConfigured,
 } from '@/lib/wiki/server-store';
 import { WikiCharacterDetail } from '@/lib/wiki/types';
+import { randomUUID } from 'node:crypto';
 
 function generateSlug(name: string): string {
   return name
@@ -153,7 +154,7 @@ export async function POST(request: NextRequest) {
       finalSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
-    const createdPageId = `char-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const createdPageId = randomUUID();
 
     // Prepare default sections if none provided
     const preparedSections =
@@ -164,6 +165,7 @@ export async function POST(request: NextRequest) {
             section_key: s.section_key || `custom_${idx}`,
             title: s.title || 'Section',
             content_html: s.content_html || '',
+            content_json: s.content_json,
             sort_order: s.sort_order || idx + 1,
             is_hidden: Boolean(s.is_hidden),
           }))
@@ -204,7 +206,7 @@ export async function POST(request: NextRequest) {
       summary: summary || `${trimmedName} is a citizen of Los Santos.`,
       status: (status as any) || 'active',
       is_archived: false,
-      is_draft: false,
+      is_draft: Boolean(body.is_draft),
       page_views: 0,
       created_by_discord_id: session.discordId || session.id || '', // Server authoritative owner
       created_by_user_id: session.id || session.discordId || '',
@@ -241,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Save to persistent server store. Never report success unless it was
     // actually persisted, otherwise the profile would be invisible to the public.
-    const persisted = await saveServerCharacter(characterPayload);
+    const persisted = await saveServerCharacter(characterPayload, { create: true, actor: session.id || session.discordId });
     if (!persisted) {
       return NextResponse.json(
         {

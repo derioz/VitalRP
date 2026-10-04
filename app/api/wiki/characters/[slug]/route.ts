@@ -9,6 +9,7 @@ import {
   deleteServerCharacter,
 } from '@/lib/wiki/server-store';
 import { WikiCharacterDetail } from '@/lib/wiki/types';
+import { canEditWikiPage, isWikiModerator } from '@/lib/wiki/permissions';
 
 function getCorsHeaders(request: NextRequest, methods = 'GET, PUT, DELETE, OPTIONS') {
   const origin = request.headers.get('origin') || '*';
@@ -69,13 +70,15 @@ export async function GET(
         slug: character.slug,
         title: character.title,
         status: character.status,
+        entity_type: character.entity_type,
         character: character.character,
       },
       { headers: corsHeaders }
     );
   }
 
-  return NextResponse.json(character, { headers: corsHeaders });
+  const permitted = canEditWikiPage(session, character);
+  return NextResponse.json({ ...character, can_edit: permitted, sections: character.sections.filter(s => !s.is_hidden || permitted), wiki_links: character.wiki_links?.filter(l => !l.section_hidden || permitted) }, { headers: corsHeaders });
 }
 
 /**
@@ -127,7 +130,7 @@ export async function PUT(
   );
   const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
 
-  const canEdit = isAdmin || isCreator;
+  const canEdit = canEditWikiPage(session, existing);
 
   if (!canEdit) {
     return NextResponse.json(
@@ -175,6 +178,7 @@ export async function PUT(
       created_by_user_id: existing.created_by_user_id || session.id,
       updated_by_discord_id: session.discordId,
       updated_at: new Date().toISOString(),
+      is_draft: body.is_draft !== undefined ? Boolean(body.is_draft) : existing.is_draft,
       character: {
         ...existing.character,
         full_name: trimmedName,
@@ -200,7 +204,7 @@ export async function PUT(
       gallery: gallery !== undefined ? gallery : existing.gallery || [],
     };
 
-    const persisted = await saveServerCharacter(updatedCharacter);
+    const persisted = await saveServerCharacter(updatedCharacter, { actor: session.id || session.discordId });
     if (!persisted) {
       return NextResponse.json(
         { error: 'Storage error: changes could not be saved to the Wiki database. Please try again.' },
@@ -270,7 +274,7 @@ export async function DELETE(
   );
   const isAdmin = session.isSuperAdmin || session.isAdmin || session.effectivePermissions.includes('wiki.moderate');
 
-  const canDelete = isAdmin || isCreator;
+  const canDelete = canEditWikiPage(session, existing);
 
   if (!canDelete) {
     return NextResponse.json(
@@ -280,7 +284,7 @@ export async function DELETE(
   }
 
   try {
-    await deleteServerCharacter(slug);
+    if (!await deleteServerCharacter(slug, session.id || session.discordId || null)) throw new Error('Wiki storage is unavailable.');
     return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (err: any) {
     console.error('[Wiki Character Detail API DELETE] Error:', err);

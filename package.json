@@ -8,7 +8,8 @@
     "build:docs": "vite build && node -e \"require('fs').copyFileSync('docs/index.html', 'docs/404.html')\" && node scripts/generate_merch_meta.cjs",
     "dev:vite": "vite",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:wiki": "node --test scripts/test-wiki-links.cjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
@@ -31,6 +32,7 @@
     "react-dom": "^19.0.0",
     "react-easy-crop": "^5.5.6",
     "resend": "^6.30.0",
+    "sanitize-html": "2.18.0",
     "server-only": "^0.0.1",
     "stripe": "^22.6.2",
     "tailwind-merge": "^3.5.0"

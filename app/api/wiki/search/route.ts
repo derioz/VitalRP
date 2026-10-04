@@ -3,6 +3,9 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { searchServerCharacters } from '@/lib/wiki/server-store';
+import { adminDb } from '@/lib/firebase/admin';
+import { listWikiEntities } from '@/lib/wiki/graph-store';
+import { isPublicPage, entityNames, normalizeWikiName } from '@/lib/wiki/link-core';
 
 function getCorsHeaders(request: NextRequest) {
   const origin = request.headers.get('origin') || '*';
@@ -35,7 +38,13 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get('q') || '';
   const limit = Math.min(parseInt(searchParams.get('limit') || '10', 10), 30);
 
-  const results = await searchServerCharacters(q, limit);
+  const type = searchParams.get('type') || '';
+  const term = normalizeWikiName(q);
+  const results = adminDb
+    ? (await listWikiEntities(adminDb)).filter(p => isPublicPage(p) && (!type || p.entity_type === type) && (!term || [...entityNames(p), normalizeWikiName(p.summary || ''), normalizeWikiName(p.character?.occupation || ''), normalizeWikiName(p.character?.gang || ''), normalizeWikiName(p.character?.business || '')].some(n => n.includes(term))))
+      .sort((a,b) => Number(entityNames(b).includes(term)) - Number(entityNames(a).includes(term)) || a.title.localeCompare(b.title))
+      .slice(0,limit).map(p => ({ id:p.id, slug:p.slug, title:p.title, full_name:p.title, entity_type:p.entity_type, aliases:p.aliases || p.character?.aliases || [], avatar_url:p.character?.avatar_url || '', status:p.status, summary:p.summary, gang:p.character?.gang, occupation:p.character?.occupation, business:p.character?.business }))
+    : (await searchServerCharacters(q,limit)).map(p => ({ ...p, entity_type:'character' }));
 
   return NextResponse.json({ results }, { headers: corsHeaders });
 }

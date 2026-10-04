@@ -23,6 +23,7 @@ import { FALLBACK_CHARACTERS } from '../../data/wiki-fallback';
 import { getApiUrl } from '../../lib/api-config';
 import { supabase } from '../../lib/supabase/client';
 import { getLocalCharacters } from '../../lib/wiki/storage';
+import { WikiLinkManager } from './WikiLinkManager';
 
 export const WikiAdminView: React.FC = () => {
   const { user, isAdmin, isSuperAdmin } = useAuth();
@@ -328,16 +329,7 @@ export const WikiAdminView: React.FC = () => {
             <h3 className="text-base font-display font-bold text-white">
               Internal Link Graph Health
             </h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Mentions are mapped to permanent UUIDs. If an entity is renamed or updated, links
-              remain solid. Archived mentions are marked with &ldquo;(Archived)&rdquo; labels
-              gracefully.
-            </p>
-
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 size={16} />
-              <span>Link graph check passed: 0 orphaned reference integrity errors detected.</span>
-            </div>
+            <WikiLinkManager />
           </div>
         )}
 

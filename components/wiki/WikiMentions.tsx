@@ -2,6 +2,8 @@
 
 import React, { useState, useRef } from 'react';
 import { MentionData } from '../../lib/wiki/mentions';
+import { renderWikiHtml } from '../../lib/wiki/link-core';
+import { WikiLink } from '../../lib/wiki/types';
 import { Skeleton } from '../ui/skeleton';
 import { getApiUrl } from '../../lib/api-config';
 
@@ -146,57 +148,7 @@ export const MentionLink: React.FC<{
 /**
  * Parses raw HTML string and transforms <span data-character-id="..."> into interactive MentionLinks.
  */
-export function renderRichHtmlWithMentions(
-  html: string,
-  characterLookup?: Record<string, MentionData>
-): React.ReactNode {
+export function renderRichHtmlWithMentions(html: string, characterLookup?: Record<string, MentionData>, links: WikiLink[] = []): React.ReactNode {
   if (!html) return null;
-
-  // Split by mention span tags
-  const mentionTagRegex = /<span\s+[^>]*data-character-id="([0-9a-fA-F-]{36})"[^>]*>@?([^<]*)<\/span>/gi;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = mentionTagRegex.exec(html)) !== null) {
-    const [fullMatch, characterId, rawName] = match;
-    const matchStart = match.index;
-
-    // Push preceding standard HTML
-    if (matchStart > lastIndex) {
-      const precedingHtml = html.slice(lastIndex, matchStart);
-      parts.push(
-        <span
-          key={`html-${lastIndex}`}
-          dangerouslySetInnerHTML={{ __html: precedingHtml }}
-        />
-      );
-    }
-
-    // Push interactive mention
-    const charName = rawName.trim().replace(/^@/, '') || 'Character';
-    parts.push(
-      <MentionLink
-        key={`mention-${characterId}-${matchStart}`}
-        characterId={characterId}
-        displayName={charName}
-        characterLookup={characterLookup}
-      />
-    );
-
-    lastIndex = matchStart + fullMatch.length;
-  }
-
-  // Push remaining HTML
-  if (lastIndex < html.length) {
-    const trailingHtml = html.slice(lastIndex);
-    parts.push(
-      <span
-        key={`html-${lastIndex}`}
-        dangerouslySetInnerHTML={{ __html: trailingHtml }}
-      />
-    );
-  }
-
-  return <>{parts}</>;
+  return <div dangerouslySetInnerHTML={{ __html: renderWikiHtml(html, links) }} />;
 }

@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../Navbar';
 import { Footer } from '../Footer';
 import { WikiRichEditor } from './WikiRichEditor';
+import { mentionMarker } from '../../lib/wiki/link-core';
+import { canEditWikiPage } from '../../lib/wiki/permissions';
 import { CharacterInfobox } from './CharacterInfobox';
 import { WikiCharacterDetail, WikiRelationship, WikiSection } from '../../lib/wiki/types';
 import { uploadWikiImageWithProgress } from '../../lib/wiki/fivemanage';
@@ -368,7 +370,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
               page_id: s.page_id,
               section_key: s.section_key || `sec_${idx}`,
               title: s.title || `Section ${idx + 1}`,
-              content_html: s.content_html || s.content || '',
+              content_html: (s.content_html || s.content || '').replace(/<span\b[^>]*data-wiki-link-id="([^"]+)"[^>]*>[^<]*<\/span>/gi, (whole: string, id: string) => { const link = charData.wiki_links?.find(l => l.id === id); return link ? mentionMarker(link) : whole; }),
               sort_order: s.sort_order || idx + 1,
               is_hidden: Boolean(s.is_hidden),
             }))
@@ -558,7 +560,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
       return;
     }
     try {
-      const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(query.trim())}&limit=5`));
+      const res = await fetch(getApiUrl(`/api/wiki/search?q=${encodeURIComponent(query.trim())}&limit=5&type=character`));
       const ct = res.headers.get('content-type') || '';
       if (res.ok && ct.includes('application/json')) {
         const data = await res.json();
@@ -804,7 +806,7 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
         (isSuperAdmin ||
           isAdmin ||
           user.effectivePermissions?.includes('wiki.moderate') ||
-          isCreator)
+          (serverCharacter && canEditWikiPage(user, serverCharacter)))
       );
 
   if (authLoading || (!isNew && loadingInitial)) {

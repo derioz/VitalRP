@@ -7,6 +7,7 @@ import { SearchResultSkeleton } from './WikiSkeletons';
 import { getFallbackSearchResults } from '../../data/wiki-fallback';
 import { getApiUrl } from '../../lib/api-config';
 import { getLocalCharacters } from '../../lib/wiki/storage';
+import { wikiEntityHref } from '../../lib/wiki/link-core';
 
 interface WikiSearchBarProps {
   placeholder?: string;
@@ -16,7 +17,7 @@ interface WikiSearchBarProps {
 }
 
 export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
-  placeholder = 'Search characters, aliases, gangs, jobs (e.g. Damon Vox)...',
+  placeholder = 'Search Wiki entities and aliases (e.g. Damon Vox)...',
   className = '',
   autoFocus = false,
   onSelect,
@@ -91,8 +92,8 @@ export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
 
         // Merge results
         const resultMap = new Map<string, WikiSearchResult>();
-        for (const r of apiResults) resultMap.set(r.slug.toLowerCase(), r);
-        for (const r of localMatches) resultMap.set(r.slug.toLowerCase(), r);
+        for (const r of apiResults) resultMap.set(r.id, r);
+        for (const r of localMatches) resultMap.set(r.id, { ...r, entity_type:'character' });
         setResults(Array.from(resultMap.values()).slice(0, 8));
       } catch {
         setResults([]);
@@ -121,7 +122,7 @@ export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
         if (onSelect) {
           onSelect(selected);
         } else {
-          window.location.href = `/wiki/characters/${selected.slug}`;
+          window.location.href = wikiEntityHref({ ...selected, entity_type:selected.entity_type || 'character' });
         }
         setIsOpen(false);
       }
@@ -188,7 +189,8 @@ export const WikiSearchBar: React.FC<WikiSearchBarProps> = ({
                 return (
                   <a
                     key={char.id}
-                    href={`/wiki/characters/${char.slug}`}
+                    href={wikiEntityHref({ ...char, entity_type:char.entity_type || 'character' })}
+                    onClick={e => { if (onSelect) { e.preventDefault(); onSelect(char); setIsOpen(false); } }}
                     onMouseEnter={() => setSelectedIndex(index)}
                     className={`flex items-center gap-3.5 p-3 rounded-xl transition-colors ${
                       isSelected

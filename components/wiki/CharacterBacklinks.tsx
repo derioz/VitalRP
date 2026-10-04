@@ -1,17 +1,20 @@
 import React from 'react';
 import { WikiBacklink } from '../../lib/wiki/types';
 import { Link2, ArrowUpRight } from 'lucide-react';
+import { wikiEntityHref } from '../../lib/wiki/link-core';
 
 interface CharacterBacklinksProps {
   backlinks: WikiBacklink[];
   characterSlug: string;
   characterName: string;
+  entityType?: string;
 }
 
 export const CharacterBacklinks: React.FC<CharacterBacklinksProps> = ({
   backlinks,
   characterSlug,
   characterName,
+  entityType = 'character',
 }) => {
   if (!backlinks || backlinks.length === 0) {
     return (
@@ -31,7 +34,7 @@ export const CharacterBacklinks: React.FC<CharacterBacklinksProps> = ({
         return (
           <a
             key={b.id}
-            href={`/wiki/characters/${srcSlug}`}
+            href={src ? wikiEntityHref({ ...src, entity_type: src.entity_type || 'character' }) : '#'}
             className="group block bg-dark-900/60 hover:bg-dark-900/90 border border-white/5 hover:border-vital-500/30 rounded-2xl p-4 transition-all duration-200 shadow-sm"
           >
             <div className="flex items-start justify-between gap-3">
@@ -55,6 +58,7 @@ export const CharacterBacklinks: React.FC<CharacterBacklinksProps> = ({
                       Section: {b.section_key}
                     </span>
                   </div>
+                  <div className="text-[10px] text-gray-500 capitalize">{src?.entity_type || 'character'}</div>
                   {src?.gang && (
                     <div className="text-[11px] font-tech text-vital-400 mt-0.5">
                       {src.gang}
@@ -77,7 +81,7 @@ export const CharacterBacklinks: React.FC<CharacterBacklinksProps> = ({
         );
       })}
 
-      <div className="pt-2 text-right">
+      {entityType === 'character' && <div className="pt-2 text-right">
         <a
           href={`/wiki/characters/${characterSlug}/backlinks`}
           className="inline-flex items-center gap-1.5 text-xs text-vital-400 hover:text-vital-300 font-tech uppercase tracking-wider font-bold transition-colors"
@@ -85,7 +89,7 @@ export const CharacterBacklinks: React.FC<CharacterBacklinksProps> = ({
           <Link2 size={13} />
           <span>View All Backlinks &rarr;</span>
         </a>
-      </div>
+      </div>}
     </div>
   );
 };
