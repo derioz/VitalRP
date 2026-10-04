@@ -40,10 +40,14 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
   initialData,
 }) => {
   const { user, isAdmin, isSuperAdmin } = useAuth();
-  const [characterData, setCharacterData] = useState<WikiCharacterDetail | null>(
-    initialData || null
-  );
-  const [loading, setLoading] = useState(!initialData);
+  const [characterData, setCharacterData] = useState<WikiCharacterDetail | null>(() => {
+    if (initialData) return initialData;
+    if (typeof window !== 'undefined') {
+      return getLocalCharacterBySlug(slug);
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !initialData && !getLocalCharacterBySlug(slug));
   const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
@@ -69,7 +73,8 @@ export const CharacterPageView: React.FC<CharacterPageViewProps> = ({
         if (isMounted) setCharacterData(data);
       })
       .catch(() => {
-        const fallback = getFallbackCharacterBySlug(slug);
+        const localChar = getLocalCharacterBySlug(slug);
+        const fallback = localChar || getFallbackCharacterBySlug(slug);
         if (isMounted) setCharacterData(fallback || null);
       })
       .finally(() => {

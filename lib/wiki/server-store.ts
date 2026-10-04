@@ -47,6 +47,13 @@ function sanitizeForFirestore<T>(obj: T): T {
 }
 
 /**
+ * Whether the primary persistent store (Firestore Admin SDK) is configured.
+ */
+export function isWikiStorageConfigured(): boolean {
+  return Boolean(adminDb);
+}
+
+/**
  * Save or update a character in Firestore (and Supabase if migrated).
  */
 export async function saveServerCharacter(character: WikiCharacterDetail): Promise<boolean> {

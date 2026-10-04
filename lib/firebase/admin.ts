@@ -3,8 +3,15 @@ import * as admin from 'firebase-admin';
 
 function formatPrivateKey(key: string | undefined): string | undefined {
   if (!key) return undefined;
+  let clean = key.trim();
+  if (
+    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith("'") && clean.endsWith("'"))
+  ) {
+    clean = clean.slice(1, -1);
+  }
   // Replace escaped newlines with actual newlines if necessary
-  return key.replace(/\\n/g, '\n');
+  return clean.replace(/\\n/g, '\n');
 }
 
 function getFirebaseAdminApp(): admin.app.App | null {

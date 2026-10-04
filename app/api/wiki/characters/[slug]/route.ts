@@ -192,7 +192,13 @@ export async function PUT(
       gallery: gallery !== undefined ? gallery : existing.gallery || [],
     };
 
-    await saveServerCharacter(updatedCharacter);
+    const persisted = await saveServerCharacter(updatedCharacter);
+    if (!persisted) {
+      return NextResponse.json(
+        { error: 'Storage error: changes could not be saved to the Wiki database. Please try again.' },
+        { status: 503, headers: corsHeaders }
+      );
+    }
 
     return NextResponse.json(
       {

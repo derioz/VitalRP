@@ -5,6 +5,7 @@ import { Role, UserPermissions, getPermissions, normalizeRole, isKnownAdminId } 
 import { AppPermission, isSuperAdmin as checkIsSuperAdmin, isKnownAdmin, getAllPermissions } from '@/lib/auth/permissions';
 import { supabase } from '@/lib/supabase/client';
 import { getApiUrl } from '@/lib/api-config';
+import { publishLocalCharacters } from '@/lib/wiki/sync';
 
 export interface AuthUser {
   id?: string;
@@ -405,6 +406,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEditMode((prev) => !prev);
     }
   }, [isAdmin]);
+
+  // Recover Wiki characters that were previously only saved in this browser.
+  React.useEffect(() => {
+    if (!user?.discordId) return;
+    publishLocalCharacters(user.discordId).catch(() => {});
+  }, [user?.discordId]);
 
   const contextValue = React.useMemo(
     () => ({

@@ -5,6 +5,7 @@ import {
   saveServerCharacter,
   listServerCharacters,
   getServerCharacterBySlug,
+  isWikiStorageConfigured,
 } from '@/lib/wiki/server-store';
 import { WikiCharacterDetail } from '@/lib/wiki/types';
 
@@ -61,7 +62,9 @@ export async function GET(request: NextRequest) {
     limit,
   });
 
-  return NextResponse.json(res, { headers: corsHeaders });
+  return NextResponse.json(res, {
+    headers: { ...corsHeaders, 'X-Wiki-Storage': isWikiStorageConfigured() ? 'ok' : 'unavailable' },
+  });
 }
 
 /**
@@ -240,8 +243,18 @@ export async function POST(request: NextRequest) {
       related_characters: [],
     };
 
-    // 4. Save to persistent server store
-    await saveServerCharacter(characterPayload);
+    // 4. Save to persistent server store. Never report success unless it was
+    // actually persisted, otherwise the profile would be invisible to the public.
+    const persisted = await saveServerCharacter(characterPayload);
+    if (!persisted) {
+      return NextResponse.json(
+        {
+          error:
+            'Storage error: the character could not be saved to the Wiki database. Please try again or contact staff.',
+        },
+        { status: 503, headers: corsHeaders }
+      );
+    }
 
     return NextResponse.json(
       {

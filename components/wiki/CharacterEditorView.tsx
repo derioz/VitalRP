@@ -39,7 +39,7 @@ import {
 import { getFallbackCharacterBySlug } from '../../data/wiki-fallback';
 import { getApiUrl } from '../../lib/api-config';
 import { supabase } from '../../lib/supabase/client';
-import { saveLocalCharacter, getLocalCharacterBySlug } from '../../lib/wiki/storage';
+import { saveLocalCharacter, getLocalCharacterBySlug, removeLocalCharacter } from '../../lib/wiki/storage';
 
 interface CharacterEditorViewProps {
   initialSlug?: string;
@@ -415,7 +415,11 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
           if (data && !data.error && (data.character?.full_name || data.title)) {
             setServerCharacter(data);
             applyData(data);
-          } else if (!localChar) {
+          } else if (localChar) {
+            // Not on the server yet (legacy local-only save). Use the local copy
+            // for the editor UI; the server assigns ownership when it is published.
+            setServerCharacter(localChar);
+          } else {
             const fallback = getFallbackCharacterBySlug(initialSlug);
             if (fallback) {
               setServerCharacter(fallback);
@@ -709,10 +713,10 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
       related_characters: [],
     };
 
-    try {
-      const endpoint = isNew ? '/api/wiki/characters' : `/api/wiki/characters/${encodeURIComponent(initialSlug || '')}`;
-      const method = isNew ? 'POST' : 'PUT';
+    // Always keep a local backup so no work is lost if the request fails.
+    saveLocalCharacter(localCharDetail);
 
+    try {
       const { data: authData } = await supabase.auth.getSession();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -721,62 +725,50 @@ export const CharacterEditorView: React.FC<CharacterEditorViewProps> = ({
         headers['Authorization'] = `Bearer ${authData.session.access_token}`;
       }
 
-      const res = await fetch(getApiUrl(endpoint), {
-        method,
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
+      const send = async (method: 'POST' | 'PUT') => {
+        const endpoint =
+          method === 'POST'
+            ? '/api/wiki/characters'
+            : `/api/wiki/characters/${encodeURIComponent(initialSlug || '')}`;
+        const res = await fetch(getApiUrl(endpoint), {
+          method,
+          headers,
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        const data: any = contentType.includes('application/json') ? await res.json().catch(() => null) : null;
+        return { res, data };
+      };
 
-      const contentType = res.headers.get('content-type') || '';
-      let data: any = null;
-      if (contentType.includes('application/json')) {
-        data = await res.json();
+      let { res, data } = await send(isNew ? 'POST' : 'PUT');
+
+      // The character only existed in this browser (legacy local-only save):
+      // publish it to the server so everyone can see it.
+      if (!isNew && res.status === 404) {
+        ({ res, data } = await send('POST'));
       }
 
       if (!res.ok) {
-        if (
-          res.status === 401 ||
-          res.status === 403 ||
-          (data?.error &&
-            (data.error.includes('Unauthorized') ||
-              data.error.includes('Forbidden') ||
-              data.error.includes('whitelist') ||
-              data.error.includes('own this character')))
-        ) {
-          throw new Error(data?.error || `Access denied (${res.status})`);
-        }
-        // Save locally if server database is not yet migrated or offline
-        saveLocalCharacter(localCharDetail);
-        setSaveStatus('saved');
-        window.location.href = `/wiki/characters/${targetSlug}`;
-        return;
+        throw new Error(
+          data?.error ||
+            `The server could not save this character (HTTP ${res.status}). Your changes are backed up on this device — please try again.`
+        );
       }
 
-      if (data?.slug) {
-        localCharDetail.slug = data.slug;
-        localCharDetail.id = data.id || localCharDetail.id;
-      }
-      saveLocalCharacter(localCharDetail);
+      const finalSlug = data?.slug || targetSlug;
+      // Server is now the source of truth; drop the local copies.
+      removeLocalCharacter(targetSlug);
+      if (initialSlug) removeLocalCharacter(initialSlug);
       setSaveStatus('saved');
-      window.location.href = `/wiki/characters/${data?.slug || targetSlug}`;
+      window.location.href = `/wiki/characters/${finalSlug}`;
     } catch (err: any) {
-      if (
-        err.message &&
-        (err.message.includes('Unauthorized') ||
-          err.message.includes('Forbidden') ||
-          err.message.includes('whitelist') ||
-          err.message.includes('Access denied') ||
-          err.message.includes('own this character'))
-      ) {
-        setErrorMsg(err.message);
-        setSaveStatus('unsaved');
-      } else {
-        // Zero-data-loss fallback: preserve user input locally
-        saveLocalCharacter(localCharDetail);
-        setSaveStatus('saved');
-        window.location.href = `/wiki/characters/${targetSlug}`;
-      }
+      setErrorMsg(
+        err?.message && err.message !== 'Failed to fetch'
+          ? err.message
+          : 'Could not reach the Wiki server. Your changes are backed up on this device — please try again.'
+      );
+      setSaveStatus('unsaved');
     } finally {
       setSaving(false);
     }
