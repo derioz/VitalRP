@@ -82,16 +82,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
     { label: 'Merch', href: '/merch' },
     { label: 'Photo Contest', href: 'https://contest.vitalrp.net', isExternal: true },
     { label: 'Forums', href: '#', isComingSoon: true },
-    { label: 'Store', href: 'https://vitalrp.tebex.io/', isExternal: true, isStore: true },
+    { label: 'Store', href: '#', isExternal: false, isStore: true, isUnavailable: true },
   ];
 
   const handleLinkClick = (e: React.MouseEvent, item: any) => {
-    if (item.isStore) {
-      if (onOpenStore) {
-        e.preventDefault();
-        onOpenStore();
-      }
-    } else if (item.href.startsWith('/')) {
+    if (item.isUnavailable || item.isStore) {
+      e.preventDefault();
+      return;
+    }
+    if (item.href.startsWith('/')) {
       e.preventDefault();
       window.location.href = item.href;
     }
@@ -116,7 +115,19 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
             <ul className="space-y-4">
               {links.map((item) => (
                 <li key={item.label} className="w-fit">
-                  {item.isComingSoon ? (
+                  {item.isUnavailable ? (
+                    <div
+                      className="group relative flex items-center cursor-not-allowed select-none"
+                      title="Temporarily unavailable"
+                    >
+                      <span className="text-gray-600 group-hover:text-gray-500 transition-colors text-sm font-tech uppercase tracking-wider block">
+                        {item.label}
+                      </span>
+                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-dark-900 border border-amber-500/40 text-amber-400 text-[9px] font-tech font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg z-20">
+                        Temporarily unavailable
+                      </span>
+                    </div>
+                  ) : item.isComingSoon ? (
                     <div className="group relative flex items-center cursor-help">
                       <span className="text-gray-500 text-sm font-tech uppercase tracking-wider group-hover:text-vital-500 transition-colors">
                         {item.label}

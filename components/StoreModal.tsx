@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ShoppingCart, Loader2 } from 'lucide-react';
+import { X, ShoppingCart, AlertTriangle } from 'lucide-react';
 
 interface StoreModalProps {
   isOpen: boolean;
@@ -42,30 +42,21 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-              className="w-full max-w-6xl h-[85vh] bg-dark-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col shadow-2xl pointer-events-auto"
+              className="w-full max-w-xl bg-dark-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col shadow-2xl pointer-events-auto"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/5 bg-dark-900 z-10 shrink-0">
                 <div className="flex items-center gap-3">
-                   <div className="bg-vital-500/10 p-2 rounded-lg text-vital-500">
+                   <div className="bg-amber-500/10 p-2 rounded-lg text-amber-400">
                       <ShoppingCart size={20} />
                    </div>
                    <div>
                       <h3 className="font-display font-bold text-white text-lg leading-none">Vital Store</h3>
-                      <p className="text-xs text-gray-500 font-tech uppercase tracking-wider mt-0.5">Secure Checkout</p>
+                      <p className="text-xs text-amber-400 font-tech uppercase tracking-wider mt-0.5">Temporarily Unavailable</p>
                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                   <a
-                     href="https://vitalrp.tebex.io/"
-                     target="_blank"
-                     rel="noreferrer"
-                     className="hidden md:flex items-center gap-2 px-4 py-2 bg-vital-600 hover:bg-vital-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-vital-500/20"
-                   >
-                      <span>Open in New Tab</span>
-                      <ExternalLink size={14} />
-                   </a>
                    <button
                      onClick={onClose}
                      className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
@@ -77,37 +68,30 @@ export const StoreModal: React.FC<StoreModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Content Area */}
-              <div className="flex-1 relative bg-dark-950 w-full h-full">
-                 {/* Loading / Fallback State (Visible while iframe loads or if it fails) */}
-                 <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 z-0">
-                    <Loader2 size={32} className="animate-spin mb-4 text-vital-500" />
-                    <p className="font-medium text-gray-400">Loading Store Interface...</p>
-                    <p className="text-sm mt-2 max-w-xs text-center text-gray-600">
-                        If the store does not appear shortly, please use the "Open in New Tab" button.
-                    </p>
+              <div className="relative bg-dark-950 w-full p-8 sm:p-10 flex flex-col items-center justify-center text-center">
+                 <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-5 shadow-[0_0_25px_rgba(245,158,11,0.15)]">
+                    <AlertTriangle size={32} />
                  </div>
-
-                 {/* Store Iframe */}
-                 <iframe
-                   src="https://vitalrp.tebex.io/"
-                   title="Vital RP Store"
-                   className="absolute inset-0 w-full h-full border-0 z-10 bg-transparent"
-                   allow="payment"
-                   sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-                 />
-              </div>
-              
-              {/* Mobile Footer CTA */}
-              <div className="md:hidden p-4 border-t border-white/5 bg-dark-900 z-10 shrink-0">
-                 <a
-                     href="https://vitalrp.tebex.io/"
+                 <h4 className="font-display font-bold text-white text-xl sm:text-2xl mb-2">Store Temporarily Unavailable</h4>
+                 <p className="text-gray-400 text-sm max-w-md font-sans leading-relaxed mb-6">
+                    The Vital RP Tebex store is currently offline for maintenance and updates. Please check back soon or join our Discord community for official announcements.
+                 </p>
+                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                   <a
+                     href="https://discord.gg/vitalrp"
                      target="_blank"
                      rel="noreferrer"
-                     className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-vital-600 text-white font-bold rounded-lg shadow-lg shadow-vital-500/20"
+                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 transition-all"
                    >
-                      <span>Open in New Tab</span>
-                      <ExternalLink size={16} />
+                     <span>Join Discord for Updates</span>
                    </a>
+                   <button
+                     onClick={onClose}
+                     className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-tech font-bold text-xs uppercase tracking-wider transition-colors border border-white/10"
+                   >
+                     Close
+                   </button>
+                 </div>
               </div>
             </motion.div>
           </div>

@@ -44,6 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [isForumsHovered, setIsForumsHovered] = useState(false);
+  const [isStoreHovered, setIsStoreHovered] = useState(false);
   const forumsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { user, isAdmin, loading, login, logout, updateDisplayName } = useAuth();
@@ -168,12 +169,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
     { name: 'Join', href: '/#join' },
   ];
 
-  const handleStoreClick = () => {
-    if (onOpenStore) {
-      onOpenStore();
-    } else {
-      window.open('https://vitalrp.tebex.io/', '_blank', 'noopener,noreferrer');
-    }
+  const handleStoreClick = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    // Tebex store links are temporarily disabled
   };
 
   return (
@@ -294,15 +292,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               </span>
             </button>
 
-            {/* Tebex Store */}
-            <button
-              onClick={handleStoreClick}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-300 hover:text-vital-400 hover:bg-vital-500/10 rounded-full transition-colors border border-transparent hover:border-vital-500/20"
-              title="Official VitalRP Tebex Store"
+            {/* Tebex Store (Temporarily Disabled) */}
+            <div
+              className="relative hidden md:block"
+              onMouseEnter={() => setIsStoreHovered(true)}
+              onMouseLeave={() => setIsStoreHovered(false)}
             >
-              <ShoppingCart size={14} className="text-vital-400" />
-              <span>Store</span>
-            </button>
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                onClick={handleStoreClick}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-400 opacity-60 cursor-not-allowed rounded-full transition-colors border border-white/5 bg-white/[0.02]"
+                title="Temporarily unavailable"
+              >
+                <ShoppingCart size={14} className="text-gray-400" />
+                <span>Store</span>
+              </button>
+              <AnimatePresence>
+                {isStoreHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-amber-500/40 text-amber-400 text-[10px] font-tech font-bold px-2.5 py-1 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8),0_0_15px_rgba(245,158,11,0.2)] whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
+                  >
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-amber-500/40 rotate-45" />
+                    <span>Temporarily unavailable</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Discord */}
             <a
@@ -443,16 +464,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                 </a>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      handleStoreClick();
-                    }}
-                    className="flex items-center justify-center gap-2 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-gray-300 font-tech font-bold text-xs uppercase tracking-wider border border-white/10 transition-colors"
+                  <div
+                    className="relative"
+                    title="Temporarily unavailable"
                   >
-                    <ShoppingCart size={14} className="text-vital-400" />
-                    <span>Store</span>
-                  </button>
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      onClick={(e) => {
+                        e.preventDefault();
+                      }}
+                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-dark-800/60 text-gray-400 font-tech font-bold text-xs uppercase tracking-wider border border-white/5 cursor-not-allowed opacity-60"
+                      title="Temporarily unavailable"
+                    >
+                      <ShoppingCart size={14} className="text-gray-400" />
+                      <span>Store</span>
+                      <span className="text-[9px] text-amber-400/90 font-mono tracking-tight ml-0.5">(Unavailable)</span>
+                    </button>
+                  </div>
 
                   <a
                     href="https://discord.gg/vitalrp"
