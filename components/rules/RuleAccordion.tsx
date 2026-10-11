@@ -5,6 +5,7 @@ import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronDown, Link as LinkIcon, Check, Copy } from 'lucide-react';
 import { Rule } from '@/data/rules';
 import { RuleCallout } from './RuleCallout';
+import { FormattedRuleText } from './FormattedRuleText';
 
 interface RuleAccordionProps {
   rules: Rule[];
@@ -124,8 +125,8 @@ export const RuleAccordion: React.FC<RuleAccordionProps> = ({
                 </div>
 
                 {/* Complete Unaltered Official Text */}
-                <div className="font-sans text-gray-300 leading-relaxed space-y-3 whitespace-pre-line text-sm">
-                  {rule.content}
+                <div className="font-sans text-gray-300 leading-relaxed text-sm">
+                  <FormattedRuleText content={rule.content} />
                 </div>
 
                 {/* Structured Callout Boxes */}

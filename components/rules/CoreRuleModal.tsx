@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
 import { Rule, RULE_CATEGORIES } from '@/data/rules';
 import { RuleCallout } from './RuleCallout';
+import { FormattedRuleText } from './FormattedRuleText';
 
 interface CoreRuleModalProps {
   rule: Rule | null;
@@ -117,11 +118,7 @@ export const CoreRuleModal: React.FC<CoreRuleModalProps> = ({
               <span className="text-xs font-tech font-bold uppercase tracking-wider text-gray-400 block">
                 Official Legislation Text
               </span>
-              {rule.content.split('\n\n').map((paragraph, index) => (
-                <p key={index} className="whitespace-pre-line leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
+              <FormattedRuleText content={rule.content} />
             </div>
           </div>
 

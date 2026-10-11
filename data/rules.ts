@@ -1,7 +1,22 @@
+export type RuleCalloutType =
+  | 'IMPORTANT'
+  | 'WARNING'
+  | 'EXAMPLE'
+  | 'COOLDOWN'
+  | 'REQUIRES_APPROVAL'
+  | 'STAFF_APPROVAL'
+  | 'NOT_ALLOWED'
+  | 'PROHIBITED'
+  | 'CUSTOM';
+
 export interface RuleCallout {
-  type: 'IMPORTANT' | 'WARNING' | 'EXAMPLE' | 'COOLDOWN' | 'REQUIRES_APPROVAL' | 'NOT_ALLOWED';
+  type: RuleCalloutType;
   title?: string;
   text: string;
+  customLabel?: string;
+  customColor?: 'cyan' | 'vital' | 'emerald' | 'purple' | 'rose' | 'amber' | 'blue' | 'fuchsia';
+  linkUrl?: string;
+  linkText?: string;
 }
 
 export interface Rule {

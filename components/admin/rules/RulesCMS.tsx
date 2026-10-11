@@ -36,6 +36,9 @@ import {
   Clock,
   ExternalLink,
   ShieldAlert,
+  Ban,
+  ShieldCheck,
+  Link as LinkIcon,
   ChevronDown,
   ChevronUp,
   RefreshCw,
@@ -47,7 +50,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { DbRule, DbRuleCategory, DbRuleDraft, StagedChangeSummary, DbRuleVersion } from '@/lib/rules/supabase-rules';
-import { RuleCallout } from '@/data/rules';
+import { RuleCallout, RuleCalloutType } from '@/data/rules';
+import { RuleCallout as RuleCalloutView } from '@/components/rules/RuleCallout';
+import { FormattedRuleText } from '@/components/rules/FormattedRuleText';
 import {
   getClientRulesData,
   syncExistingRulesToSupabase,
@@ -194,6 +199,12 @@ export const RulesCMS: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isRuleHistoryModalOpen, setIsRuleHistoryModalOpen] = useState(false);
   const [inspectingRuleId, setInspectingRuleId] = useState<string | null>(null);
+
+  // Link Insertion State
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [linkModalText, setLinkModalText] = useState('');
+  const [linkModalUrl, setLinkModalUrl] = useState('');
+  const [linkModalSelection, setLinkModalSelection] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
 
   // Staged changes & version state
   const [stagedChanges, setStagedChanges] = useState<StagedChangeSummary[]>([]);
@@ -864,13 +875,75 @@ export const RulesCMS: React.FC = () => {
   const handleAddCallout = (type: RuleCallout['type']) => {
     if (!editingRule) return;
     const current = editingRule.callouts || [];
+
+    const defaultMap: Record<
+      string,
+      { title: string; customLabel?: string; customColor?: RuleCallout['customColor'] }
+    > = {
+      WARNING: { title: 'Important Warning' },
+      PROHIBITED: { title: 'Zero Tolerance / Prohibited' },
+      NOT_ALLOWED: { title: 'Zero Tolerance / Prohibited' },
+      IMPORTANT: { title: 'Important Requirement' },
+      STAFF_APPROVAL: { title: 'Staff Approval Required' },
+      REQUIRES_APPROVAL: { title: 'Staff Approval Required' },
+      COOLDOWN: { title: 'Mandatory Cooldown Period' },
+      CUSTOM: { title: 'Custom Notice', customLabel: 'CUSTOM', customColor: 'cyan' },
+      EXAMPLE: { title: 'Roleplay Example' },
+    };
+
+    const def = defaultMap[type] || { title: 'Notice' };
     const newCallout: RuleCallout = {
       type,
-      title: type === 'WARNING' ? 'Important Warning' : type === 'EXAMPLE' ? 'Roleplay Example' : 'Note',
+      title: def.title,
       text: '',
+      customLabel: def.customLabel,
+      customColor: def.customColor,
     };
+
     setEditingRule({ ...editingRule, callouts: [...current, newCallout] });
     setHasUnsavedChanges(true);
+  };
+
+  // Open Link Insertion Modal
+  const handleOpenLinkModal = () => {
+    const textarea = document.getElementById('rule-content-textarea') as HTMLTextAreaElement;
+    if (!textarea || !editingRule) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = editingRule.content || '';
+    const selected = text.substring(start, end);
+
+    setLinkModalSelection({ start, end });
+    setLinkModalText(selected || '');
+    setLinkModalUrl('');
+    setIsLinkModalOpen(true);
+  };
+
+  // Insert Link into Textarea
+  const handleInsertLink = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const textarea = document.getElementById('rule-content-textarea') as HTMLTextAreaElement;
+    if (!textarea || !editingRule) return;
+
+    const url = linkModalUrl.trim();
+    if (!url) return;
+
+    const label = linkModalText.trim() || url;
+    const text = editingRule.content || '';
+    const { start, end } = linkModalSelection;
+
+    const markdownLink = `[${label}](${url})`;
+    const newContent = text.substring(0, start) + markdownLink + text.substring(end);
+
+    setEditingRule({ ...editingRule, content: newContent });
+    setHasUnsavedChanges(true);
+    setIsLinkModalOpen(false);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + markdownLink.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 50);
   };
 
   // Formatting helpers for text area
@@ -1604,67 +1677,117 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => insertFormatting('**', '**')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Bold"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Bold (**text**)"
                         >
                           <Bold size={14} />
                         </button>
                         <button
                           type="button"
                           onClick={() => insertFormatting('*', '*')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Italic"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Italic (*text*)"
                         >
                           <Italic size={14} />
                         </button>
                         <button
                           type="button"
+                          onClick={handleOpenLinkModal}
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Insert Link ([Text](URL))"
+                        >
+                          <LinkIcon size={14} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => insertFormatting('\n- ')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Bullet List"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Bullet List (- item)"
                         >
                           <List size={14} />
                         </button>
                         <button
                           type="button"
                           onClick={() => insertFormatting('\n1. ')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Numbered List"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Numbered List (1. item)"
                         >
                           <ListOrdered size={14} />
                         </button>
                         <button
                           type="button"
                           onClick={() => insertFormatting('\n> ')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Quote Block"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Quote Block (> quote)"
                         >
                           <Quote size={14} />
                         </button>
                         <button
                           type="button"
                           onClick={() => insertFormatting('`', '`')}
-                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5"
-                          title="Code"
+                          className="p-1.5 text-gray-400 hover:text-white rounded hover:bg-white/5 transition-colors"
+                          title="Inline Code (`code`)"
                         >
                           <Code size={14} />
                         </button>
-                        <div className="h-4 w-px bg-white/10 mx-1" />
+
+                        <div className="h-4 w-px bg-white/10 mx-1 shrink-0" />
+                        <span className="text-[10px] uppercase font-tech text-gray-500 font-bold px-1 shrink-0">
+                          Cards:
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleAddCallout('WARNING')}
-                          className="px-2 py-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 rounded flex items-center gap-1"
+                          className="px-2 py-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Warning callout card"
                         >
                           <AlertTriangle size={12} />
                           <span>+ Warning</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleAddCallout('EXAMPLE')}
-                          className="px-2 py-1 text-[11px] font-bold text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 rounded flex items-center gap-1"
+                          onClick={() => handleAddCallout('PROHIBITED')}
+                          className="px-2 py-1 text-[11px] font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Prohibited callout card"
                         >
-                          <Info size={12} />
-                          <span>+ Example</span>
+                          <Ban size={12} />
+                          <span>+ Prohibited</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddCallout('IMPORTANT')}
+                          className="px-2 py-1 text-[11px] font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Important callout card"
+                        >
+                          <AlertCircle size={12} />
+                          <span>+ Important</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddCallout('STAFF_APPROVAL')}
+                          className="px-2 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Staff Approval callout card"
+                        >
+                          <ShieldCheck size={12} />
+                          <span>+ Staff</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddCallout('COOLDOWN')}
+                          className="px-2 py-1 text-[11px] font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Cooldown callout card"
+                        >
+                          <Clock size={12} />
+                          <span>+ Cooldown</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddCallout('CUSTOM')}
+                          className="px-2 py-1 text-[11px] font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          title="Add Custom callout card"
+                        >
+                          <Sparkles size={12} />
+                          <span>+ Custom</span>
                         </button>
                       </div>
 
@@ -1676,67 +1799,354 @@ export const RulesCMS: React.FC = () => {
                           setEditingRule({ ...editingRule, content: e.target.value });
                           setHasUnsavedChanges(true);
                         }}
-                        placeholder="Write official rule text..."
+                        placeholder="Write official rule text... (Supports markdown links [text](url), lists, quotes, and bold text)"
                         className="w-full bg-dark-950 border border-white/10 rounded-b-xl p-3.5 text-sm text-white font-mono focus:outline-none focus:border-vital-500 leading-relaxed"
                       />
                     </div>
 
-                    {/* Callouts Section */}
-                    {editingRule.callouts && editingRule.callouts.length > 0 && (
-                      <div className="space-y-3 pt-2">
+                    {/* Structured Callouts Section */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
                         <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider">
-                          Structured Callout Cards ({editingRule.callouts.length})
+                          Structured Callout Cards ({editingRule.callouts?.length || 0})
                         </label>
-                        {editingRule.callouts.map((callout, cIdx) => (
-                          <div
-                            key={cIdx}
-                            className="p-3.5 rounded-xl bg-dark-950 border border-white/10 space-y-2 relative"
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('WARNING')}
+                            className="text-[10px] font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Warning Card"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 text-vital-400">
-                                {callout.type}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
+                            + Warning
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('PROHIBITED')}
+                            className="text-[10px] font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Prohibited Card"
+                          >
+                            + Prohibited
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('IMPORTANT')}
+                            className="text-[10px] font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Important Card"
+                          >
+                            + Important
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('STAFF_APPROVAL')}
+                            className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Staff Approval Card"
+                          >
+                            + Staff
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('COOLDOWN')}
+                            className="text-[10px] font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Cooldown Card"
+                          >
+                            + Cooldown
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddCallout('CUSTOM')}
+                            className="text-[10px] font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-0.5 rounded transition-colors"
+                            title="Add Custom Card"
+                          >
+                            + Custom
+                          </button>
+                        </div>
+                      </div>
+
+                      {!editingRule.callouts || editingRule.callouts.length === 0 ? (
+                        <div className="p-4 rounded-xl bg-dark-950 border border-white/5 border-dashed text-center">
+                          <p className="text-xs text-gray-400 mb-3">
+                            No callout cards attached. Use callout cards to highlight prohibitions, mandatory approvals, cooldowns, or notices.
+                          </p>
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('WARNING')}
+                              className="px-2.5 py-1 text-xs font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <AlertTriangle size={13} />
+                              <span>Warning</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('PROHIBITED')}
+                              className="px-2.5 py-1 text-xs font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 border border-rose-400/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Ban size={13} />
+                              <span>Prohibited</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('IMPORTANT')}
+                              className="px-2.5 py-1 text-xs font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 border border-vital-500/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <AlertCircle size={13} />
+                              <span>Important</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('STAFF_APPROVAL')}
+                              className="px-2.5 py-1 text-xs font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 border border-emerald-400/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <ShieldCheck size={13} />
+                              <span>Staff Approval</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('COOLDOWN')}
+                              className="px-2.5 py-1 text-xs font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 border border-purple-400/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Clock size={13} />
+                              <span>Cooldown</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddCallout('CUSTOM')}
+                              className="px-2.5 py-1 text-xs font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/20 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Sparkles size={13} />
+                              <span>Custom Card</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        editingRule.callouts.map((callout, cIdx) => {
+                          const calloutColorPills = [
+                            { id: 'cyan', label: 'Cyan', bg: 'bg-cyan-500' },
+                            { id: 'vital', label: 'Vital Orange', bg: 'bg-vital-500' },
+                            { id: 'emerald', label: 'Emerald', bg: 'bg-emerald-500' },
+                            { id: 'purple', label: 'Purple', bg: 'bg-purple-500' },
+                            { id: 'rose', label: 'Rose', bg: 'bg-rose-500' },
+                            { id: 'amber', label: 'Amber', bg: 'bg-amber-500' },
+                            { id: 'blue', label: 'Blue', bg: 'bg-blue-500' },
+                            { id: 'fuchsia', label: 'Fuchsia', bg: 'bg-fuchsia-500' },
+                          ];
+
+                          return (
+                            <div
+                              key={cIdx}
+                              className="p-3.5 rounded-xl bg-dark-950 border border-white/10 space-y-3 relative transition-all"
+                            >
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                  {/* Type Selector Dropdown */}
+                                  <select
+                                    value={callout.type}
+                                    onChange={(e) => {
+                                      const updated = [...(editingRule.callouts || [])];
+                                      const nextType = e.target.value as RuleCallout['type'];
+                                      updated[cIdx] = {
+                                        ...updated[cIdx],
+                                        type: nextType,
+                                        customLabel: nextType === 'CUSTOM' ? (updated[cIdx].customLabel || 'CUSTOM') : undefined,
+                                        customColor: nextType === 'CUSTOM' ? (updated[cIdx].customColor || 'cyan') : undefined,
+                                      };
+                                      setEditingRule({ ...editingRule, callouts: updated });
+                                      setHasUnsavedChanges(true);
+                                    }}
+                                    className="bg-dark-900 border border-white/15 rounded-lg px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:border-vital-500 cursor-pointer"
+                                  >
+                                    <option value="WARNING">⚠️ Warning Card</option>
+                                    <option value="PROHIBITED">🚫 Prohibited Card</option>
+                                    <option value="IMPORTANT">❗ Important Card</option>
+                                    <option value="STAFF_APPROVAL">🛡️ Staff Approval Card</option>
+                                    <option value="COOLDOWN">⏱️ Cooldown Card</option>
+                                    <option value="CUSTOM">✨ Custom Card</option>
+                                    <option value="EXAMPLE">💡 Example Scenario</option>
+                                  </select>
+
+                                  {/* Badge Tag Preview */}
+                                  <span
+                                    className={`text-[10px] font-tech font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                                      callout.type === 'WARNING'
+                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                        : callout.type === 'PROHIBITED' || callout.type === 'NOT_ALLOWED'
+                                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                        : callout.type === 'IMPORTANT'
+                                        ? 'bg-vital-500/10 text-vital-400 border-vital-500/20'
+                                        : callout.type === 'STAFF_APPROVAL' || callout.type === 'REQUIRES_APPROVAL'
+                                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                                        : callout.type === 'COOLDOWN'
+                                        ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                                        : callout.type === 'CUSTOM'
+                                        ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+                                        : 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                                    }`}
+                                  >
+                                    {callout.type === 'CUSTOM' ? (callout.customLabel || 'CUSTOM') : callout.type}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  {/* Reorder Up */}
+                                  <button
+                                    type="button"
+                                    disabled={cIdx === 0}
+                                    onClick={() => {
+                                      if (cIdx === 0) return;
+                                      const updated = [...(editingRule.callouts || [])];
+                                      const temp = updated[cIdx];
+                                      updated[cIdx] = updated[cIdx - 1];
+                                      updated[cIdx - 1] = temp;
+                                      setEditingRule({ ...editingRule, callouts: updated });
+                                      setHasUnsavedChanges(true);
+                                    }}
+                                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
+                                    title="Move up"
+                                  >
+                                    <ChevronUp size={14} />
+                                  </button>
+                                  {/* Reorder Down */}
+                                  <button
+                                    type="button"
+                                    disabled={cIdx === (editingRule.callouts?.length || 1) - 1}
+                                    onClick={() => {
+                                      if (cIdx >= (editingRule.callouts?.length || 1) - 1) return;
+                                      const updated = [...(editingRule.callouts || [])];
+                                      const temp = updated[cIdx];
+                                      updated[cIdx] = updated[cIdx + 1];
+                                      updated[cIdx + 1] = temp;
+                                      setEditingRule({ ...editingRule, callouts: updated });
+                                      setHasUnsavedChanges(true);
+                                    }}
+                                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
+                                    title="Move down"
+                                  >
+                                    <ChevronDown size={14} />
+                                  </button>
+                                  {/* Remove */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...(editingRule.callouts || [])];
+                                      updated.splice(cIdx, 1);
+                                      setEditingRule({ ...editingRule, callouts: updated });
+                                      setHasUnsavedChanges(true);
+                                    }}
+                                    className="p-1 rounded text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                    title="Remove Callout"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Custom Callout Settings: Badge Label & Color Theme */}
+                              {callout.type === 'CUSTOM' && (
+                                <div className="p-2.5 rounded-lg bg-dark-900 border border-white/5 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-[10px] font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
+                                      Badge Label:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={callout.customLabel || ''}
+                                      onChange={(e) => {
+                                        const updated = [...(editingRule.callouts || [])];
+                                        updated[cIdx].customLabel = e.target.value.toUpperCase();
+                                        setEditingRule({ ...editingRule, callouts: updated });
+                                        setHasUnsavedChanges(true);
+                                      }}
+                                      placeholder="e.g. NOTICE, SANCTION, RESTRICTION"
+                                      className="flex-1 bg-dark-950 border border-white/10 rounded px-2 py-1 text-xs text-white uppercase font-tech"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-[10px] font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
+                                      Color Theme:
+                                    </label>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {calloutColorPills.map((p) => {
+                                        const active = (callout.customColor || 'cyan') === p.id;
+                                        return (
+                                          <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => {
+                                              const updated = [...(editingRule.callouts || [])];
+                                              updated[cIdx].customColor = p.id as any;
+                                              setEditingRule({ ...editingRule, callouts: updated });
+                                              setHasUnsavedChanges(true);
+                                            }}
+                                            className={`w-5 h-5 rounded-full ${p.bg} transition-all cursor-pointer ${
+                                              active ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'
+                                            }`}
+                                            title={p.label}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              <input
+                                type="text"
+                                placeholder="Callout title (e.g. Zero Tolerance, Staff Authorization Required)"
+                                value={callout.title || ''}
+                                onChange={(e) => {
                                   const updated = [...(editingRule.callouts || [])];
-                                  updated.splice(cIdx, 1);
+                                  updated[cIdx].title = e.target.value;
                                   setEditingRule({ ...editingRule, callouts: updated });
                                   setHasUnsavedChanges(true);
                                 }}
-                                className="text-gray-500 hover:text-red-400 text-xs"
-                              >
-                                Remove
-                              </button>
+                                className="w-full bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-vital-500 font-medium"
+                              />
+
+                              <textarea
+                                rows={2}
+                                placeholder="Callout description or rule breakdown... (Supports markdown links [text](url))"
+                                value={callout.text}
+                                onChange={(e) => {
+                                  const updated = [...(editingRule.callouts || [])];
+                                  updated[cIdx].text = e.target.value;
+                                  setEditingRule({ ...editingRule, callouts: updated });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="w-full bg-dark-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-vital-500 font-normal leading-relaxed"
+                              />
+
+                              {/* Optional Callout Action Link */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                                <input
+                                  type="text"
+                                  placeholder="Action Link URL (optional, e.g. https://... or /rules#...)"
+                                  value={callout.linkUrl || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(editingRule.callouts || [])];
+                                    updated[cIdx].linkUrl = e.target.value;
+                                    setEditingRule({ ...editingRule, callouts: updated });
+                                    setHasUnsavedChanges(true);
+                                  }}
+                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-[11px] text-gray-300 font-mono focus:outline-none focus:border-vital-500"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Link Button Text (e.g. Read Appeal Process)"
+                                  value={callout.linkText || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(editingRule.callouts || [])];
+                                    updated[cIdx].linkText = e.target.value;
+                                    setEditingRule({ ...editingRule, callouts: updated });
+                                    setHasUnsavedChanges(true);
+                                  }}
+                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-[11px] text-gray-300 focus:outline-none focus:border-vital-500"
+                                />
+                              </div>
                             </div>
-                            <input
-                              type="text"
-                              placeholder="Callout title (e.g. Zero Tolerance)"
-                              value={callout.title || ''}
-                              onChange={(e) => {
-                                const updated = [...(editingRule.callouts || [])];
-                                updated[cIdx].title = e.target.value;
-                                setEditingRule({ ...editingRule, callouts: updated });
-                                setHasUnsavedChanges(true);
-                              }}
-                              className="w-full bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                            />
-                            <textarea
-                              rows={2}
-                              placeholder="Callout description or rule breakdown..."
-                              value={callout.text}
-                              onChange={(e) => {
-                                const updated = [...(editingRule.callouts || [])];
-                                updated[cIdx].text = e.target.value;
-                                setEditingRule({ ...editingRule, callouts: updated });
-                                setHasUnsavedChanges(true);
-                              }}
-                              className="w-full bg-dark-900 border border-white/10 rounded-lg p-2 text-xs text-white"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          );
+                        })
+                      )}
+                    </div>
                   </>
                 ) : (
                   /* Live Preview Tab */
@@ -1759,24 +2169,14 @@ export const RulesCMS: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 leading-relaxed whitespace-pre-line">
-                          {editingRule.content || 'No content written yet.'}
+                        <div className="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 leading-relaxed">
+                          <FormattedRuleText content={editingRule.content || 'No content written yet.'} />
                         </div>
 
                         {editingRule.callouts && editingRule.callouts.length > 0 && (
                           <div className="mt-4 space-y-2">
                             {editingRule.callouts.map((c, i) => (
-                              <div
-                                key={i}
-                                className={`p-3 rounded-xl border text-xs ${
-                                  c.type === 'WARNING'
-                                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
-                                    : 'bg-vital-500/10 border-vital-500/30 text-vital-300'
-                                }`}
-                              >
-                                {c.title && <div className="font-bold mb-1">{c.title}</div>}
-                                <div>{c.text}</div>
-                              </div>
+                              <RuleCalloutView key={i} callout={c} />
                             ))}
                           </div>
                         )}
@@ -2624,6 +3024,120 @@ export const RulesCMS: React.FC = () => {
             </div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* LINK INSERTION MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {isLinkModalOpen && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLinkModalOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-400">
+                    <LinkIcon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Insert Markdown Link</h3>
+                    <p className="text-xs text-gray-400">Add an interactive hyperlink to rule content</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsLinkModalOpen(false)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleInsertLink} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                    Link Display Text
+                  </label>
+                  <input
+                    type="text"
+                    value={linkModalText}
+                    onChange={(e) => setLinkModalText(e.target.value)}
+                    placeholder="e.g. Vital RP Discord, Guidelines"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-vital-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                    Link Destination URL
+                  </label>
+                  <input
+                    type="text"
+                    value={linkModalUrl}
+                    onChange={(e) => setLinkModalUrl(e.target.value)}
+                    placeholder="https://... or /rules#exploits-cheating"
+                    className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-vital-500"
+                  />
+                  {/* Preset Quick Chips */}
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    <span className="text-[10px] text-gray-500 font-tech uppercase">Quick:</span>
+                    <button
+                      type="button"
+                      onClick={() => setLinkModalUrl('https://')}
+                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                    >
+                      https://
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLinkModalUrl('/rules#')}
+                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                    >
+                      /rules#
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLinkModalUrl('https://discord.gg/vitalrp')}
+                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                    >
+                      discord.gg/vitalrp
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setIsLinkModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!linkModalUrl.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 text-dark-950 text-xs font-bold transition-all shadow-lg shadow-vital-500/25 disabled:opacity-40 cursor-pointer"
+                  >
+                    Insert Link
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );
