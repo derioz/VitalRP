@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Users, Shield, Gavel, Hammer, DollarSign, Calendar, Home, Store, Coffee, Crosshair, Skull, MapPin, Sword, Car, Dices, Flame, Cpu } from 'lucide-react';
+import { Users, Shield, Gavel, Hammer, DollarSign, Calendar, Home, Store, Coffee, Crosshair, Skull, MapPin, Sword, Car, Dices, Flame, Cpu, Compass } from 'lucide-react';
 
 const offers = [
   { icon: Users, title: "18+ Semi-Serious RP", description: "Focused on story, character development, and immersive scenes rather than simple shootouts." },
@@ -17,7 +17,7 @@ const worldFeatures = [
   { icon: Cpu, title: "In-House Scripts", description: "Engineered from scratch with proprietary custom code. Every system is unique, delivering fluid mechanics found nowhere else." },
   { icon: Car, title: "Expansive Vehicle Fleet", description: "A massive lineup of custom import cars, bikes, and specialized work vehicles with realistic handling and deep tuning." },
   { icon: Dices, title: "The Diamond Casino", description: "Test your luck at playable blackjack, roulette, slot machines, and the daily Lucky Wheel to win exclusive podium rides." },
-  { icon: MapPin, title: "Expanded Map & MLOs", description: "Explore new territories including Roxwood, custom designer interiors, and vibrant server-wide social hotspots." }
+  { icon: Compass, title: "Cayo Perico: Extraction", description: "Deploy into custom high-stakes missions on Cayo Perico island. Complete tactical objectives, survive hostile territory, and extract with rare loot." }
 ];
 
 const containerVariants: Variants = {
@@ -201,7 +201,7 @@ export const Features: React.FC = () => {
                 <Crosshair size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-gray-300 block mb-0.5">Dynamic Crime & Heists</strong>
-                  Tiered criminal progression spanning petty crime, vehicle boosting, store holdups, and high-security multi-stage bank vaults.
+                  Tiered criminal progression spanning petty crime, vehicle boosting, multi-stage bank vaults, and high-risk Cayo Perico Extraction loot runs.
                 </div>
               </li>
               <li className="flex gap-2.5 bg-dark-900/40 p-3.5 rounded-xl border border-white/[0.04]">
