@@ -339,7 +339,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
 
             {/* FiveM Play/Connect CTA */}
             <a
-              href="https://cfx.re/join/ogpvmv"
+              href="https://connect.vitalrp.net"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 hover:shadow-vital-500/40 hover:scale-105 active:scale-95 transition-all"
             >
               <Gamepad2 size={14} />
@@ -456,7 +458,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                 </button>
 
                 <a
-                  href="https://cfx.re/join/ogpvmv"
+                  href="https://connect.vitalrp.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/25"
                 >
                   <Gamepad2 size={16} />

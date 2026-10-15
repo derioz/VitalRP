@@ -48,7 +48,7 @@ export const JoinCTA: React.FC = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Button href="https://cfx.re/join/ogpvmv" variant="primary" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
+            <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
               Connect to Server
             </Button>
 
