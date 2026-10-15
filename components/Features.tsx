@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
-import { Users, Shield, Gavel, Hammer, DollarSign, Calendar, Home, Store, Coffee, Crosshair, Skull, MapPin, Sword, Car, Dices } from 'lucide-react';
+import { Users, Shield, Gavel, Hammer, DollarSign, Calendar, Home, Store, Coffee, Crosshair, Skull, MapPin, Sword, Car, Dices, Flame, Cpu } from 'lucide-react';
 
 const offers = [
   { icon: Users, title: "18+ Semi-Serious RP", description: "Focused on story, character development, and immersive scenes rather than simple shootouts." },
@@ -14,10 +14,10 @@ const offers = [
 ];
 
 const worldFeatures = [
-  { icon: MapPin, title: "Expanded Map", description: "Explore new zones including Roxwood, opening up entirely new RP environments." },
-  { icon: Sword, title: "Unique Melee", description: "A wide array of custom melee weapons for varied and intense close-quarters encounters." },
-  { icon: Car, title: "Rotating Vehicles", description: "An exclusive, regularly rotating vehicle lineup available through the Vit Coin store." },
-  { icon: Dices, title: "Casino Podium", description: "Test your luck. The Casino Podium Car changes regularly with the daily prize wheel." }
+  { icon: Cpu, title: "In-House Scripts", description: "Engineered from scratch with proprietary custom code. Every system is unique, delivering fluid mechanics found nowhere else." },
+  { icon: Car, title: "Expansive Vehicle Fleet", description: "A massive lineup of custom import cars, bikes, and specialized work vehicles with realistic handling and deep tuning." },
+  { icon: Dices, title: "The Diamond Casino", description: "Test your luck at playable blackjack, roulette, slot machines, and the daily Lucky Wheel to win exclusive podium rides." },
+  { icon: MapPin, title: "Expanded Map & MLOs", description: "Explore new territories including Roxwood, custom designer interiors, and vibrant server-wide social hotspots." }
 ];
 
 const containerVariants: Variants = {
@@ -134,14 +134,14 @@ export const Features: React.FC = () => {
                 <span className="text-[9px] uppercase tracking-[0.2em] text-blue-500/60 font-tech font-bold">Public Service</span>
               </div>
             </div>
-            <ul className="space-y-3 text-[13px] text-gray-400">
+            <ul className="space-y-3.5 text-[13px] text-gray-400">
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-blue-500"></div>
-                <p><strong className="text-gray-300">Law Enforcement & DOJ:</strong> Robust LEO departments and an active DOJ community for fighting charges and handling court cases.</p>
+                <p><strong className="text-gray-300">Law Enforcement (LSPD & BCSO):</strong> Dedicated police and county sheriff departments powered by deep custom faction scripts, dispatch, MDTs, tactical gear, and patrol fleets.</p>
               </li>
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-blue-500"></div>
-                <p><strong className="text-gray-300">Emergency Services:</strong> Fire/EMS and supporting roles for those who enjoy medical and rescue RP.</p>
+                <p><strong className="text-gray-300">Emergency Medical Services (EMS):</strong> Advanced triage systems, dynamic patient treatment mechanics, life-saving rescue vehicles, and high-standard medical RP.</p>
               </li>
             </ul>
           </motion.div>
@@ -160,19 +160,19 @@ export const Features: React.FC = () => {
             <ul className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-[13px] text-gray-400">
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-emerald-500"></div>
-                <p>Housing system with full decoration support, plus optional professional decorators.</p>
+                <p><strong className="text-gray-300">Interactive Civilian Jobs:</strong> Power washing, garbage collection routes, construction & building trades, advanced fishing (with dynamite!), and wilderness hunting.</p>
               </li>
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-emerald-500"></div>
-                <p>Player-owned and operated businesses, restaurants, nightclubs, and strip clubs.</p>
+                <p><strong className="text-gray-300">Player-Run Enterprises:</strong> Own and manage popular restaurants, nightclubs, strip clubs, mechanic auto-shops, and custom retail storefronts.</p>
               </li>
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-emerald-500"></div>
-                <p>Golf, skateboarding, street racing, hunting, treasure hunting, and a water park for social RP.</p>
+                <p><strong className="text-gray-300">Housing & Custom Decorating:</strong> Fully customizable homes with furniture decoration support, private garages, and personal interior styling freedom.</p>
               </li>
               <li className="flex gap-2.5">
                 <div className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-emerald-500"></div>
-                <p>Pets system featuring rideable horses and donkeys, plus pigs, cows, chickens, rats, and more.</p>
+                <p><strong className="text-gray-300">Social RP & Recreation:</strong> Golfing, skateboarding, competitive street racing, local gathering hubs, and community-driven events.</p>
               </li>
             </ul>
           </motion.div>
@@ -191,16 +191,25 @@ export const Features: React.FC = () => {
             </div>
             <ul className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[13px] text-gray-400 relative z-10">
               <li className="flex gap-2.5 bg-dark-900/40 p-3.5 rounded-xl border border-white/[0.04]">
+                <Flame size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-gray-300 block mb-0.5">Diverse Illegal Factions</strong>
+                  Build or rise through ruthless Mafia syndicates, territorial street gangs, outlaw Motorcycle Clubs (MCs), and underground racing crews with deep turf rivalries.
+                </div>
+              </li>
+              <li className="flex gap-2.5 bg-dark-900/40 p-3.5 rounded-xl border border-white/[0.04]">
                 <Crosshair size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                <p>Criminal activities ranging from petty crime to large-scale heists.</p>
+                <div>
+                  <strong className="text-gray-300 block mb-0.5">Dynamic Crime & Heists</strong>
+                  Tiered criminal progression spanning petty crime, vehicle boosting, store holdups, and high-security multi-stage bank vaults.
+                </div>
               </li>
               <li className="flex gap-2.5 bg-dark-900/40 p-3.5 rounded-xl border border-white/[0.04]">
                 <Store size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                <p>Multiple material farming paths, including illegal scrapping and legal mining.</p>
-              </li>
-              <li className="flex gap-2.5 bg-dark-900/40 p-3.5 rounded-xl border border-white/[0.04]">
-                <Coffee size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                <p>Multiple drug crafting methods and gun crafting systems for deeper progression.</p>
+                <div>
+                  <strong className="text-gray-300 block mb-0.5">Black Market & Crafting</strong>
+                  Multiple material farming paths, illegal scrapping, legal mining, multi-step drug synthesis, and bespoke weapon crafting systems.
+                </div>
               </li>
             </ul>
           </motion.div>
