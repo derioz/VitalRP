@@ -58,11 +58,8 @@ export const RuleSidebar: React.FC<RuleSidebarProps> = ({
       className="sticky top-28 flex flex-col gap-1 w-full select-none"
     >
       <div className="px-3 pb-3 mb-1 border-b border-white/5 flex items-center justify-between">
-        <span className="text-[11px] font-tech uppercase tracking-[0.2em] text-gray-500 font-bold">
-          Categories
-        </span>
-        <span className="text-[11px] font-tech text-vital-500 font-bold">
-          {rules.length} RULES
+        <span className="text-sm font-tech text-gray-300">
+          {rules.length} rules
         </span>
       </div>
 

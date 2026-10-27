@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { List, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Rule, RuleCategory } from '@/data/rules';
 
 interface RuleTableOfContentsProps {
@@ -38,15 +38,9 @@ export const RuleTableOfContents: React.FC<RuleTableOfContentsProps> = ({
       aria-label="On This Page"
       className="sticky top-28 flex flex-col gap-3 w-full select-none"
     >
-      <div className="flex items-center gap-2 text-xs font-tech uppercase tracking-[0.2em] text-gray-500 font-bold pb-2 border-b border-white/5">
-        <List className="w-3.5 h-3.5 text-vital-500" />
-        <span>On This Page</span>
-      </div>
-
       {currentCategory && (
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-tech font-bold text-vital-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-vital-500" />
+          <span className="text-sm font-tech font-bold text-vital-400 mb-1">
             {currentCategory.title}
           </span>
 
@@ -83,9 +77,9 @@ export const RuleTableOfContents: React.FC<RuleTableOfContentsProps> = ({
             const el = document.getElementById('core-rules');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="text-xs font-tech text-gray-500 hover:text-vital-400 transition-colors flex items-center justify-between w-full uppercase tracking-wider"
+          className="text-sm font-tech text-gray-300 hover:text-vital-400 transition-colors flex items-center justify-between w-full"
         >
-          <span>↑ Core Rules Overview</span>
+          <span>Back to core rules</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>

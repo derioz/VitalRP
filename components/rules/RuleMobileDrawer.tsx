@@ -98,9 +98,6 @@ export const RuleMobileDrawer: React.FC<RuleMobileDrawerProps> = ({
               <Search className="w-4 h-4 text-vital-500" />
               <span>Search rules or abbreviations...</span>
             </div>
-            <span className="text-[10px] font-tech text-vital-500 font-bold uppercase tracking-wider">
-              SEARCH
-            </span>
           </button>
 
           {/* Category List */}

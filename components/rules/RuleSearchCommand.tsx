@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Command } from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Search, X, Hash, ArrowRight, CornerDownLeft, Sparkles, BookOpen } from 'lucide-react';
+import { Search, X, Hash, ArrowRight, CornerDownLeft, BookOpen } from 'lucide-react';
 import { RULES, RULE_CATEGORIES, Rule } from '@/data/rules';
 
 interface RuleSearchCommandProps {
@@ -104,9 +104,6 @@ export const RuleSearchCommand: React.FC<RuleSearchCommandProps> = ({
             {/* Suggestions / Shortcuts row when empty */}
             {!search && (
               <div className="px-5 py-2.5 bg-dark-950/60 border-b border-white/5 flex flex-wrap items-center gap-2 text-xs font-tech text-gray-400">
-                <span className="text-gray-500 uppercase tracking-widest text-[10px] flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-vital-500" /> Popular:
-                </span>
                 {['FearRP', 'NLR', 'Metagaming', 'RDM / VDM', 'Heists', 'Combat Logging', 'Factions'].map(
                   (term) => (
                     <button

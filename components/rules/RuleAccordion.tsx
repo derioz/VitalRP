@@ -70,8 +70,8 @@ export const RuleAccordion: React.FC<RuleAccordionProps> = ({
                       {rule.title}
                     </span>
                     {rule.featured && (
-                      <span className="text-[10px] font-tech font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-vital-500/10 text-vital-400 border border-vital-500/20">
-                        CORE RULE
+                      <span className="text-xs font-tech px-2 py-0.5 rounded bg-vital-500/10 text-vital-400 border border-vital-500/20">
+                        Core rule
                       </span>
                     )}
                   </div>
@@ -114,8 +114,7 @@ export const RuleAccordion: React.FC<RuleAccordionProps> = ({
             >
               <div className="pt-2 border-t border-white/5 flex flex-col gap-4">
                 {/* Official Rule Header */}
-                <div className="flex items-center justify-between text-xs font-tech uppercase tracking-widest text-vital-500 font-semibold pt-2">
-                  <span>Official Legislation</span>
+                <div className="flex items-center justify-end pt-2">
                   <a
                     href={`#${rule.id}`}
                     className="text-gray-500 hover:text-vital-400 text-[11px] lowercase tracking-normal flex items-center gap-1"

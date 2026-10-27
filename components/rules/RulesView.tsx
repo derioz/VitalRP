@@ -14,7 +14,6 @@ import {
   AlertOctagon,
   Menu,
   Search,
-  Sparkles,
   LucideIcon,
 } from 'lucide-react';
 import { RULES, RULE_CATEGORIES, Rule, RuleCategory } from '@/data/rules';
@@ -301,15 +300,11 @@ export const RulesView: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
             <div>
-              <div className="inline-flex items-center gap-2 text-xs font-tech font-bold uppercase tracking-widest text-vital-500 mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                FOUNDATIONAL KNOWLEDGE
-              </div>
               <h2 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">
-                KNOW THESE FIRST
+                Know these first
               </h2>
-              <p className="text-xs sm:text-sm font-sans text-gray-400 mt-1 max-w-xl">
-                The {coreRules.length} essential rules every citizen must understand before stepping into Los Santos.
+              <p className="text-sm font-sans text-gray-300 mt-1 max-w-xl">
+                {coreRules.length} rules to read before you play.
               </p>
             </div>
 
@@ -390,13 +385,10 @@ export const RulesView: React.FC = () => {
                   {/* Category Header */}
                   <div className="pb-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                     <div>
-                      <span className="text-[11px] font-tech font-bold uppercase tracking-[0.25em] text-vital-500 block mb-1">
-                        SECTION LEGISLATION
-                      </span>
                       <h2 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
                         {category.title}
                       </h2>
-                      <p className="text-xs sm:text-sm font-sans text-gray-400 mt-1 max-w-xl">
+                      <p className="text-sm font-sans text-gray-300 mt-1 max-w-xl">
                         {category.description}
                       </p>
                     </div>
