@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, useScroll, useSpring } from 'framer-motion';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { Features } from '@/components/Features';
@@ -17,23 +16,10 @@ import { StoreModal } from '@/components/StoreModal';
 
 export default function HomePage() {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001,
-  });
-
   return (
     <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative transition-colors duration-700">
       {/* Floating Admin Controls Bar (Only shows if authorized server-side) */}
       <AdminControls />
-
-      {/* Horizontal Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-vital-500 to-vital-400 origin-left z-[100]"
-        style={{ scaleX }}
-      />
 
       {/* Global Ambient Background */}
       <ParallaxBackground />

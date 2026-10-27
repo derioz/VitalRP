@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { Plus, Minus, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Minus } from 'lucide-react';
 
 const faqs = [
   {
@@ -27,28 +27,6 @@ const faqs = [
   }
 ];
 
-const containerVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.04,
-      delayChildren: 0.05,
-    }
-  }
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 6 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.16, 1, 0.3, 1] as const,
-    }
-  }
-};
-
 export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -56,35 +34,25 @@ export const FAQ: React.FC = () => {
     <section id="faq" className="py-24 bg-dark-800 relative scroll-mt-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vital-500/10 text-vital-500 mb-4">
-            <HelpCircle size={24} />
-          </div>
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6 uppercase tracking-tight">
-            COMMON <span className="text-vital-500">QUESTIONS</span>
+        <div className="mb-12">
+          <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
+            Common questions
           </h2>
-          <p className="text-gray-400">Everything you need to know before flying in.</p>
+          <p className="text-gray-300">Answers to what new players ask most.</p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.08 }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <motion.div
+            <div
               key={index}
-              variants={itemVariants}
-              className="border border-white/10 rounded-lg bg-dark-900 overflow-hidden"
+              className="border border-white/10 rounded bg-dark-900 overflow-hidden"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full flex items-center justify-between p-6 text-left hover:bg-white/5 transition-colors"
               >
                 <span className="text-lg font-bold text-white font-display">{faq.question}</span>
-                <span className={`transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-vital-500' : 'text-gray-500'}`}>
+                <span className={`transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-vital-500' : 'text-gray-400'}`}>
                   {openIndex === index ? <Minus size={20} /> : <Plus size={20} />}
                 </span>
               </button>
@@ -97,15 +65,15 @@ export const FAQ: React.FC = () => {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                   >
-                    <div className="px-6 pb-6 pt-0 text-gray-400 leading-relaxed border-t border-white/5 mt-2 pt-4">
+                    <div className="px-6 pb-6 pt-0 text-gray-300 leading-relaxed border-t border-white/5 mt-2 pt-4">
                       {faq.answer}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
       </div>
     </section>

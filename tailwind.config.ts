@@ -11,7 +11,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'Inter', 'sans-serif'],
+        sans: ['var(--font-plex)', 'IBM Plex Sans', 'sans-serif'],
         display: ['var(--font-outfit)', 'Outfit', 'sans-serif'],
         tech: ['var(--font-jetbrains)', 'JetBrains Mono', 'monospace'],
       },

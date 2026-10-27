@@ -11,6 +11,7 @@ import {
   useReducedMotion,
 } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { Button } from './Button';
 
 // EXACT Unmodified Remote Asset & Social Constants
 const HERO_IMAGE = 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png';
@@ -286,19 +287,6 @@ export const Hero: React.FC = () => {
             }}
             className="w-full flex flex-col items-start will-change-transform"
           >
-            {/* Eyebrow Accent */}
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-              className="inline-flex items-center gap-3 mb-4 sm:mb-5"
-            >
-              <span className="w-7 sm:w-9 h-[2px] bg-vital-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
-              <span className="text-xs sm:text-sm font-tech font-bold uppercase tracking-[0.25em] text-vital-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.45)]">
-                SERIOUS ROLEPLAY. PLAYER-DRIVEN STORIES.
-              </span>
-            </motion.div>
-
             {/* Main Headline */}
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
@@ -306,16 +294,8 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.7, delay: 0.22, ease: 'easeOut' }}
               className="mb-5 sm:mb-6"
             >
-              <h1 className="flex flex-col tracking-tight select-none">
-                <span className="text-xl sm:text-2xl md:text-3xl font-display font-medium text-gray-300 uppercase tracking-[0.16em] mb-1 drop-shadow-sm">
-                  WE ARE
-                </span>
-                <span className="text-5xl sm:text-7xl md:text-8xl lg:text-[5.75rem] font-display font-black text-white uppercase leading-[0.88] tracking-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.85)]">
-                  VITAL{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-vital-400 via-vital-500 to-vital-600 drop-shadow-[0_0_35px_rgba(249,115,22,0.5)]">
-                    RP
-                  </span>
-                </span>
+              <h1 className="select-none text-6xl sm:text-7xl md:text-8xl lg:text-[6.5rem] font-display font-black text-white leading-[0.9] tracking-tight">
+                Vital <span className="text-vital-500">RP</span>
               </h1>
             </motion.div>
 
@@ -324,7 +304,7 @@ export const Hero: React.FC = () => {
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.35, ease: 'easeOut' }}
-              className="text-lg sm:text-xl lg:text-[1.35rem] font-sans font-light text-gray-100 leading-snug tracking-wide mb-3 max-w-xl drop-shadow-md"
+              className="text-lg sm:text-xl lg:text-[1.35rem] font-sans text-gray-100 leading-snug mb-3 max-w-xl"
             >
               A serious roleplay community built around characters, stories, and the moments that make Los Santos feel alive.
             </motion.p>
@@ -334,7 +314,7 @@ export const Hero: React.FC = () => {
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45, ease: 'easeOut' }}
-              className="text-sm sm:text-base font-sans text-gray-400 font-normal leading-relaxed mb-7 sm:mb-8 max-w-lg drop-shadow-sm"
+              className="text-base font-sans text-gray-300 leading-relaxed mb-7 sm:mb-8 max-w-lg"
             >
               Your choices matter. Your character has a story. What happens next is up to you.
             </motion.p>
@@ -349,34 +329,23 @@ export const Hero: React.FC = () => {
             }}
             className="w-full flex flex-col items-start will-change-transform"
           >
-            {/* Elegant Server Identity Line & Live Population Indicator */}
+            {/* Live population */}
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.55, ease: 'easeOut' }}
-              className="flex flex-wrap items-center gap-y-2 gap-x-3 text-xs font-tech tracking-wider text-gray-300 uppercase mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-tech tabular-nums text-gray-200 mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
             >
-              {/* Live CFX Population */}
-              <div className="inline-flex items-center gap-2 text-white font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vital-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-vital-500 shadow-[0_0_8px_#f97316]" />
-                </span>
-                <span>
-                  {serverStats.online && serverStats.players > 0
-                    ? `${serverStats.players} Citizens in City`
-                    : 'City Live'}
-                </span>
-              </div>
-
-              <span className="text-white/25 select-none">•</span>
-              <span className="text-gray-300">SERIOUS RP</span>
-              <span className="text-white/25 select-none">•</span>
-              <span className="text-gray-300">PLAYER DRIVEN</span>
-              <span className="text-white/25 select-none">•</span>
-              <span className="text-gray-300">STORY FOCUSED</span>
-              <span className="text-white/25 select-none">•</span>
-              <span className="text-gray-300">18+</span>
+              <span className="inline-flex items-center gap-2 text-white">
+                <span className="h-2 w-2 rounded-full bg-vital-500" />
+                {serverStats.online && serverStats.players > 0
+                  ? `${serverStats.players} players in the city`
+                  : 'City is live'}
+              </span>
+              <span className="text-white/25 select-none">/</span>
+              <span>Whitelisted</span>
+              <span className="text-white/25 select-none">/</span>
+              <span>18+</span>
             </motion.div>
 
             {/* Minimalist CTAs */}
@@ -386,28 +355,23 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.7, delay: 0.65, ease: 'easeOut' }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto"
             >
-              {/* Primary Action: Enter Los Santos */}
-              <button
+              <Button
                 onClick={handleEnterLosSantos}
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-sm bg-gradient-to-r from-vital-500 to-vital-600 hover:brightness-110 text-white font-display font-black text-sm uppercase tracking-widest transition-[filter,box-shadow] duration-200 shadow-[0_0_20px_rgba(249,115,22,0.35)] hover:shadow-[0_0_35px_rgba(249,115,22,0.65)] cursor-pointer active:scale-[0.98]"
+                size="lg"
+                icon={<ArrowRight size={18} />}
               >
-                <span>Enter Los Santos</span>
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-1.5 stroke-[2.5]"
-                />
-              </button>
-
-              {/* Secondary Action: Join the Community */}
-              <a
+                Enter Los Santos
+              </Button>
+              <Button
                 href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-sm bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/15 hover:border-vital-500/50 hover:shadow-[0_0_20px_rgba(249,115,22,0.15)] backdrop-blur-md font-display font-bold text-sm uppercase tracking-wider transition-colors duration-200 active:scale-[0.98]"
+                variant="outline"
+                size="lg"
+                icon={<DiscordIcon className="w-5 h-5 fill-current" />}
               >
-                <DiscordIcon className="w-4 h-4 fill-current opacity-80 group-hover:opacity-100 transition-opacity text-vital-500" />
-                <span>Join the Community</span>
-              </a>
+                Join the Discord
+              </Button>
             </motion.div>
           </motion.div>
         </div>
@@ -426,8 +390,8 @@ export const Hero: React.FC = () => {
         transition={{ duration: 0.8, delay: 0.85 }}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none select-none will-change-[transform,opacity]"
       >
-        <span className="text-[10px] font-tech uppercase tracking-[0.3em] text-gray-400 font-medium">
-          SCROLL
+        <span className="text-xs font-tech text-gray-300">
+          Scroll
         </span>
         <div className="w-[1.5px] h-7 bg-white/15 overflow-hidden relative rounded-full">
           <motion.div
@@ -437,7 +401,7 @@ export const Hero: React.FC = () => {
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            className="w-full h-1/2 bg-vital-500 rounded-full shadow-[0_0_8px_#f97316]"
+            className="w-full h-1/2 bg-vital-500 rounded-full"
           />
         </div>
       </motion.div>

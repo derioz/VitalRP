@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Outfit, JetBrains_Mono } from 'next/font/google';
+import { IBM_Plex_Sans, Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 
-const inter = Inter({
+const plex = IBM_Plex_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-plex',
   display: 'swap',
 });
 
@@ -94,7 +95,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} scroll-smooth dark`}
+      className={`${plex.variable} ${outfit.variable} ${jetbrainsMono.variable} scroll-smooth dark`}
     >
       <body className="bg-dark-950 text-white font-sans antialiased overflow-x-hidden selection:bg-vital-500 selection:text-white">
         <AuthProvider>{children}</AuthProvider>

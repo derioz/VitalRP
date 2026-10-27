@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, Variants } from 'framer-motion';
 import {
   ShieldAlert,
   Drama,
@@ -13,12 +12,11 @@ import {
   LogOut,
   Ban,
   AlertOctagon,
-  BookOpen,
   FileText,
-  ArrowRight,
   ExternalLink,
 } from 'lucide-react';
 import { RULES } from '@/data/rules';
+import { Button } from './Button';
 import { CoreRuleCard } from './rules/CoreRuleCard';
 import { CoreRuleModal } from './rules/CoreRuleModal';
 
@@ -119,28 +117,6 @@ const CORE_RULES = [
   },
 ];
 
-const containerVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.03,
-      delayChildren: 0.04,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
-
 /**
  * Compact, Pretty Core Rules section for the Vital RP homepage.
  * Renders the 10 foundational rules in a symmetrical 2-row spotlight grid.
@@ -161,44 +137,30 @@ export const Rules: React.FC = () => {
   return (
     <section id="rules" className="py-20 relative overflow-hidden scroll-mt-20">
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-dark-950/90 backdrop-blur-md z-0" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-vital-500/[0.04] blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute inset-0 bg-dark-950/95 z-0" />
 
       {/* Top separator line */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-vital-900/60 to-transparent z-20" />
+      <div className="absolute top-0 left-0 w-full h-px bg-white/10 z-20" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-vital-500/10 border border-vital-500/20 text-vital-400 text-xs font-tech font-bold uppercase tracking-wider mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-vital-500 animate-pulse" />
-              Core Directives
-            </div>
-            <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-4 uppercase tracking-tight">
-              SERVER <span className="text-vital-500">CORE RULES</span>
+        <div className="mb-12 max-w-3xl">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
+              Ten rules everyone follows
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-base md:text-lg leading-relaxed font-sans">
-              The foundational pillars that govern everyday life in Los Santos. Every citizen is required to know and uphold these 10 directives.
+            <p className="text-gray-300 text-base md:text-lg leading-relaxed font-sans">
+              The foundations of everyday life in Los Santos. Every player is expected to know and follow these.
             </p>
-          </motion.div>
+          </div>
         </div>
 
         {/* 10 Core Rules Spotlight Grid (Symmetrical 2 rows of 5 on desktop) */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.05 }}
+        <div
           className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10"
         >
           {CORE_RULES.map((rule) => (
-            <motion.div key={rule.id} variants={itemVariants}>
+            <div key={rule.id}>
               <CoreRuleCard
                 id={rule.id}
                 ruleNumber={rule.ruleNumber}
@@ -209,66 +171,38 @@ export const Rules: React.FC = () => {
                 icon={rule.icon}
                 onSelect={(id) => setActiveRuleId(id)}
               />
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Bottom Legislation Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="relative p-6 md:p-8 rounded-2xl bg-gradient-to-r from-dark-900/90 via-dark-800/80 to-dark-900/90 border border-white/[0.08] hover:border-vital-500/30 transition-all duration-300 backdrop-blur-md overflow-hidden"
-        >
-          {/* Subtle Ambient Glow */}
-          <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-vital-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex items-start gap-4 text-left">
-              <div className="w-12 h-12 rounded-xl bg-vital-500/10 border border-vital-500/20 flex items-center justify-center text-vital-500 flex-shrink-0 mt-0.5">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-tech font-bold uppercase tracking-wider text-vital-400 bg-vital-500/10 px-2 py-0.5 rounded border border-vital-500/20">
-                    OFFICIAL DOCUMENTATION
-                  </span>
-                  <span className="text-xs text-gray-500 font-tech font-semibold">
-                    40+ ARTICLES
-                  </span>
-                </div>
-                <h3 className="text-xl font-display font-black text-white tracking-tight uppercase">
-                  NEED THE COMPLETE SERVER LEGISLATION?
-                </h3>
-                <p className="text-sm text-gray-400 mt-1 max-w-2xl font-sans leading-relaxed">
-                  Detailed robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island kill-on-sight guidelines are documented in our full legislation.
-                </p>
-              </div>
+        <div className="p-6 md:p-8 rounded border border-white/10 bg-dark-900/80">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div>
+              <h3 className="text-xl font-display font-black text-white tracking-tight">
+                Need the complete server legislation?
+              </h3>
+              <p className="text-sm text-gray-300 mt-1 max-w-2xl font-sans leading-relaxed">
+                Robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island kill-on-sight guidelines are in the full document of 40+ rules.
+              </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end flex-shrink-0">
-              <a
-                href="/rules"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-vital-500 hover:bg-vital-400 text-dark-950 font-display font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] transition-all duration-200 group"
-              >
-                <FileText className="w-4 h-4" />
-                <span>View Full Legislation (40+ Rules)</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </a>
-
-              <a
+            <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
+              <Button href="/rules" icon={<FileText className="w-4 h-4" />}>
+                View all rules
+              </Button>
+              <Button
                 href="https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 hover:text-white border border-white/10 hover:border-white/20 text-xs font-tech font-bold uppercase tracking-wider transition-all duration-200"
+                variant="outline"
+                icon={<ExternalLink className="w-4 h-4" />}
               >
-                <span>Official Google Doc</span>
-                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-              </a>
+                Google Doc
+              </Button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Interactive Quick View Detail Modal */}

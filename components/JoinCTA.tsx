@@ -3,7 +3,6 @@
 import React from 'react';
 import { Button } from './Button';
 import { Gamepad2 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg
@@ -29,34 +28,27 @@ export const JoinCTA: React.FC = () => {
           className="w-full h-full object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/90 to-dark-900/80"></div>
-        {/* Subtle color grading overlay */}
-        <div className="absolute inset-0 bg-vital-900/20 mix-blend-overlay"></div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <h2 className="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">
-            READY TO START YOUR <span className="text-vital-500">LEGACY?</span>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div>
+          <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight max-w-3xl">
+            Ready to start your <span className="text-vital-500">legacy</span>?
           </h2>
-          <p className="text-xl text-gray-300 mb-10 font-sans max-w-2xl mx-auto">
-            Join thousands of other players in the most advanced roleplay environment. Create your character today.
+          <p className="text-xl text-gray-200 mb-10 font-sans max-w-2xl">
+            Create a character, join the whitelist, and step into Los Santos.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
-              Connect to Server
+              Connect to server
             </Button>
 
-            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" variant="secondary" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
-              Join Our Discord
+            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" variant="outline" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
+              Join the Discord
             </Button>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
