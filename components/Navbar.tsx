@@ -192,23 +192,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
           layout
           animate={{
             maxWidth: isScrolled ? '80rem' : '100%',
-            borderRadius: isScrolled ? '9999px' : '0px',
+            borderRadius: isScrolled ? '8px' : '0px',
           }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
           className={`w-full flex items-center justify-between pointer-events-auto transition-colors duration-300 ${
             isScrolled
-              ? 'px-3 sm:px-6 py-2 sm:py-2.5 bg-dark-950/75 border border-white/10 sm:border-vital-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(249,115,22,0.15)]'
-              : 'px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5 bg-dark-950/40 border-b border-white/5 shadow-none'
+              ? 'px-3 sm:px-6 py-2 sm:py-2.5 bg-dark-950/95 border border-white/15'
+              : 'px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5 bg-dark-950/80 border-b border-white/10 shadow-none'
           }`}
-          style={{
-            backdropFilter: isScrolled ? 'blur(24px)' : 'blur(12px)',
-            WebkitBackdropFilter: isScrolled ? 'blur(24px)' : 'blur(12px)',
-          }}
         >
           {/* Brand Logo & Clean Title (Vital RP) */}
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="relative">
-              <VitalLogo className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 filter drop-shadow-[0_0_10px_rgba(249,115,22,0.4)] group-hover:scale-105 transition-transform duration-200" />
+              <VitalLogo className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
             </div>
             <div className="flex items-center">
               <span className="text-white font-display font-extrabold text-base sm:text-xl tracking-wider leading-none">
@@ -230,7 +226,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   key={link.name}
                   href={link.href}
                   onMouseEnter={() => setHoveredNavIndex(index)}
-                  className="relative px-3.5 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-300 hover:text-white transition-colors duration-200 rounded-full"
+                  className="relative px-3.5 py-1.5 text-sm font-display font-semibold  text-gray-300 hover:text-white transition-colors duration-200 rounded"
                 >
                   {isHovered && (
                     <motion.div
@@ -255,7 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
             >
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-400 hover:text-white hover:bg-white/5 rounded transition-colors"
               >
                 <MessageSquare size={14} />
                 <span>Forums</span>
@@ -267,7 +263,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-vital-500 text-dark-950 text-[10px] font-tech font-black px-2.5 py-1 rounded shadow-lg whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none"
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-vital-500 text-dark-950 text-xs font-tech font-black px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none"
                   >
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-vital-500 rotate-45" />
                     Coming Soon!
@@ -281,14 +277,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
             {/* Photo Contest Button */}
             <button
               onClick={handleContestClick}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-amber-300 hover:text-white bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 hover:from-amber-500/25 hover:to-orange-500/25 rounded-full border border-amber-500/30 hover:border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all hover:scale-105 active:scale-95 group"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-vital-300 hover:text-white bg-vital-500/10 hover:bg-vital-500/20 rounded border border-vital-500/30 hover:border-vital-400/60 transition-all active:scale-95 group"
               title="Vital RP Photo Contest"
             >
-              <Camera size={14} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+              <Camera size={14} className="text-vital-400 group-hover:rotate-12 transition-transform duration-300" />
               <span>Contest</span>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-vital-500"></span>
               </span>
             </button>
 
@@ -303,7 +298,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                 disabled
                 aria-disabled="true"
                 onClick={handleStoreClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-400 opacity-60 cursor-not-allowed rounded-full transition-colors border border-white/5 bg-white/[0.02]"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-400 opacity-60 cursor-not-allowed rounded transition-colors border border-white/5 bg-white/[0.02]"
                 title="Temporarily unavailable"
               >
                 <ShoppingCart size={14} className="text-gray-400" />
@@ -316,9 +311,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-amber-500/40 text-amber-400 text-[10px] font-tech font-bold px-2.5 py-1 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8),0_0_15px_rgba(245,158,11,0.2)] whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
                   >
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-amber-500/40 rotate-45" />
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-vital-500/40 rotate-45" />
                     <span>Temporarily unavailable</span>
                   </motion.div>
                 )}
@@ -330,7 +325,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               href="https://discord.gg/vitalrp"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-tech font-bold uppercase tracking-wider text-gray-300 hover:text-[#5865F2] hover:bg-[#5865F2]/10 rounded-full transition-colors border border-transparent hover:border-[#5865F2]/30"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-300 hover:text-[#5865F2] hover:bg-[#5865F2]/10 rounded transition-colors border border-transparent hover:border-[#5865F2]/30"
               title="Join VitalRP Discord"
             >
               <DiscordLogo className="w-3.5 h-3.5 text-[#5865F2]" />
@@ -342,7 +337,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               href="https://connect.vitalrp.net"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/20 hover:shadow-vital-500/40 hover:scale-105 active:scale-95 transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-vital-600 hover:bg-vital-500 text-white font-display font-semibold text-sm  active:scale-95 transition-all"
             >
               <Gamepad2 size={14} />
               <span>Play</span>
@@ -358,7 +353,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                 <Link
                   href="/admin"
                   aria-label="Admin Console"
-                  className="p-2 rounded-full bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] group flex items-center justify-center"
+                  className="p-2 rounded bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all active:scale-95 group flex items-center justify-center"
                 >
                   <Shield size={15} className="text-vital-400 group-hover:text-white transition-colors" />
                 </Link>
@@ -369,7 +364,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 4, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-[11px] font-tech font-bold px-2.5 py-1 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8),0_0_15px_rgba(249,115,22,0.25)] whitespace-nowrap z-50 uppercase tracking-wider pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
+                      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
                     >
                       <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-vital-500/40 rotate-45" />
                       <Shield size={11} className="text-vital-400" />
@@ -391,7 +386,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                 /* Login Button */
                 <button
                   onClick={() => login('/')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#5865F2]/15 hover:bg-[#5865F2]/25 text-[#8a94fd] hover:text-white border border-[#5865F2]/30 transition-all text-xs font-tech font-bold uppercase tracking-wider"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 text-[#8a94fd] hover:text-white border border-[#5865F2]/30 transition-all text-sm font-display font-semibold "
                   title="Sign in with Discord"
                 >
                   <DiscordLogo className="w-3.5 h-3.5" />
@@ -405,7 +400,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               aria-label="Toggle mobile menu"
               aria-expanded={isMobileMenuOpen}
-              className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-full transition-colors ml-1"
+              className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-white/5 rounded transition-colors ml-1"
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -423,7 +418,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="lg:hidden max-w-7xl mx-auto mt-2 pointer-events-auto"
           >
-            <div className="bg-dark-900/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] divide-y divide-white/10 space-y-4">
+            <div className="bg-dark-900/95  border border-white/15 rounded p-5 divide-y divide-white/10 space-y-4">
               {/* Navigation Links */}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 {navLinks.map((link) => (
@@ -431,7 +426,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 hover:text-vital-400 font-tech font-bold text-xs uppercase tracking-wider border border-white/5 transition-colors"
+                    className="flex items-center justify-center px-4 py-2.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 hover:text-vital-400 font-display font-semibold text-sm  border border-white/5 transition-colors"
                   >
                     {link.name}
                   </a>
@@ -446,14 +441,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                     setIsMobileMenuOpen(false);
                     handleContestClick();
                   }}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 font-tech font-bold text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded bg-vital-500/10 hover:bg-vital-500/20 text-vital-300 border border-vital-500/30 font-display font-semibold text-sm  transition-all"
                 >
                   <div className="flex items-center gap-2">
-                    <Camera size={16} className="text-amber-400" />
+                    <Camera size={16} className="text-vital-400" />
                     <span>VitalRP Photo Contest</span>
                   </div>
-                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">
-                    Live <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <span className="flex items-center gap-1.5 text-xs text-vital-400 bg-vital-500/20 px-2 py-0.5 rounded border border-vital-500/30">
+                    Live <span className="w-1.5 h-1.5 rounded-full bg-vital-400 " />
                   </span>
                 </button>
 
@@ -461,7 +456,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   href="https://connect.vitalrp.net"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-vital-500/25"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-vital-600 text-white font-display font-semibold text-sm "
                 >
                   <Gamepad2 size={16} />
                   <span>Connect to Server (FiveM)</span>
@@ -479,12 +474,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       onClick={(e) => {
                         e.preventDefault();
                       }}
-                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-dark-800/60 text-gray-400 font-tech font-bold text-xs uppercase tracking-wider border border-white/5 cursor-not-allowed opacity-60"
+                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded bg-dark-800/60 text-gray-400 font-display font-semibold text-sm  border border-white/5 cursor-not-allowed opacity-60"
                       title="Temporarily unavailable"
                     >
                       <ShoppingCart size={14} className="text-gray-400" />
                       <span>Store</span>
-                      <span className="text-[9px] text-amber-400/90 font-mono tracking-tight ml-0.5">(Unavailable)</span>
+                      <span className="text-xs text-vital-400/90 font-mono tracking-tight ml-0.5">(Unavailable)</span>
                     </button>
                   </div>
 
@@ -492,14 +487,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                     href="https://discord.gg/vitalrp"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-2 rounded-xl bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#8a94fd] font-tech font-bold text-xs uppercase tracking-wider border border-[#5865F2]/30 transition-colors"
+                    className="flex items-center justify-center gap-2 py-2 rounded bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#8a94fd] font-display font-semibold text-sm  border border-[#5865F2]/30 transition-colors"
                   >
                     <DiscordLogo className="w-3.5 h-3.5" />
                     <span>Discord</span>
                   </a>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-dark-800/50 text-gray-400 font-tech font-bold text-xs uppercase tracking-wider border border-white/5">
+                <div className="flex items-center justify-center gap-2 py-2.5 rounded bg-dark-800/50 text-gray-400 font-display font-semibold text-sm  border border-white/5">
                   <MessageSquare size={14} />
                   <span>Forums (Coming Soon)</span>
                 </div>
@@ -528,13 +523,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                             {user.displayName}
                           </span>
                           {isAdmin && (
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-tech font-bold uppercase tracking-wider bg-vital-500/20 text-vital-400 border border-vital-500/30 shrink-0">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-tech font-bold  bg-vital-500/20 text-vital-400 border border-vital-500/30 shrink-0">
                               Admin
                             </span>
                           )}
                         </div>
                         {user.username && (
-                          <span className="text-gray-400 text-[11px] truncate">
+                          <span className="text-gray-400 text-xs truncate">
                             @{user.username}
                           </span>
                         )}
@@ -589,7 +584,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       <Link
                         href="/admin"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-vital-500/10 text-vital-400 border border-vital-500/25 text-xs font-tech font-bold uppercase tracking-wider"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded bg-vital-500/10 text-vital-400 border border-vital-500/25 text-sm font-display font-semibold "
                       >
                         <div className="flex items-center gap-2">
                           <Shield size={14} />
@@ -604,7 +599,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                         setIsMobileMenuOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-tech font-bold uppercase tracking-wider text-red-400 bg-red-500/10 border border-red-500/20"
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded text-sm font-display font-semibold  text-red-400 bg-red-500/10 border border-red-500/20"
                     >
                       <LogOut size={14} />
                       <span>Log Out</span>
@@ -616,7 +611,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       setIsMobileMenuOpen(false);
                       login('/');
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-tech font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#5865F2]/20"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-[#5865F2] hover:bg-[#4752c4] text-white font-display font-semibold text-sm /20"
                   >
                     <DiscordLogo className="w-4 h-4" />
                     <span>Login with Discord</span>
@@ -656,7 +651,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
             <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-r-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
 
             {/* Top HUD Stats */}
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-tech tracking-widest text-amber-400 uppercase">
+            <div className="flex items-center justify-between text-xs sm:text-xs font-tech tracking-widest text-amber-400 uppercase">
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                 <span className="font-bold text-white tracking-wider">REC</span>
@@ -704,8 +699,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                   transition={{ delay: 0.12, duration: 0.25 }}
                   className="mt-6 text-center"
                 >
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 text-[10px] sm:text-xs font-tech font-bold uppercase tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 text-xs sm:text-xs font-tech font-bold uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 " />
                     Focus Locked
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-display font-black text-white tracking-wider uppercase mt-2 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
@@ -719,7 +714,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
             </div>
 
             {/* Bottom HUD Info */}
-            <div className="flex items-center justify-between text-[11px] sm:text-xs font-tech tracking-widest text-gray-400 uppercase">
+            <div className="flex items-center justify-between text-xs sm:text-xs font-tech tracking-widest text-gray-400 uppercase">
               <div className="flex items-center gap-3">
                 <span>[ AF-C TRACKING ]</span>
                 <span className="hidden sm:inline">[ MATRIX 3D ]</span>

@@ -105,7 +105,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               <VitalLogo className="w-10 h-10 flex-shrink-0" />
               <span className="text-2xl font-display font-bold text-white">VITAL RP</span>
             </div>
-            <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
               Vital RP is a premium FiveM roleplay community focused on storytelling, character development, and high-quality interactions. Join us today and start your journey in Los Santos.
             </p>
           </div>
@@ -120,19 +120,19 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
                       className="group relative flex items-center cursor-not-allowed select-none"
                       title="Temporarily unavailable"
                     >
-                      <span className="text-gray-600 group-hover:text-gray-500 transition-colors text-sm font-tech uppercase tracking-wider block">
+                      <span className="text-gray-400 group-hover:text-gray-400 transition-colors text-sm font-tech  block">
                         {item.label}
                       </span>
-                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-dark-900 border border-amber-500/40 text-amber-400 text-[9px] font-tech font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg z-20">
+                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-dark-900 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20">
                         Temporarily unavailable
                       </span>
                     </div>
                   ) : item.isComingSoon ? (
                     <div className="group relative flex items-center cursor-help">
-                      <span className="text-gray-500 text-sm font-tech uppercase tracking-wider group-hover:text-vital-500 transition-colors">
+                      <span className="text-gray-400 text-sm font-tech  group-hover:text-vital-500 transition-colors">
                         {item.label}
                       </span>
-                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-vital-500 text-white text-[9px] font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none">
+                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-vital-500 text-white text-xs font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none">
                         SOON
                       </span>
                     </div>
@@ -142,7 +142,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
                       target={item.isExternal ? "_blank" : undefined}
                       rel={item.isExternal ? "noreferrer" : undefined}
                       onClick={(e) => handleLinkClick(e, item)}
-                      className="text-gray-500 hover:text-vital-500 transition-colors text-sm font-tech uppercase tracking-wider block"
+                      className="text-gray-400 hover:text-vital-500 transition-colors text-sm font-tech  block"
                     >
                       {item.label}
                     </a>
@@ -178,7 +178,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
 
           {/* Secret Admin Login Trigger */}
           <div className="flex items-center gap-4 order-2 md:order-1">
-            <p className="text-gray-600 text-xs font-sans">
+            <p className="text-gray-400 text-xs font-sans">
               © {new Date().getFullYear()} Vital Roleplay. Not affiliated with Rockstar Games.
             </p>
             {isAdmin ? (
@@ -204,7 +204,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
             key={wiggleKey}
             className={`flex items-center gap-2 order-1 md:order-2 bg-dark-900/60 px-3.5 py-1.5 rounded-full border transition-all duration-300 cursor-pointer select-none group/dev ${
               foundEasterEgg
-                ? 'border-vital-500/80 shadow-[0_0_20px_rgba(249,115,22,0.35)] bg-dark-900/90'
+                ? 'border-vital-500/80 bg-dark-900/90'
                 : 'border-white/5 hover:border-vital-500/50'
             }`}
             onClick={toggleEasterEgg}
@@ -213,11 +213,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               scale: [1, 1.08, 0.98, 1.04, 1],
             } : {}}
             transition={{ duration: 0.55, ease: "easeInOut" }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+                        whileTap={{ scale: 0.95 }}
           >
-            <span className={`text-[10px] font-tech uppercase tracking-widest transition-colors ${
-              foundEasterEgg ? 'text-vital-500 font-bold drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'text-gray-500 group-hover/dev:text-gray-300'
+            <span className={`text-xs font-tech  transition-colors ${
+              foundEasterEgg ? 'text-vital-500 font-bold' : 'text-gray-400 group-hover/dev:text-gray-300'
             }`}>
               {foundEasterEgg ? "what's up n shit" : 'Made by Damon'}
             </span>
