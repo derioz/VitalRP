@@ -103,38 +103,28 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden"
+            className="fixed inset-0 bg-black/80 z-50 lg:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-dark-900/95 backdrop-blur-xl border-r border-white/5 flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) lg:translate-x-0 shadow-2xl shadow-black/50 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-dark-900 border-r border-white/5 flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) lg:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Logo Section */}
         <div className="p-7 border-b border-white/5 flex justify-between items-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-vital-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="flex items-center gap-4 relative z-10 w-full">
+                    <div className="flex items-center gap-4 relative z-10 w-full">
             <div className="relative shrink-0">
-              <div className="absolute inset-0 bg-vital-500 blur-xl opacity-20 animate-pulse" />
-              <VitalLogo className="w-12 h-12 relative z-10 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]" />
+              <VitalLogo className="w-12 h-12 relative z-10" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-white font-display font-black text-xl leading-none tracking-wide bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                VITAL RP
+              <h1 className="text-white font-display font-black text-xl leading-none">
+                Vital RP
               </h1>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[10px] text-vital-500 font-bold tracking-[0.2em] uppercase font-tech">
-                  Command Center
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-tech font-bold uppercase tracking-wider w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Discord Role Sync</span>
-              </div>
+              <span className="text-sm text-gray-300 font-tech mt-1">Admin</span>
             </div>
           </div>
           <button
@@ -148,9 +138,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav className="flex-1 p-5 space-y-1.5 overflow-y-auto">
-          <div className="px-3 mb-2 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
-            Administration
-          </div>
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             return (
@@ -158,9 +145,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 key={item.path}
                 href={item.path}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 relative group ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded font-medium text-sm transition-all duration-200 relative group ${
                   isActive
-                    ? 'text-white bg-vital-500/15 border border-vital-500/30 shadow-[0_0_20px_rgba(249,115,22,0.15)]'
+                    ? 'text-white bg-vital-500/15 border border-vital-500/30'
                     : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
               >
@@ -173,11 +160,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   />
                   <span>{item.label}</span>
                 </div>
-                {item.badge && (
-                  <span className="relative z-10 text-[9px] font-bold px-1.5 py-0.5 rounded bg-vital-500/20 text-vital-400 border border-vital-500/30 uppercase tracking-wider">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -191,7 +173,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.displayName || 'User'}`}
                 alt={user?.displayName || 'User Avatar'}
                 className={`w-10 h-10 rounded-full border object-cover ${
-                  isSuperAdmin ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.5)]' : 'border-vital-500/40'
+                  isSuperAdmin ? 'border-amber-400' : 'border-vital-500/40'
                 }`}
               />
               {isSuperAdmin && (
@@ -205,7 +187,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <span className="text-white text-sm font-bold truncate">{user?.displayName}</span>
               </div>
               <span
-                className={`text-[10px] font-tech uppercase tracking-wider font-bold truncate ${
+                className={`text-sm font-tech truncate ${
                   isSuperAdmin ? 'text-amber-400' : 'text-vital-400'
                 }`}
               >

@@ -150,7 +150,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
             <MoreVertical size={12} />
           </button>
         )}
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
           {count}
         </span>
       </div>
@@ -972,7 +972,7 @@ export const RulesCMS: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shadow-[0_0_25px_rgba(249,115,22,0.2)] shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shrink-0">
               <BookOpen size={28} />
             </div>
             <div>
@@ -1005,12 +1005,12 @@ export const RulesCMS: React.FC = () => {
             {canPublish && (
               <button
                 onClick={handleOpenPublishCenter}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-bold text-xs shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all relative overflow-hidden"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-vital-500 to-vital-600 hover:from-vital-400 hover:to-vital-500 text-white font-bold text-xs transition-all relative overflow-hidden"
               >
                 <UploadCloud size={16} />
                 <span>Publish Changes</span>
                 {stats.draftsCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-dark-950 text-vital-400 text-[10px] font-black flex items-center justify-center ml-1">
+                  <span className="w-5 h-5 rounded-full bg-dark-950 text-vital-400 text-xs font-black flex items-center justify-center ml-1">
                     {stats.draftsCount}
                   </span>
                 )}
@@ -1136,17 +1136,17 @@ export const RulesCMS: React.FC = () => {
           <div className="bg-dark-900 border border-white/5 rounded-3xl p-4 space-y-2">
             <div className="flex items-center justify-between px-2 pb-2 border-b border-white/5">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider font-tech">
+                <span className="text-xs font-bold text-gray-400  font-tech">
                   Categories
                 </span>
                 {isReorderingCategories && (
-                  <span className="text-[10px] text-vital-400 font-tech animate-pulse flex items-center gap-1">
+                  <span className="text-xs text-vital-400 font-tech animate-pulse flex items-center gap-1">
                     <RefreshCw size={10} className="animate-spin" />
                     <span>Saving...</span>
                   </span>
                 )}
                 {categoryReorderSuccess && (
-                  <span className="text-[10px] text-emerald-400 font-tech flex items-center gap-1">
+                  <span className="text-xs text-emerald-400 font-tech flex items-center gap-1">
                     <CheckCircle2 size={10} />
                     <span>Saved</span>
                   </span>
@@ -1165,7 +1165,7 @@ export const RulesCMS: React.FC = () => {
             </div>
 
             {canEdit && (
-              <div className="px-2 py-0.5 text-[10px] text-gray-500 font-tech flex items-center justify-between">
+              <div className="px-2 py-0.5 text-xs text-gray-500 font-tech flex items-center justify-between">
                 <span>Drag handle to reorder</span>
                 <span>Right-click for options</span>
               </div>
@@ -1184,7 +1184,7 @@ export const RulesCMS: React.FC = () => {
                   <Layers size={14} className="text-vital-500" />
                   <span>All Categories</span>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-400 font-tech">
                   {rules.length}
                 </span>
               </button>
@@ -1275,7 +1275,7 @@ export const RulesCMS: React.FC = () => {
                     key={rule.id}
                     className={`group p-4 rounded-2xl bg-dark-900/90 border transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                       rule.has_draft
-                        ? 'border-vital-500/40 bg-vital-500/[0.02] shadow-[0_0_15px_rgba(249,115,22,0.05)]'
+                        ? 'border-vital-500/40 bg-vital-500/[0.02]'
                         : 'border-white/5 hover:border-white/10'
                     }`}
                   >
@@ -1291,12 +1291,12 @@ export const RulesCMS: React.FC = () => {
 
                           {/* Status Badge */}
                           {rule.deleted_at ? (
-                            <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold uppercase">
                               Deleted
                             </span>
                           ) : rule.has_draft ? (
                             <span
-                              className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase flex items-center gap-1 ${
+                              className={`px-2 py-0.5 rounded-full border text-xs font-bold uppercase flex items-center gap-1 ${
                                 rule.draft_action === 'create'
                                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                                   : rule.draft_action === 'reorder'
@@ -1320,17 +1320,17 @@ export const RulesCMS: React.FC = () => {
                                 : 'Modified'}
                             </span>
                           ) : rule.enabled ? (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold uppercase">
                               Live
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30 text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30 text-xs font-bold uppercase">
                               Disabled
                             </span>
                           )}
 
                           {rule.featured && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold uppercase">
                               Core
                             </span>
                           )}
@@ -1340,7 +1340,7 @@ export const RulesCMS: React.FC = () => {
                           {rule.short_description || rule.content}
                         </p>
 
-                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500">
+                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                           <span>{categoryObj?.title || rule.category_id}</span>
                           {rule.aliases && rule.aliases.length > 0 && (
                             <>
@@ -1443,7 +1443,7 @@ export const RulesCMS: React.FC = () => {
                 }
                 setIsEditorOpen(false);
               }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/80 "
             />
 
             <motion.div
@@ -1561,7 +1561,7 @@ export const RulesCMS: React.FC = () => {
                     {/* Basic Metadata Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-gray-300  mb-1.5">
                           Rule Title *
                         </label>
                         <input
@@ -1576,7 +1576,7 @@ export const RulesCMS: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-gray-300  mb-1.5">
                           Rule Number
                         </label>
                         <input
@@ -1593,7 +1593,7 @@ export const RulesCMS: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-gray-300  mb-1.5">
                           Category
                         </label>
                         <select
@@ -1613,7 +1613,7 @@ export const RulesCMS: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-gray-300  mb-1.5">
                           Severity / Core Status
                         </label>
                         <div className="flex items-center gap-3 h-[42px]">
@@ -1648,7 +1648,7 @@ export const RulesCMS: React.FC = () => {
 
                     {/* Short Summary */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-bold text-gray-300  mb-1.5">
                         Short Summary (Shown in card headers & search)
                       </label>
                       <input
@@ -1666,10 +1666,10 @@ export const RulesCMS: React.FC = () => {
                     {/* Content Editor with Formatting Toolbar */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        <label className="text-xs font-bold text-gray-300 ">
                           Full Rule Legislation Content *
                         </label>
-                        <span className="text-[11px] text-gray-500">Supports markdown formatting</span>
+                        <span className="text-xs text-gray-500">Supports markdown formatting</span>
                       </div>
 
                       {/* Toolbar */}
@@ -1732,13 +1732,13 @@ export const RulesCMS: React.FC = () => {
                         </button>
 
                         <div className="h-4 w-px bg-white/10 mx-1 shrink-0" />
-                        <span className="text-[10px] uppercase font-tech text-gray-500 font-bold px-1 shrink-0">
+                        <span className="text-xs uppercase font-tech text-gray-500 font-bold px-1 shrink-0">
                           Cards:
                         </span>
                         <button
                           type="button"
                           onClick={() => handleAddCallout('WARNING')}
-                          className="px-2 py-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Warning callout card"
                         >
                           <AlertTriangle size={12} />
@@ -1747,7 +1747,7 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddCallout('PROHIBITED')}
-                          className="px-2 py-1 text-[11px] font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Prohibited callout card"
                         >
                           <Ban size={12} />
@@ -1756,7 +1756,7 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddCallout('IMPORTANT')}
-                          className="px-2 py-1 text-[11px] font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Important callout card"
                         >
                           <AlertCircle size={12} />
@@ -1765,7 +1765,7 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddCallout('STAFF_APPROVAL')}
-                          className="px-2 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Staff Approval callout card"
                         >
                           <ShieldCheck size={12} />
@@ -1774,7 +1774,7 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddCallout('COOLDOWN')}
-                          className="px-2 py-1 text-[11px] font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Cooldown callout card"
                         >
                           <Clock size={12} />
@@ -1783,7 +1783,7 @@ export const RulesCMS: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddCallout('CUSTOM')}
-                          className="px-2 py-1 text-[11px] font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
+                          className="px-2 py-1 text-xs font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 rounded flex items-center gap-1 shrink-0 transition-colors"
                           title="Add Custom callout card"
                         >
                           <Sparkles size={12} />
@@ -1807,14 +1807,14 @@ export const RulesCMS: React.FC = () => {
                     {/* Structured Callouts Section */}
                     <div className="space-y-3 pt-2">
                       <div className="flex items-center justify-between">
-                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        <label className="block text-xs font-bold text-gray-300 ">
                           Structured Callout Cards ({editingRule.callouts?.length || 0})
                         </label>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
                             onClick={() => handleAddCallout('WARNING')}
-                            className="text-[10px] font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Warning Card"
                           >
                             + Warning
@@ -1822,7 +1822,7 @@ export const RulesCMS: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleAddCallout('PROHIBITED')}
-                            className="text-[10px] font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Prohibited Card"
                           >
                             + Prohibited
@@ -1830,7 +1830,7 @@ export const RulesCMS: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleAddCallout('IMPORTANT')}
-                            className="text-[10px] font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-vital-400 bg-vital-500/10 hover:bg-vital-500/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Important Card"
                           >
                             + Important
@@ -1838,7 +1838,7 @@ export const RulesCMS: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleAddCallout('STAFF_APPROVAL')}
-                            className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Staff Approval Card"
                           >
                             + Staff
@@ -1846,7 +1846,7 @@ export const RulesCMS: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleAddCallout('COOLDOWN')}
-                            className="text-[10px] font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Cooldown Card"
                           >
                             + Cooldown
@@ -1854,7 +1854,7 @@ export const RulesCMS: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleAddCallout('CUSTOM')}
-                            className="text-[10px] font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-0.5 rounded transition-colors"
+                            className="text-xs font-bold text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-0.5 rounded transition-colors"
                             title="Add Custom Card"
                           >
                             + Custom
@@ -1955,18 +1955,18 @@ export const RulesCMS: React.FC = () => {
                                     }}
                                     className="bg-dark-900 border border-white/15 rounded-lg px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:border-vital-500 cursor-pointer"
                                   >
-                                    <option value="WARNING">⚠️ Warning Card</option>
-                                    <option value="PROHIBITED">🚫 Prohibited Card</option>
-                                    <option value="IMPORTANT">❗ Important Card</option>
-                                    <option value="STAFF_APPROVAL">🛡️ Staff Approval Card</option>
-                                    <option value="COOLDOWN">⏱️ Cooldown Card</option>
-                                    <option value="CUSTOM">✨ Custom Card</option>
-                                    <option value="EXAMPLE">💡 Example Scenario</option>
+                                    <option value="WARNING">Warning Card</option>
+                                    <option value="PROHIBITED">Prohibited Card</option>
+                                    <option value="IMPORTANT">Important Card</option>
+                                    <option value="STAFF_APPROVAL">Staff Approval Card</option>
+                                    <option value="COOLDOWN">Cooldown Card</option>
+                                    <option value="CUSTOM">Custom Card</option>
+                                    <option value="EXAMPLE">Example Scenario</option>
                                   </select>
 
                                   {/* Badge Tag Preview */}
                                   <span
-                                    className={`text-[10px] font-tech font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                                    className={`text-xs font-tech font-bold  px-2 py-0.5 rounded border ${
                                       callout.type === 'WARNING'
                                         ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                         : callout.type === 'PROHIBITED' || callout.type === 'NOT_ALLOWED'
@@ -2044,7 +2044,7 @@ export const RulesCMS: React.FC = () => {
                               {callout.type === 'CUSTOM' && (
                                 <div className="p-2.5 rounded-lg bg-dark-900 border border-white/5 space-y-2">
                                   <div className="flex items-center gap-2">
-                                    <label className="text-[10px] font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
+                                    <label className="text-xs font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
                                       Badge Label:
                                     </label>
                                     <input
@@ -2061,7 +2061,7 @@ export const RulesCMS: React.FC = () => {
                                     />
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <label className="text-[10px] font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
+                                    <label className="text-xs font-bold uppercase text-gray-400 w-24 shrink-0 font-tech">
                                       Color Theme:
                                     </label>
                                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -2127,7 +2127,7 @@ export const RulesCMS: React.FC = () => {
                                     setEditingRule({ ...editingRule, callouts: updated });
                                     setHasUnsavedChanges(true);
                                   }}
-                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-[11px] text-gray-300 font-mono focus:outline-none focus:border-vital-500"
+                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-xs text-gray-300 font-mono focus:outline-none focus:border-vital-500"
                                 />
                                 <input
                                   type="text"
@@ -2139,7 +2139,7 @@ export const RulesCMS: React.FC = () => {
                                     setEditingRule({ ...editingRule, callouts: updated });
                                     setHasUnsavedChanges(true);
                                   }}
-                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-[11px] text-gray-300 focus:outline-none focus:border-vital-500"
+                                  className="w-full bg-dark-900/60 border border-white/10 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-vital-500"
                                 />
                               </div>
                             </div>
@@ -2201,7 +2201,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsPublishModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -2237,7 +2237,7 @@ export const RulesCMS: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-vital-400 font-tech">
+                    <span className="text-xs font-bold  text-vital-400 font-tech">
                       Staged Modifications ({stagedChanges.length})
                     </span>
 
@@ -2268,7 +2268,7 @@ export const RulesCMS: React.FC = () => {
                               )}
                             </div>
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                                 isCreate
                                   ? 'bg-emerald-500/20 text-emerald-400'
                                   : isDelete
@@ -2297,11 +2297,11 @@ export const RulesCMS: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-gray-400">
                                 <span className="font-bold text-red-400 block mb-1">Before:</span>
-                                <p className="line-clamp-4 font-mono text-[11px]">{change.before?.content || 'Empty'}</p>
+                                <p className="line-clamp-4 font-mono text-xs">{change.before?.content || 'Empty'}</p>
                               </div>
                               <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-gray-300">
                                 <span className="font-bold text-emerald-400 block mb-1">After:</span>
-                                <p className="line-clamp-4 font-mono text-[11px] text-emerald-200">
+                                <p className="line-clamp-4 font-mono text-xs text-emerald-200">
                                   {change.after?.content || 'Empty'}
                                 </p>
                               </div>
@@ -2315,7 +2315,7 @@ export const RulesCMS: React.FC = () => {
 
                 {/* Publish Note Input */}
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-gray-300  mb-1.5">
                     Publish Release Note (e.g. Updated robbery rules and reorganized gang conflict)
                   </label>
                   <input
@@ -2378,7 +2378,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHistoryModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -2416,13 +2416,13 @@ export const RulesCMS: React.FC = () => {
                           Version {ver.version_number}
                         </span>
                         {ver.version_number === stats.currentVersion && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase">
                             Active
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-gray-300 mt-1">{ver.publish_note || 'Official release'}</p>
-                      <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-2">
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mt-2">
                         <span>By {ver.published_by_display_name}</span>
                         <span>•</span>
                         <span>{new Date(ver.published_at).toLocaleString()}</span>
@@ -2458,7 +2458,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCategoryModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -2473,7 +2473,7 @@ export const RulesCMS: React.FC = () => {
                     {isEditingCategory ? 'Edit Rule Category' : 'Create Rule Category'}
                   </h3>
                   {isEditingCategory && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-300">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-gray-300">
                       {categoryForm.id}
                     </span>
                   )}
@@ -2537,7 +2537,7 @@ export const RulesCMS: React.FC = () => {
                         key={ic}
                         type="button"
                         onClick={() => setCategoryForm({ ...categoryForm, icon: ic })}
-                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                        className={`text-xs px-2 py-0.5 rounded-md border transition-all ${
                           categoryForm.icon === ic
                             ? 'bg-vital-500 text-white border-vital-400 font-bold'
                             : 'bg-white/5 text-gray-400 border-white/5 hover:text-white hover:bg-white/10'
@@ -2594,7 +2594,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHeroModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -2721,18 +2721,18 @@ export const RulesCMS: React.FC = () => {
                     placeholder="Leave empty for automatic live timestamp (e.g. Updated: September 28, 2026)"
                     className="w-full bg-dark-950 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     If left blank, the website automatically displays the latest date any rule was updated or published.
                   </p>
                 </div>
 
                 {/* Live Preview Box */}
                 <div className="p-4 rounded-2xl bg-dark-950 border border-vital-500/20 space-y-2 mt-4">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-vital-400 font-tech">
+                  <div className="text-xs font-bold  text-vital-400 font-tech">
                     Live Preview:
                   </div>
                   <div className="text-center py-3">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-vital-500/10 border border-vital-500/30 text-vital-400 text-[10px] font-bold uppercase tracking-wider mb-2">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-vital-500/10 border border-vital-500/30 text-vital-400 text-xs font-bold  mb-2">
                       {heroForm.eyebrow || 'VITAL ROLEPLAY CONSTITUTION'}
                     </div>
                     <div className="text-xl font-black text-white uppercase">
@@ -2780,7 +2780,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsRuleHistoryModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -2832,16 +2832,16 @@ export const RulesCMS: React.FC = () => {
               top: categoryContextMenu.y,
               zIndex: 9999,
             }}
-            className="w-56 rounded-2xl bg-dark-900/95 backdrop-blur-2xl border border-white/10 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_25px_rgba(249,115,22,0.15)] text-xs font-sans"
+            className="w-56 rounded-2xl bg-dark-900/95  border border-white/10 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_25px_rgba(249,115,22,0.15)] text-xs font-sans"
             onClick={(e) => e.stopPropagation()}
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* Context Menu Header */}
             <div className="px-3 py-2 border-b border-white/5 mb-1 flex items-center justify-between gap-2">
-              <span className="text-[10px] uppercase font-tech text-gray-500 font-bold tracking-wider">
+              <span className="text-xs uppercase font-tech text-gray-500 font-bold tracking-wider">
                 Category
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-gray-400 truncate max-w-[100px]">
+              <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-white/5 text-gray-400 truncate max-w-[100px]">
                 {categoryContextMenu.category.id}
               </span>
             </div>
@@ -2858,7 +2858,7 @@ export const RulesCMS: React.FC = () => {
               <Pencil size={14} className="text-vital-400 group-hover:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-xs">Edit Category</div>
-                <div className="text-[10px] text-gray-500">Title, description & icon</div>
+                <div className="text-xs text-gray-500">Title, description & icon</div>
               </div>
             </button>
 
@@ -2871,7 +2871,7 @@ export const RulesCMS: React.FC = () => {
               <Trash2 size={14} className="text-rose-400 group-hover:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-xs text-rose-300">Delete Category</div>
-                <div className="text-[10px] text-rose-400/70">Remove from server rules</div>
+                <div className="text-xs text-rose-400/70">Remove from server rules</div>
               </div>
             </button>
           </motion.div>
@@ -2894,7 +2894,7 @@ export const RulesCMS: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => !deletingCategory && setIsDeleteCategoryModalOpen(false)}
-                className="fixed inset-0 bg-black/85 backdrop-blur-md"
+                className="fixed inset-0 bg-black/85 "
               />
 
               <motion.div
@@ -2904,7 +2904,7 @@ export const RulesCMS: React.FC = () => {
                 className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col z-10 text-white"
               >
                 <div className="flex items-center gap-3.5 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
                     <AlertTriangle size={24} />
                   </div>
                   <div>
@@ -2919,7 +2919,7 @@ export const RulesCMS: React.FC = () => {
                   <div className="text-xs text-gray-400">Target Category:</div>
                   <div className="text-sm font-bold text-white flex items-center gap-2">
                     <span>{categoryToDelete.title}</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-400">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-gray-400">
                       {categoryToDelete.id}
                     </span>
                   </div>
@@ -2955,7 +2955,7 @@ export const RulesCMS: React.FC = () => {
                           <div className="font-bold text-white">
                             Move {activeCount} rule(s) to "{fallbackCat?.title || 'General'}"
                           </div>
-                          <div className="text-[11px] text-gray-400 mt-0.5">
+                          <div className="text-xs text-gray-400 mt-0.5">
                             Recommended. Safely reassigns all rules so you don't lose any published legislation.
                           </div>
                         </div>
@@ -2979,7 +2979,7 @@ export const RulesCMS: React.FC = () => {
                           <div className="font-bold text-rose-300">
                             Delete Category and permanently erase all {activeCount} rule(s)
                           </div>
-                          <div className="text-[11px] text-gray-400 mt-0.5">
+                          <div className="text-xs text-gray-400 mt-0.5">
                             Destructive. Deletes both the category and all rules inside it.
                           </div>
                         </div>
@@ -3037,7 +3037,7 @@ export const RulesCMS: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsLinkModalOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/80 "
             />
 
             <motion.div
@@ -3067,7 +3067,7 @@ export const RulesCMS: React.FC = () => {
 
               <form onSubmit={handleInsertLink} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-300  mb-1">
                     Link Display Text
                   </label>
                   <input
@@ -3081,7 +3081,7 @@ export const RulesCMS: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-300  mb-1">
                     Link Destination URL
                   </label>
                   <input
@@ -3093,25 +3093,25 @@ export const RulesCMS: React.FC = () => {
                   />
                   {/* Preset Quick Chips */}
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    <span className="text-[10px] text-gray-500 font-tech uppercase">Quick:</span>
+                    <span className="text-xs text-gray-500 font-tech uppercase">Quick:</span>
                     <button
                       type="button"
                       onClick={() => setLinkModalUrl('https://')}
-                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                      className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
                     >
                       https://
                     </button>
                     <button
                       type="button"
                       onClick={() => setLinkModalUrl('/rules#')}
-                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                      className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
                     >
                       /rules#
                     </button>
                     <button
                       type="button"
                       onClick={() => setLinkModalUrl('https://discord.gg/vitalrp')}
-                      className="text-[11px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
+                      className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 font-mono transition-colors"
                     >
                       discord.gg/vitalrp
                     </button>

@@ -119,7 +119,7 @@ export const RolePermissionsManager: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shadow-[0_0_25px_rgba(249,115,22,0.2)] shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shrink-0">
               <KeyRound size={28} />
             </div>
             <div>
@@ -149,7 +149,7 @@ export const RolePermissionsManager: React.FC = () => {
             {canManage && (
               <button
                 onClick={() => setIsNewModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs transition-all"
               >
                 <Plus size={16} />
                 <span>Map Discord Role</span>
@@ -184,7 +184,7 @@ export const RolePermissionsManager: React.FC = () => {
                   </div>
 
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`text-xs font-bold  px-2 py-0.5 rounded-full ${
                       isEnabled
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : 'bg-red-500/10 text-red-400 border border-red-500/20'
@@ -200,7 +200,7 @@ export const RolePermissionsManager: React.FC = () => {
 
                 {/* Permissions List */}
                 <div className="mt-4 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-tech">
+                  <span className="text-xs font-bold  text-gray-400 font-tech">
                     Granted Permissions ({mapping.permissions.length})
                   </span>
 
@@ -216,7 +216,7 @@ export const RolePermissionsManager: React.FC = () => {
                             className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/5 text-xs text-gray-300"
                           >
                             <span className="font-medium text-white">{def?.name || p}</span>
-                            <span className="text-[10px] text-emerald-400 font-mono font-bold">Enabled</span>
+                            <span className="text-xs text-emerald-400 font-mono font-bold">Enabled</span>
                           </div>
                         );
                       })
@@ -253,7 +253,7 @@ export const RolePermissionsManager: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveEditingRole(null)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/80 "
             />
 
             <motion.div
@@ -307,7 +307,7 @@ export const RolePermissionsManager: React.FC = () => {
 
                 {/* Permissions Categorized List */}
                 <div className="space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400 font-tech">
+                  <span className="text-xs font-bold  text-gray-400 font-tech">
                     Assign Role Capabilities
                   </span>
 
@@ -332,7 +332,7 @@ export const RolePermissionsManager: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-white">{def.name}</span>
-                            <span className="text-[10px] font-mono text-gray-500 uppercase">{def.id}</span>
+                            <span className="text-xs font-mono text-gray-500 uppercase">{def.id}</span>
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">{def.description}</p>
                         </div>
@@ -375,7 +375,7 @@ export const RolePermissionsManager: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsNewModalOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              className="fixed inset-0 bg-black/85 "
             />
 
             <motion.div
@@ -422,7 +422,7 @@ export const RolePermissionsManager: React.FC = () => {
                         {role.name}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-gray-500">{role.id}</span>
+                    <span className="text-xs font-mono text-gray-500">{role.id}</span>
                   </button>
                 ))}
               </div>

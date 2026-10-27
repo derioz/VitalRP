@@ -97,10 +97,10 @@ function getRoleBadgeConfig(primaryRole?: string, isSuper?: boolean) {
     return {
       name: 'Super Admin',
       badgeClass:
-        'bg-gradient-to-r from-amber-500/20 to-vital-500/20 border-amber-500/40 text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.2)]',
-      borderClass: 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]',
+        'bg-gradient-to-r from-amber-500/20 to-vital-500/20 border-amber-500/40 text-amber-400',
+      borderClass: 'border-amber-400',
       cardBorder:
-        'border-amber-400/30 shadow-[0_0_25px_rgba(251,191,36,0.08)] bg-amber-400/[0.02]',
+        'border-amber-400/30 bg-amber-400/[0.02]',
       dotClass: 'bg-amber-400',
     };
   }
@@ -778,7 +778,7 @@ export const StaffManager: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shadow-[0_0_25px_rgba(249,115,22,0.2)] shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-vital-500/15 border border-vital-500/30 flex items-center justify-center text-vital-500 shrink-0">
               <Users size={28} />
             </div>
             <div>
@@ -786,9 +786,8 @@ export const StaffManager: React.FC = () => {
                 <h1 className="text-2xl lg:text-3xl font-black text-white font-display tracking-wide">
                   Staff Management
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-tech uppercase flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {counts.active} Active Staff
+                <span className="text-sm font-tech text-gray-300">
+                  {counts.active} active
                 </span>
                 {counts.inactive > 0 && (
                   <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-gray-500/10 border border-gray-500/20 text-gray-400 text-xs font-bold font-tech uppercase">
@@ -806,7 +805,7 @@ export const StaffManager: React.FC = () => {
             <button
               onClick={handleSyncRoster}
               disabled={refreshing}
-              className={`px-3 py-2.5 rounded-xl bg-vital-500/10 hover:bg-vital-500/20 text-vital-400 hover:text-vital-300 transition-all border border-vital-500/30 flex items-center gap-2 text-xs font-bold shadow-[0_0_15px_rgba(249,115,22,0.15)] ${
+              className={`px-3 py-2.5 rounded-xl bg-vital-500/10 hover:bg-vital-500/20 text-vital-400 hover:text-vital-300 transition-all border border-vital-500/30 flex items-center gap-2 text-xs font-bold ${
                 refreshing ? 'opacity-60 cursor-not-allowed' : ''
               }`}
               title="Pull Senior Admins & Admins directly from Discord Guild to grant admin console permissions"
@@ -818,7 +817,7 @@ export const StaffManager: React.FC = () => {
             {canManagePermissions && (
               <Link
                 href="/admin/permissions"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-vital-500 hover:bg-vital-400 text-white font-bold text-xs transition-all"
               >
                 <KeyRound size={15} />
                 <span>Role Permissions</span>
@@ -837,8 +836,8 @@ export const StaffManager: React.FC = () => {
             exit={{ opacity: 0, y: -10 }}
             className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs ${
               syncStatus.type === 'success'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-                : 'bg-red-500/10 border-red-500/30 text-red-300 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                : 'bg-red-500/10 border-red-500/30 text-red-300'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -869,14 +868,14 @@ export const StaffManager: React.FC = () => {
               onClick={() => setStatusFilter('active')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 statusFilter === 'active'
-                  ? 'bg-vital-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]'
+                  ? 'bg-vital-500 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
               <UserCheck size={14} />
               <span>Active Staff</span>
               <span
-                className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                className={`px-1.5 py-0.2 rounded-md text-xs font-mono ${
                   statusFilter === 'active'
                     ? 'bg-black/20 text-white'
                     : 'bg-white/5 text-gray-400'
@@ -890,14 +889,14 @@ export const StaffManager: React.FC = () => {
               onClick={() => setStatusFilter('inactive')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 statusFilter === 'inactive'
-                  ? 'bg-vital-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]'
+                  ? 'bg-vital-500 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
               <UserX size={14} />
               <span>Former / Inactive</span>
               <span
-                className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                className={`px-1.5 py-0.2 rounded-md text-xs font-mono ${
                   statusFilter === 'inactive'
                     ? 'bg-black/20 text-white'
                     : 'bg-white/5 text-gray-400'
@@ -911,13 +910,13 @@ export const StaffManager: React.FC = () => {
               onClick={() => setStatusFilter('all')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 statusFilter === 'all'
-                  ? 'bg-vital-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]'
+                  ? 'bg-vital-500 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
               <span>All Staff</span>
               <span
-                className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                className={`px-1.5 py-0.2 rounded-md text-xs font-mono ${
                   statusFilter === 'all'
                     ? 'bg-black/20 text-white'
                     : 'bg-white/5 text-gray-400'
@@ -946,7 +945,7 @@ export const StaffManager: React.FC = () => {
 
         {/* Role Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar text-xs">
-          <span className="text-gray-500 text-[11px] font-bold uppercase tracking-wider font-tech flex items-center gap-1.5 shrink-0 pr-1">
+          <span className="text-gray-500 text-xs font-bold  font-tech flex items-center gap-1.5 shrink-0 pr-1">
             <Filter size={12} />
             Role:
           </span>
@@ -966,7 +965,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Head Administrator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Head Administrator'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-cyan-400 border border-white/5'
             }`}
           >
@@ -978,7 +977,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Senior Administrator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Senior Administrator'
-                ? 'bg-red-500/20 text-red-300 border border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)]'
+                ? 'bg-red-500/20 text-red-300 border border-red-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-red-400 border border-white/5'
             }`}
           >
@@ -990,7 +989,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Administrator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Administrator'
-                ? 'bg-orange-500/20 text-orange-300 border border-orange-500/50 shadow-[0_0_12px_rgba(249,115,22,0.2)]'
+                ? 'bg-orange-500/20 text-orange-300 border border-orange-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-orange-400 border border-white/5'
             }`}
           >
@@ -1002,7 +1001,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Senior Moderator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Senior Moderator'
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-purple-400 border border-white/5'
             }`}
           >
@@ -1014,7 +1013,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Moderator')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Moderator'
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50 shadow-[0_0_12px_rgba(59,130,246,0.2)]'
+                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-blue-400 border border-white/5'
             }`}
           >
@@ -1026,7 +1025,7 @@ export const StaffManager: React.FC = () => {
             onClick={() => setRoleFilter('Support Staff')}
             className={`px-3 py-1 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               roleFilter === 'Support Staff'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
                 : 'bg-dark-900 text-gray-400 hover:text-emerald-400 border border-white/5'
             }`}
           >
@@ -1096,7 +1095,7 @@ export const StaffManager: React.FC = () => {
                 transition={{ duration: 0.2 }}
                 className={`p-6 rounded-3xl bg-dark-900/90 border transition-all duration-300 flex flex-col justify-between ${
                   isSuper
-                    ? 'border-amber-400/40 shadow-[0_0_25px_rgba(251,191,36,0.1)] bg-amber-400/[0.02]'
+                    ? 'border-amber-400/40 bg-amber-400/[0.02]'
                     : member.active
                     ? 'border-white/5 hover:border-white/20'
                     : 'border-white/5 bg-dark-950/60 opacity-75'
@@ -1128,13 +1127,13 @@ export const StaffManager: React.FC = () => {
                     <div className="flex flex-col items-end gap-1.5">
                       {/* Primary Role Badge */}
                       {isSuper ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-vital-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(251,191,36,0.2)] font-tech">
+                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-vital-500/20 border border-amber-500/40 text-amber-400 text-xs font-black  flex items-center gap-1 font-tech">
                           <Sparkles size={11} className="text-amber-400" />
                           Super Admin
                         </span>
                       ) : (
                         <span
-                          className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold uppercase font-tech tracking-wider ${roleConfig.badgeClass}`}
+                          className={`px-2.5 py-0.5 rounded-full border text-xs font-bold uppercase font-tech tracking-wider ${roleConfig.badgeClass}`}
                         >
                           {member.primary_role || 'Staff Member'}
                         </span>
@@ -1143,7 +1142,7 @@ export const StaffManager: React.FC = () => {
                       {/* Active Status Badge */}
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
+                          className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase font-mono ${
                             member.active
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                               : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
@@ -1152,7 +1151,7 @@ export const StaffManager: React.FC = () => {
                           {member.active ? 'Active' : 'Inactive'}
                         </span>
 
-                        <span className="text-[11px] text-gray-500 font-mono">
+                        <span className="text-xs text-gray-500 font-mono">
                           {isSuper
                             ? '10 / 10 perms'
                             : `${member.effectivePermissions?.length || 0} perms`}
@@ -1171,7 +1170,7 @@ export const StaffManager: React.FC = () => {
                       <span className="text-xs text-gray-400">@{member.discord_username}</span>
                       <button
                         onClick={() => copyToClipboard(member.discord_user_id)}
-                        className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-md font-mono transition-colors border border-white/5"
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-md font-mono transition-colors border border-white/5"
                         title="Click to copy Discord Snowflake ID"
                       >
                         <span>{member.discord_user_id}</span>
@@ -1187,13 +1186,13 @@ export const StaffManager: React.FC = () => {
                   {/* Other Recognized Roles (if multiple held) */}
                   {otherRecognizedRoles.length > 0 && (
                     <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] uppercase font-bold text-gray-500 font-tech">
+                      <span className="text-xs uppercase font-bold text-gray-500 font-tech">
                         Also Holds:
                       </span>
                       {otherRecognizedRoles.map((roleName, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-medium text-gray-300"
+                          className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-medium text-gray-300"
                         >
                           {roleName}
                         </span>
@@ -1202,12 +1201,12 @@ export const StaffManager: React.FC = () => {
                   )}
 
                   {/* Timestamps: Staff Since & Last Login */}
-                  <div className="mt-3.5 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="mt-3.5 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-gray-500 flex items-center gap-1">
                         <Calendar size={11} /> Staff Since
                       </span>
-                      <span className="text-gray-300 font-medium font-mono text-[11px] block mt-0.5">
+                      <span className="text-gray-300 font-medium font-mono text-xs block mt-0.5">
                         {member.first_admin_login
                           ? new Date(member.first_admin_login).toLocaleDateString()
                           : '—'}
@@ -1219,7 +1218,7 @@ export const StaffManager: React.FC = () => {
                         <Clock size={11} /> Last Login
                       </span>
                       <span
-                        className="text-gray-300 font-medium font-mono text-[11px] block mt-0.5"
+                        className="text-gray-300 font-medium font-mono text-xs block mt-0.5"
                         title={
                           member.last_admin_login
                             ? new Date(member.last_admin_login).toLocaleString()
@@ -1276,7 +1275,7 @@ export const StaffManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             onClick={() => setSelectedMember(null)}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/80 "
           />
 
           <div className="relative w-full max-w-xl bg-dark-900 border border-white/10 rounded-3xl p-6 lg:p-8 shadow-2xl z-10 text-white max-h-[85vh] flex flex-col overflow-hidden">
@@ -1351,10 +1350,10 @@ export const StaffManager: React.FC = () => {
               {isAdjustingPerms && (
                 <div className="p-3.5 rounded-2xl bg-vital-500/10 border border-vital-500/20 space-y-2.5 mb-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-vital-400 uppercase tracking-wider font-tech">
+                    <span className="text-xs font-bold text-vital-400  font-tech">
                       Quick Presets:
                     </span>
-                    <span className="text-[11px] font-mono text-gray-300">
+                    <span className="text-xs font-mono text-gray-300">
                       {editingPermissions.length} / {PERMISSION_DEFINITIONS.length} active
                     </span>
                   </div>
@@ -1472,7 +1471,7 @@ export const StaffManager: React.FC = () => {
                         )}
                         <span className="text-sm font-bold text-white">{def.name}</span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase">
+                      <span className="text-xs font-mono font-bold text-gray-400 uppercase">
                         {def.id}
                       </span>
                     </div>
@@ -1480,7 +1479,7 @@ export const StaffManager: React.FC = () => {
                     <p className="text-xs text-gray-400 mt-1 pl-6">{def.description}</p>
 
                     {hasPerm && grantedBy.length > 0 && !isAdjustingPerms && (
-                      <div className="mt-2.5 pt-2 border-t border-white/5 pl-6 flex items-center gap-1.5 text-[11px] text-vital-400">
+                      <div className="mt-2.5 pt-2 border-t border-white/5 pl-6 flex items-center gap-1.5 text-xs text-vital-400">
                         <span className="text-gray-500 font-medium">Granted by:</span>
                         <span className="font-bold">{grantedBy.join(', ')}</span>
                       </div>

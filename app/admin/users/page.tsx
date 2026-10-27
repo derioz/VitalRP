@@ -158,8 +158,7 @@ const UsersPage: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto">
             <AdminHero
-                title="User Management"
-                subtitle="Manage roles and permissions for registered Vital RP accounts."
+                title="Users"
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -172,7 +171,7 @@ const UsersPage: React.FC = () => {
                             key={user.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-dark-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 group hover:border-vital-500/30 hover:bg-dark-900/60 transition-all relative overflow-hidden shadow-xl"
+                            className="bg-dark-900/40  border border-white/5 rounded-2xl p-6 group hover:border-vital-500/30 hover:bg-dark-900/60 transition-all relative overflow-hidden shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-6">
                                 <div className="flex items-center gap-4">
@@ -207,7 +206,7 @@ const UsersPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/5 border-dashed">
-                                <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Current Role</span>
+                                <span className="text-sm text-gray-300 font-medium">Role</span>
                                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-${roleConfig.color}-500/10 text-${roleConfig.color}-400 border border-${roleConfig.color}-500/20 shadow-sm`}>
                                     <roleConfig.icon size={12} />
                                     {roleConfig.label}
@@ -228,7 +227,7 @@ const UsersPage: React.FC = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                            className="absolute inset-0 bg-black/80 "
                             onClick={() => setIsModalOpen(false)}
                         />
                         <motion.div
@@ -269,7 +268,7 @@ const UsersPage: React.FC = () => {
                                             <label
                                                 key={role.value}
                                                 className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${formData.role === role.value
-                                                    ? `bg-${role.color}-500/10 border-${role.color}-500/50 shadow-[0_0_15px_rgba(0,0,0,0.2)]`
+                                                    ? `bg-${role.color}-500/10 border-${role.color}-500/50`
                                                     : 'bg-dark-950 border-white/5 hover:border-white/10 hover:bg-white/5'
                                                     }`}
                                             >
@@ -290,7 +289,7 @@ const UsersPage: React.FC = () => {
                                                         <role.icon size={14} className={formData.role === role.value ? `text-${role.color}-400` : 'text-gray-400'} />
                                                         <span className={`text-xs font-bold ${formData.role === role.value ? 'text-white' : 'text-gray-300'}`}>{role.label}</span>
                                                     </div>
-                                                    <p className="text-[11px] text-gray-500 leading-tight">{role.description}</p>
+                                                    <p className="text-xs text-gray-500 leading-tight">{role.description}</p>
                                                 </div>
                                             </label>
                                         ))}

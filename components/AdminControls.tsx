@@ -114,7 +114,7 @@ export const AdminControls: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[380px] sm:w-[440px] bg-dark-900/95 backdrop-blur-2xl border border-vital-500/30 rounded-3xl p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(249,115,22,0.15)] flex flex-col gap-4 text-white"
+            className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[380px] sm:w-[440px] bg-dark-900/95  border border-vital-500/30 rounded-3xl p-5 flex flex-col gap-4 text-white"
           >
             {/* Header / Identity Banner */}
             <div className="flex items-center justify-between pb-3.5 border-b border-white/10">
@@ -123,36 +123,25 @@ export const AdminControls: React.FC = () => {
                   <img
                     src={avatarUrl}
                     alt={user.displayName}
-                    className="w-11 h-11 rounded-full border-2 border-vital-500 object-cover shadow-[0_0_15px_rgba(249,115,22,0.4)]"
+                    className="w-11 h-11 rounded-full border-2 border-vital-500 object-cover"
                   />
                   {isSuperAdmin ? (
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-vital-500 rounded-full flex items-center justify-center text-dark-950 shadow-md">
                       <Crown size={12} className="stroke-[2.5]" />
                     </div>
-                  ) : (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-dark-900 rounded-full" />
-                  )}
+                  ) : null}
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm text-white tracking-wide">{user.displayName}</span>
                     {isSuperAdmin && (
-                      <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-vital-500/20 border border-vital-500/40 text-vital-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
-                        <Sparkles size={10} className="text-amber-400 animate-spin-slow" />
-                        Super Admin
-                      </span>
+                      <span className="px-2 py-0.5 rounded bg-vital-500/15 border border-vital-500/40 text-vital-400 text-xs font-bold">Super admin</span>
                     )}
                   </div>
-                  <span className="text-[11px] text-gray-400 font-medium">
-                    {isSuperAdmin ? 'Unrestricted Authority' : roleTitle}
+                  <span className="text-xs text-gray-300 font-medium">
+                    {roleTitle}
                   </span>
                 </div>
-              </div>
-
-              {/* Status pill */}
-              <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-tech font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Verified</span>
               </div>
             </div>
 
@@ -163,23 +152,17 @@ export const AdminControls: React.FC = () => {
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsExpanded(false)}
-                  className="group relative p-3 rounded-2xl bg-white/[0.03] hover:bg-vital-500/10 border border-white/5 hover:border-vital-500/40 transition-all duration-200 flex flex-col gap-1.5 overflow-hidden shadow-sm"
+                  className="group relative p-3 rounded bg-white/[0.03] hover:bg-vital-500/10 border border-white/5 hover:border-vital-500/40 transition-all duration-200 flex flex-col gap-1.5 overflow-hidden shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-vital-500 group-hover:text-dark-950 text-gray-300 flex items-center justify-center transition-all duration-200">
                       <item.icon size={16} />
                     </div>
-                    {item.badge && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-vital-500/20 text-vital-400 border border-vital-500/30 uppercase tracking-wider">
-                        {item.badge}
-                      </span>
-                    )}
                   </div>
                   <div className="flex flex-col mt-0.5">
                     <span className="text-xs font-bold text-white group-hover:text-vital-400 transition-colors">
                       {item.label}
                     </span>
-                    <span className="text-[10px] text-gray-400 line-clamp-1">{item.description}</span>
                   </div>
                 </Link>
               ))}
@@ -191,7 +174,7 @@ export const AdminControls: React.FC = () => {
                 onClick={toggleEditMode}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
                   editMode
-                    ? 'bg-vital-500 text-white border-vital-400 shadow-[0_0_12px_rgba(249,115,22,0.4)]'
+                    ? 'bg-vital-500 text-white border-vital-400'
                     : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -216,7 +199,7 @@ export const AdminControls: React.FC = () => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="bg-dark-900/90 backdrop-blur-xl border border-vital-500/30 hover:border-vital-500/60 rounded-full p-1.5 pl-2 pr-2 shadow-[0_10px_35px_rgba(0,0,0,0.6),0_0_20px_rgba(249,115,22,0.15)] flex items-center gap-2 transition-all"
+        className="bg-dark-900/90  border border-vital-500/30 hover:border-vital-500/60 rounded-full p-1.5 pl-2 pr-2 flex items-center gap-2 transition-all"
       >
         {/* User Identity & Toggle */}
         <button
@@ -229,7 +212,7 @@ export const AdminControls: React.FC = () => {
               src={avatarUrl}
               alt={user.displayName}
               className={`w-8 h-8 rounded-full object-cover border ${
-                isSuperAdmin ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-vital-500'
+                isSuperAdmin ? 'border-amber-400' : 'border-vital-500'
               }`}
             />
             {isSuperAdmin ? (
@@ -249,7 +232,7 @@ export const AdminControls: React.FC = () => {
             </div>
             <div className="flex items-center gap-1 mt-1 leading-none">
               <span
-                className={`text-[9px] font-tech uppercase tracking-wider font-bold ${
+                className={`text-xs font-tech  font-bold ${
                   isSuperAdmin ? 'text-amber-400' : 'text-vital-400'
                 }`}
               >
@@ -283,7 +266,7 @@ export const AdminControls: React.FC = () => {
           onClick={toggleEditMode}
           className={`p-2 rounded-full border transition-all ${
             editMode
-              ? 'bg-vital-500 text-white border-vital-400 shadow-[0_0_10px_rgba(249,115,22,0.4)]'
+              ? 'bg-vital-500 text-white border-vital-400'
               : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10 hover:text-white'
           }`}
           title={editMode ? 'Visual Editing On' : 'Toggle Visual Edit Mode'}

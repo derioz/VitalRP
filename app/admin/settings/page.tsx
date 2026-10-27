@@ -130,7 +130,6 @@ const Settings: React.FC = () => {
         <div className="max-w-7xl mx-auto">
             <AdminHero
                 title="Settings"
-                subtitle="Manage your account preferences and system configurations."
             />
 
             <div className="flex flex-col lg:flex-row gap-8">
@@ -148,7 +147,7 @@ const Settings: React.FC = () => {
                             {activeTab === tab.id && (
                                 <motion.div
                                     layoutId="activeSettingsTab"
-                                    className="absolute inset-0 bg-vital-500/10 border border-vital-500/20 shadow-[0_0_15px_rgba(251,146,60,0.05)]"
+                                    className="absolute inset-0 bg-vital-500/10 border border-vital-500/20"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 />

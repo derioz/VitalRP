@@ -273,20 +273,9 @@ export default function AdminMerchPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-tech uppercase tracking-widest text-vital-400 font-bold">
-                E-Commerce Management
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-tech font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Printify API Connected
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-black text-white tracking-tight mt-1">
-              Merch Command Center
+            <h1 className="text-3xl sm:text-4xl font-display font-black text-white tracking-tight">
+              Merch
             </h1>
-            <p className="text-gray-400 text-sm font-sans mt-0.5">
-              Live orders, product pricing controls, Printify POD sync, and sales metrics.
-            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -328,7 +317,7 @@ export default function AdminMerchPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as MerchTab)}
-              className={`px-4 py-2 rounded-xl text-xs font-tech uppercase tracking-wider font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-2 rounded-xl text-xs font-tech  font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-vital-500 text-white shadow-lg shadow-vital-500/30'
                   : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
@@ -346,40 +335,40 @@ export default function AdminMerchPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-dark-900 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
                 <div className="flex items-center justify-between text-gray-400 mb-2">
-                  <span className="text-xs font-tech uppercase tracking-widest">Gross Revenue</span>
+                  <span className="text-xs font-tech ">Gross Revenue</span>
                   <DollarSign size={18} className="text-vital-400" />
                 </div>
                 <div className="text-3xl font-display font-black text-white">
                   ${(totalRevenue / 100).toFixed(2)}
                 </div>
-                <span className="text-[11px] font-tech text-gray-500 mt-1 block">Paid via Stripe Checkout</span>
+                <span className="text-xs font-tech text-gray-500 mt-1 block">Paid via Stripe Checkout</span>
               </div>
 
               <div className="bg-dark-900 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
                 <div className="flex items-center justify-between text-gray-400 mb-2">
-                  <span className="text-xs font-tech uppercase tracking-widest">Total Orders</span>
+                  <span className="text-xs font-tech ">Total Orders</span>
                   <ShoppingBag size={18} className="text-blue-400" />
                 </div>
                 <div className="text-3xl font-display font-black text-white">{totalOrders}</div>
-                <span className="text-[11px] font-tech text-gray-500 mt-1 block">Lifetime website purchases</span>
+                <span className="text-xs font-tech text-gray-500 mt-1 block">Lifetime website purchases</span>
               </div>
 
               <div className="bg-dark-900 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
                 <div className="flex items-center justify-between text-gray-400 mb-2">
-                  <span className="text-xs font-tech uppercase tracking-widest">In Production</span>
+                  <span className="text-xs font-tech ">In Production</span>
                   <Package size={18} className="text-amber-400" />
                 </div>
                 <div className="text-3xl font-display font-black text-white">{inProductionOrders}</div>
-                <span className="text-[11px] font-tech text-gray-500 mt-1 block">Currently at Printify facility</span>
+                <span className="text-xs font-tech text-gray-500 mt-1 block">Currently at Printify facility</span>
               </div>
 
               <div className="bg-dark-900 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
                 <div className="flex items-center justify-between text-gray-400 mb-2">
-                  <span className="text-xs font-tech uppercase tracking-widest">Shipped & Delivered</span>
+                  <span className="text-xs font-tech ">Shipped & Delivered</span>
                   <Truck size={18} className="text-emerald-400" />
                 </div>
                 <div className="text-3xl font-display font-black text-white">{shippedOrders}</div>
-                <span className="text-[11px] font-tech text-gray-500 mt-1 block">With carrier tracking</span>
+                <span className="text-xs font-tech text-gray-500 mt-1 block">With carrier tracking</span>
               </div>
             </div>
 
@@ -441,11 +430,11 @@ export default function AdminMerchPage() {
                           <td className="py-3 font-bold text-white">#{o.order_number}</td>
                           <td className="py-3 text-gray-300">
                             <div>{o.customer_name}</div>
-                            <div className="text-[10px] text-gray-500">{o.customer_email}</div>
+                            <div className="text-xs text-gray-500">{o.customer_email}</div>
                           </td>
                           <td className="py-3">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                                 o.payment_status === 'paid'
                                   ? 'bg-emerald-500/10 text-emerald-400'
                                   : 'bg-amber-500/10 text-amber-400'
@@ -456,7 +445,7 @@ export default function AdminMerchPage() {
                           </td>
                           <td className="py-3">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                                 o.fulfillment_status === 'shipped' || o.fulfillment_status === 'delivered'
                                   ? 'bg-blue-500/10 text-blue-400'
                                   : o.fulfillment_status === 'fulfillment_error'
@@ -512,11 +501,11 @@ export default function AdminMerchPage() {
                         </td>
                         <td className="py-3 text-gray-300">
                           <div>{o.customer_name}</div>
-                          <div className="text-[10px] text-gray-500">{o.customer_email}</div>
+                          <div className="text-xs text-gray-500">{o.customer_email}</div>
                         </td>
                         <td className="py-3">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                               o.fulfillment_status === 'shipped' || o.fulfillment_status === 'delivered'
                                 ? 'bg-emerald-500/10 text-emerald-400'
                                 : o.fulfillment_status === 'fulfillment_error'
@@ -608,7 +597,7 @@ export default function AdminMerchPage() {
                     Stuck Publishing Recovery &amp; Direct Deletion Tool
                   </span>
                 </div>
-                <span className="text-[10px] font-tech text-gray-500 hidden sm:inline">
+                <span className="text-xs font-tech text-gray-500 hidden sm:inline">
                   Manage any Printify item by ID even if not yet saved to local catalog
                 </span>
               </div>
@@ -628,7 +617,7 @@ export default function AdminMerchPage() {
                   type="button"
                   onClick={handleInspectProduct}
                   disabled={isInspecting || !lookupId.trim()}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-tech font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-tech font-bold  bg-white/10 hover:bg-white/15 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
                 >
                   {isInspecting ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
                   <span>Inspect Product</span>
@@ -651,16 +640,16 @@ export default function AdminMerchPage() {
                           {inspectedProduct.printifyProduct?.title || 'Unknown Title'}
                         </h4>
                         {inspectedProduct.isLocked ? (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
+                          <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
                             Stuck Publishing (Locked)
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             Unlocked
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] font-tech text-gray-400 font-mono mt-0.5">
+                      <div className="text-xs font-tech text-gray-400 font-mono mt-0.5">
                         ID: {inspectedProduct.productId} • {inspectedProduct.printifyProduct?.variants_count || 0} variants
                         {inspectedProduct.localProduct ? ' • Synced in local store' : ' • Not in local store'}
                       </div>
@@ -673,7 +662,7 @@ export default function AdminMerchPage() {
                           type="button"
                           onClick={() => handleResetPublishing(inspectedProduct.productId)}
                           disabled={actionLoading === inspectedProduct.productId || !canManage}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-tech font-bold uppercase bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50 cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech font-bold uppercase bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50 cursor-pointer"
                         >
                           {actionLoading === inspectedProduct.productId ? (
                             <Loader2 size={12} className="animate-spin" />
@@ -696,7 +685,7 @@ export default function AdminMerchPage() {
                           setDeleteModalMode('delete');
                         }}
                         disabled={!canManage}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-tech font-bold uppercase bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech font-bold uppercase bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all disabled:opacity-50 cursor-pointer"
                       >
                         <Trash2 size={12} />
                         <span>Delete Product</span>
@@ -714,7 +703,7 @@ export default function AdminMerchPage() {
                           setDeleteModalMode('force_delete');
                         }}
                         disabled={!canManage}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-tech font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-all shadow-md shadow-red-600/20 disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-tech font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-all shadow-md shadow-red-600/20 disabled:opacity-50 cursor-pointer"
                       >
                         <AlertOctagon size={12} />
                         <span>Force Delete</span>
@@ -772,40 +761,40 @@ export default function AdminMerchPage() {
                           <h4 className="text-white font-display font-bold text-sm truncate">{p.title}</h4>
                           <div className="flex items-center justify-between text-xs font-tech mt-1">
                             <span className="text-vital-400 font-bold">${(p.retail_price_cents / 100).toFixed(2)}</span>
-                            <span className="text-gray-400 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10 uppercase tracking-wider text-[10px]">
+                            <span className="text-gray-400 font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/10  text-xs">
                               {p.category}
                             </span>
                           </div>
                           <div className="flex flex-wrap items-center gap-1.5 mt-2">
                             {isLocked ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 animate-pulse">
+                              <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 animate-pulse">
                                 <AlertTriangle size={9} />
                                 <span>PUBLISHING</span>
                               </span>
                             ) : isPublishingError ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1">
                                 <AlertTriangle size={9} />
                                 <span>PUBLISHING ERROR</span>
                               </span>
                             ) : isArchived ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">
+                              <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">
                                 ARCHIVED
                               </span>
                             ) : isLive ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
                                 <span>LIVE</span>
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-tech font-bold uppercase bg-gray-500/15 text-gray-400 border border-white/10">
+                              <span className="px-2 py-0.5 rounded text-xs font-tech font-bold uppercase bg-gray-500/15 text-gray-400 border border-white/10">
                                 UNPUBLISHED
                               </span>
                             )}
-                            <span className="text-[10px] font-tech text-gray-500">
+                            <span className="text-xs font-tech text-gray-500">
                               {p.variants?.length || 0} variants
                             </span>
                           </div>
-                          <div className="text-[10px] font-tech text-gray-500 font-mono mt-1 truncate">
+                          <div className="text-xs font-tech text-gray-500 font-mono mt-1 truncate">
                             ID: {targetId}
                           </div>
                         </div>
@@ -819,7 +808,7 @@ export default function AdminMerchPage() {
                             onClick={() => handleResetPublishing(targetId)}
                             disabled={actionLoading === targetId || !canManage}
                             title="Reset Printify stuck publishing lock"
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-tech font-bold uppercase bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-tech font-bold uppercase bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all disabled:opacity-50 cursor-pointer"
                           >
                             {actionLoading === targetId ? (
                               <Loader2 size={11} className="animate-spin" />
@@ -839,7 +828,7 @@ export default function AdminMerchPage() {
                             }}
                             disabled={!canManage}
                             title="Reset stuck lock and permanently delete"
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-tech font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-all disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-tech font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-all disabled:opacity-50 cursor-pointer"
                           >
                             <AlertOctagon size={11} />
                             <span>Force Delete</span>
@@ -854,7 +843,7 @@ export default function AdminMerchPage() {
                           }}
                           disabled={!canManage}
                           title="Permanently delete product"
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-tech font-bold uppercase bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 hover:border-red-500/30 transition-all disabled:opacity-50 cursor-pointer"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-tech font-bold uppercase bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 hover:border-red-500/30 transition-all disabled:opacity-50 cursor-pointer"
                         >
                           <Trash2 size={11} />
                           <span>Delete</span>
@@ -871,7 +860,7 @@ export default function AdminMerchPage() {
         {/* PERMANENT DELETION CONFIRMATION MODAL */}
         {deleteModalProduct && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80  animate-fadeIn"
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
@@ -944,7 +933,7 @@ export default function AdminMerchPage() {
                   type="button"
                   onClick={handleConfirmDelete}
                   disabled={isDeleting}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-tech font-bold uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-all shadow-lg shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-tech font-bold  bg-red-600 hover:bg-red-500 text-white transition-all shadow-lg shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isDeleting ? (
                     <>
