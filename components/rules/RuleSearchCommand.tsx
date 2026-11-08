@@ -4,12 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Command } from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Search, X, Hash, ArrowRight, CornerDownLeft, BookOpen } from 'lucide-react';
-import { RULES, RULE_CATEGORIES, Rule } from '@/data/rules';
+import { RULES, RULE_CATEGORIES, Rule, RuleCategory } from '@/data/rules';
 
 interface RuleSearchCommandProps {
   onSelectRule: (ruleId: string) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  rules?: Rule[];
+  categories?: RuleCategory[];
 }
 
 /**
@@ -20,6 +22,8 @@ export const RuleSearchCommand: React.FC<RuleSearchCommandProps> = ({
   onSelectRule,
   isOpen,
   onOpenChange,
+  rules,
+  categories,
 }) => {
   const [search, setSearch] = useState('');
 
@@ -36,29 +40,41 @@ export const RuleSearchCommand: React.FC<RuleSearchCommandProps> = ({
   }, [isOpen, onOpenChange]);
 
   // Map category IDs to titles
+  const sourceRules = rules ?? RULES;
+  const sourceCategories = categories ?? RULE_CATEGORIES;
   const categoryMap = useMemo(() => {
-    return RULE_CATEGORIES.reduce<Record<string, string>>((acc, cat) => {
+    return sourceCategories.reduce<Record<string, string>>((acc, cat) => {
       acc[cat.id] = cat.title;
       return acc;
     }, {});
-  }, []);
+  }, [sourceCategories]);
 
   // Filter rules based on search input
   const filteredRules = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return RULES.slice(0, 10); // Show first 10 when empty
+    if (!query) return sourceRules.slice(0, 10); // Show first 10 when empty
 
-    return RULES.filter((rule) => {
-      const titleMatch = rule.title.toLowerCase().includes(query);
-      const shortTitleMatch = rule.shortTitle?.toLowerCase().includes(query);
-      const summaryMatch = rule.summary.toLowerCase().includes(query);
-      const contentMatch = rule.content.toLowerCase().includes(query);
-      const categoryMatch = (categoryMap[rule.category] || '').toLowerCase().includes(query);
-      const aliasMatch = rule.aliases.some((alias) => alias.toLowerCase().includes(query));
+    const terms = query.split(/\s+/).filter(Boolean);
 
-      return titleMatch || shortTitleMatch || summaryMatch || contentMatch || categoryMatch || aliasMatch;
+    return sourceRules.filter((rule) => {
+      // Build one searchable text blob from every field of the rule
+      const haystack = [
+        rule.title,
+        rule.shortTitle,
+        rule.summary,
+        rule.content,
+        categoryMap[rule.category],
+        ...(rule.aliases || []),
+        ...(rule.callouts || []).flatMap((c) => [c.title, c.text, c.customLabel, c.linkText]),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      // Whole phrase match, or every word present somewhere in the rule
+      return haystack.includes(query) || terms.every((t) => haystack.includes(t));
     });
-  }, [search, categoryMap]);
+  }, [search, categoryMap, sourceRules]);
 
   const handleSelect = (ruleId: string) => {
     onOpenChange(false);

@@ -406,6 +406,12 @@ export const RulesCMS: React.FC = () => {
       newRuleOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1;
     }
 
+    // Moved rules swap position numbers so neither keeps its original number
+    const newRuleNumber = targetRule.rule_number;
+    const newTargetNumber = rule.rule_number;
+    const newRuleCore = targetRule.core_rule_number;
+    const newTargetCore = rule.core_rule_number;
+
     // 1. Optimistic UI update: Immediately re-sort rules in state so the user sees the rule move instantly
     setRules((prev) => {
       return prev
@@ -414,6 +420,8 @@ export const RulesCMS: React.FC = () => {
             return {
               ...r,
               sort_order: newRuleOrder,
+              rule_number: newRuleNumber,
+              core_rule_number: newRuleCore,
               has_draft: true,
               draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
               status: 'modified' as const,
@@ -423,6 +431,8 @@ export const RulesCMS: React.FC = () => {
             return {
               ...r,
               sort_order: newTargetOrder,
+              rule_number: newTargetNumber,
+              core_rule_number: newTargetCore,
               has_draft: true,
               draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
               status: 'modified' as const,
@@ -439,14 +449,14 @@ export const RulesCMS: React.FC = () => {
           {
             rule_id: rule.id,
             category_id: rule.category_id,
-            rule_number: rule.rule_number,
+            rule_number: newRuleNumber,
             title: rule.title,
             short_title: rule.short_title || rule.title,
             short_description: rule.short_description || '',
             content: rule.content,
             aliases: rule.aliases || [],
             featured: Boolean(rule.featured),
-            core_rule_number: rule.core_rule_number,
+            core_rule_number: newRuleCore,
             severity: rule.severity || 'standard',
             callouts: rule.callouts || [],
             sort_order: newRuleOrder,
@@ -459,14 +469,14 @@ export const RulesCMS: React.FC = () => {
           {
             rule_id: targetRule.id,
             category_id: targetRule.category_id,
-            rule_number: targetRule.rule_number,
+            rule_number: newTargetNumber,
             title: targetRule.title,
             short_title: targetRule.short_title || targetRule.title,
             short_description: targetRule.short_description || '',
             content: targetRule.content,
             aliases: targetRule.aliases || [],
             featured: Boolean(targetRule.featured),
-            core_rule_number: targetRule.core_rule_number,
+            core_rule_number: newTargetCore,
             severity: targetRule.severity || 'standard',
             callouts: targetRule.callouts || [],
             sort_order: newTargetOrder,

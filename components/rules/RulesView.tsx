@@ -273,6 +273,8 @@ export const RulesView: React.FC = () => {
         isOpen={isSearchOpen}
         onOpenChange={setIsSearchOpen}
         onSelectRule={navigateToRule}
+        rules={rules}
+        categories={categories}
       />
 
       {/* Mobile Drawer */}
