@@ -385,107 +385,90 @@ export const RulesCMS: React.FC = () => {
     setIsEditorOpen(true);
   };
 
+  const actor = () => ({
+    discordId: user?.discordId || '150580708144840704',
+    displayName: user?.displayName || 'Damon',
+  });
+
+  const toDraftPayload = (r: DbRule) => ({
+    rule_id: r.id,
+    category_id: r.category_id,
+    rule_number: r.rule_number,
+    title: r.title,
+    short_title: r.short_title || r.title,
+    short_description: r.short_description || '',
+    content: r.content,
+    aliases: r.aliases || [],
+    featured: Boolean(r.featured),
+    core_rule_number: r.core_rule_number,
+    severity: r.severity || 'standard',
+    callouts: r.callouts || [],
+    sort_order: r.sort_order || 0,
+    enabled: r.enabled ?? true,
+    action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
+  });
+
+  // Renumber every rule from its position in the given order (1, 2, 3...) and stage
+  // drafts for each rule whose position or number changed.
+  const applyRuleOrder = async (ordered: DbRule[], forceIds: string[] = []) => {
+    const previous = new Map(rules.map((r) => [r.id, r]));
+    const next = ordered.map((r, i) => ({ ...r, sort_order: i + 1, rule_number: i + 1 }));
+    const changed = next.filter((r) => {
+      const old = previous.get(r.id);
+      return (
+        forceIds.includes(r.id) ||
+        !old ||
+        old.sort_order !== r.sort_order ||
+        old.rule_number !== r.rule_number ||
+        old.core_rule_number !== r.core_rule_number
+      );
+    });
+    const changedIds = new Set(changed.map((r) => r.id));
+
+    // Optimistic UI update so the new numbers show immediately
+    setRules((prev) => {
+      const byId = new Map(next.map((r) => [r.id, r]));
+      const deleted = prev.filter((r) => !byId.has(r.id));
+      const updated = next.map((r) =>
+        changedIds.has(r.id)
+          ? {
+              ...r,
+              has_draft: true,
+              draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
+              status: 'modified' as const,
+            }
+          : r
+      );
+      return [...updated, ...deleted].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    });
+
+    await Promise.all(changed.map((r) => saveClientRuleDraft(toDraftPayload(r), actor())));
+  };
+
   // Quick reorder rules inside current category
   const handleQuickReorder = async (rule: DbRule, direction: 'up' | 'down') => {
     if (!canEdit) return;
-    const catRules = rules
-      .filter((r) => r.category_id === rule.category_id && !r.deleted_at)
+    const all = rules
+      .filter((r) => !r.deleted_at)
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const catRules = all.filter((r) => r.category_id === rule.category_id);
     const currentIndex = catRules.findIndex((r) => r.id === rule.id);
     if (currentIndex < 0) return;
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= catRules.length) return;
-
     const targetRule = catRules[targetIndex];
-    const currentOrder = rule.sort_order ?? (currentIndex + 1);
-    const targetOrder = targetRule.sort_order ?? (targetIndex + 1);
 
-    let newRuleOrder = targetOrder;
-    let newTargetOrder = currentOrder;
-    if (newRuleOrder === newTargetOrder) {
-      newRuleOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1;
-    }
-
-    // Moved rules swap position numbers so neither keeps its original number
-    const newRuleNumber = targetRule.rule_number;
-    const newTargetNumber = rule.rule_number;
-    const newRuleCore = targetRule.core_rule_number;
-    const newTargetCore = rule.core_rule_number;
-
-    // 1. Optimistic UI update: Immediately re-sort rules in state so the user sees the rule move instantly
-    setRules((prev) => {
-      return prev
-        .map((r) => {
-          if (r.id === rule.id) {
-            return {
-              ...r,
-              sort_order: newRuleOrder,
-              rule_number: newRuleNumber,
-              core_rule_number: newRuleCore,
-              has_draft: true,
-              draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
-              status: 'modified' as const,
-            };
-          }
-          if (r.id === targetRule.id) {
-            return {
-              ...r,
-              sort_order: newTargetOrder,
-              rule_number: newTargetNumber,
-              core_rule_number: newTargetCore,
-              has_draft: true,
-              draft_action: (r.draft_action || 'reorder') as 'create' | 'update' | 'delete' | 'reorder',
-              status: 'modified' as const,
-            };
-          }
-          return r;
-        })
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    });
+    // Swap the two rules' places in the full list, then renumber everything
+    const ordered = [...all];
+    const i = ordered.findIndex((r) => r.id === rule.id);
+    const j = ordered.findIndex((r) => r.id === targetRule.id);
+    // Moved rules trade core numbers too so neither keeps its original one
+    ordered[i] = { ...targetRule, core_rule_number: rule.core_rule_number };
+    ordered[j] = { ...rule, core_rule_number: targetRule.core_rule_number };
+    [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
 
     try {
-      await Promise.all([
-        saveClientRuleDraft(
-          {
-            rule_id: rule.id,
-            category_id: rule.category_id,
-            rule_number: newRuleNumber,
-            title: rule.title,
-            short_title: rule.short_title || rule.title,
-            short_description: rule.short_description || '',
-            content: rule.content,
-            aliases: rule.aliases || [],
-            featured: Boolean(rule.featured),
-            core_rule_number: newRuleCore,
-            severity: rule.severity || 'standard',
-            callouts: rule.callouts || [],
-            sort_order: newRuleOrder,
-            enabled: rule.enabled ?? true,
-            action: rule.draft_action || 'reorder',
-          },
-          { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
-        ),
-        saveClientRuleDraft(
-          {
-            rule_id: targetRule.id,
-            category_id: targetRule.category_id,
-            rule_number: newTargetNumber,
-            title: targetRule.title,
-            short_title: targetRule.short_title || targetRule.title,
-            short_description: targetRule.short_description || '',
-            content: targetRule.content,
-            aliases: targetRule.aliases || [],
-            featured: Boolean(targetRule.featured),
-            core_rule_number: newTargetCore,
-            severity: targetRule.severity || 'standard',
-            callouts: targetRule.callouts || [],
-            sort_order: newTargetOrder,
-            enabled: targetRule.enabled ?? true,
-            action: targetRule.draft_action || 'reorder',
-          },
-          { discordId: user?.discordId || '150580708144840704', displayName: user?.displayName || 'Damon' }
-        ),
-      ]);
+      await applyRuleOrder(ordered);
       await fetchData();
     } catch (err: any) {
       alert(`Reordering failed: ${err.message}`);
@@ -533,6 +516,28 @@ export const RulesCMS: React.FC = () => {
     }
     setSaveStatus('saving');
     try {
+      // If the Rule Number was changed, move the rule to that position and renumber the rest
+      const existing = rules.find((r) => r.id === editingRule.id);
+      const wantedNumber = Number(editingRule.rule_number);
+      if (editingRule.id && wantedNumber > 0 && (!existing || existing.rule_number !== wantedNumber)) {
+        const others = rules
+          .filter((r) => !r.deleted_at && r.id !== editingRule.id)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        const position = Math.min(Math.max(wantedNumber, 1), others.length + 1) - 1;
+        const ordered = [...others];
+        ordered.splice(position, 0, {
+          ...(existing || ({} as DbRule)),
+          ...editingRule,
+          draft_action: existing ? editingRule.draft_action || 'update' : 'create',
+        } as DbRule);
+        await applyRuleOrder(ordered, [editingRule.id]);
+        setEditingRule({ ...editingRule, rule_number: position + 1, sort_order: position + 1 });
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
+        await fetchData();
+        return;
+      }
+
       await saveClientRuleDraft(
         {
           rule_id: editingRule.id || `rule-${Date.now()}`,
