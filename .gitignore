@@ -37,3 +37,8 @@ pnpm-debug.log*
 *.zip
 _external_components/
 *.tsbuildinfo
+
+# Local tool state and credentials
+.playwright-mcp/
+.claude/settings.local.json
+.mcp.local.json

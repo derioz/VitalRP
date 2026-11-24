@@ -1,23 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Menu,
-  X,
-  Gamepad2,
-  ShoppingCart,
-  MessageSquare,
-  LogIn,
-  Shield,
-  LogOut,
-  ExternalLink,
-  Edit2,
-  Check,
-  Loader2,
-  Camera,
-} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, X, LogOut, ExternalLink, Edit2, Check, Loader2 } from 'lucide-react';
 import { VitalLogo } from './VitalLogo';
 import { useAuth } from './AuthProvider';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -29,23 +16,42 @@ const DiscordLogo = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     fill="currentColor"
     className={className}
+    aria-hidden="true"
   >
-    <title>Discord</title>
     <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" />
   </svg>
 );
 
 interface NavbarProps {
+  /** Kept so existing pages can keep passing it. The bar no longer links to the store. */
   onOpenStore?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
+const navLinks = [
+  { name: 'Home', href: '/' },
+  { name: 'Features', href: '/#features' },
+  { name: 'About', href: '/#values' },
+  { name: 'Rules', href: '/rules' },
+  { name: 'GTA VI', href: '/gta6' },
+  { name: 'Wiki', href: '/wiki' },
+  { name: 'Merch', href: '/merch' },
+  { name: 'FAQ', href: '/#faq' },
+  { name: 'Join', href: '/#join' },
+];
+
+const DISCORD_URL = 'https://discord.gg/vitalrp';
+const PLAY_URL = 'https://connect.vitalrp.net';
+
+/**
+ * One bar, one container. The bar keeps the same height and the same inner
+ * width at the top and after scrolling, so nothing can overflow or shift. Only
+ * the surface (background and hairline) changes, with a short color
+ * transition.
+ */
+export const Navbar: React.FC<NavbarProps> = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
-  const [isForumsHovered, setIsForumsHovered] = useState(false);
-  const [isStoreHovered, setIsStoreHovered] = useState(false);
-  const forumsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pathname = usePathname();
 
   const { user, isAdmin, loading, login, logout, updateDisplayName } = useAuth();
 
@@ -55,25 +61,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
   const [isSavingMobileName, setIsSavingMobileName] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 30);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 8);
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleForumsMouseEnter = () => {
-    forumsTimeoutRef.current = setTimeout(() => {
-      setIsForumsHovered(true);
-    }, 200);
-  };
-
-  const handleForumsMouseLeave = () => {
-    if (forumsTimeoutRef.current) {
-      clearTimeout(forumsTimeoutRef.current);
-    }
-    setIsForumsHovered(false);
-  };
+  // Close the drawer when it is no longer a mobile layout or on Escape.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => mq.matches && setIsMobileMenuOpen(false);
+    window.addEventListener('keydown', onKey);
+    mq.addEventListener('change', onChange);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      mq.removeEventListener('change', onChange);
+    };
+  }, [isMobileMenuOpen]);
 
   const handleSaveMobileName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,424 +92,160 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
     setIsEditingMobileName(false);
   };
 
-  // Admin tooltip & Photo Contest transition states
-  const [isAdminHovered, setIsAdminHovered] = useState(false);
-  const [isTransitioningToContest, setIsTransitioningToContest] = useState(false);
+  const isCurrent = (href: string) => !href.includes('#') && href === pathname;
 
-  const playCameraShutterSound = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+  const linkClass = (href: string) =>
+    `relative flex h-14 items-center whitespace-nowrap px-2.5 text-sm font-display font-medium transition-colors duration-150 xl:px-3 ${
+      isCurrent(href) ? 'text-white' : 'text-gray-300 hover:text-white'
+    }`;
 
-      const playClick = (time: number, freq: number, duration: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, time);
-        osc.frequency.exponentialRampToValueAtTime(80, time + duration);
-        gain.gain.setValueAtTime(0.3, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(time);
-        osc.stop(time + duration);
-
-        // Burst of mechanical texture noise
-        const bufferSize = Math.floor(ctx.sampleRate * duration);
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = (Math.random() * 2 - 1) * 0.5;
-        }
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        const noiseFilter = ctx.createBiquadFilter();
-        noiseFilter.type = 'bandpass';
-        noiseFilter.frequency.value = 2200;
-        const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.25, time);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-        noise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        noise.start(time);
-        noise.stop(time + duration);
-      };
-
-      const now = ctx.currentTime;
-      playClick(now, 1200, 0.04);
-      playClick(now + 0.07, 750, 0.06);
-    } catch {
-      // AudioContext fails gracefully if restricted
-    }
-  };
-
-  const handleContestClick = (e?: React.MouseEvent) => {
-    if (e) {
-      if (e.metaKey || e.ctrlKey || e.shiftKey) {
-        window.open('https://contest.vitalrp.net', '_blank', 'noopener,noreferrer');
-        return;
-      }
-      e.preventDefault();
-    }
-
-    if (isTransitioningToContest) return;
-
-    setIsTransitioningToContest(true);
-    playCameraShutterSound();
-
-    setTimeout(() => {
-      window.location.href = 'https://contest.vitalrp.net';
-    }, 850);
-  };
-
-
-  // Nav links include Rules, Wiki, and Merch
-  const navLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Features', href: '/#features' },
-    { name: 'About', href: '/#values' },
-    { name: 'Rules', href: '/rules' },
-    { name: 'Wiki', href: '/wiki' },
-    { name: 'Merch', href: '/merch' },
-    { name: 'FAQ', href: '/#faq' },
-    { name: 'Join', href: '/#join' },
-  ];
-
-  const handleStoreClick = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    // Tebex store links are temporarily disabled
-  };
+  const buttonBase =
+    'inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded px-3.5 text-sm font-display font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vital-400';
 
   return (
-    <>
-      <motion.header
-      initial={false}
-      animate={{
-        paddingTop: isScrolled ? 14 : 0,
-        paddingLeft: isScrolled ? 16 : 0,
-        paddingRight: isScrolled ? 16 : 0,
-      }}
-      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-      className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
-    >
-      <div className="w-full flex justify-center">
-        {/* Navigation Bar: Fixed top-flush when at top, animated floating pill with true blur when scrolled */}
-        <motion.div
-          layout
-          animate={{
-            maxWidth: isScrolled ? '80rem' : '100%',
-            borderRadius: isScrolled ? '8px' : '0px',
-          }}
-          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-          className={`w-full flex items-center justify-between pointer-events-auto transition-colors duration-300 ${
-            isScrolled
-              ? 'px-3 sm:px-6 py-2 sm:py-2.5 bg-dark-950/95 border border-white/15'
-              : 'px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5 bg-dark-950/80 border-b border-white/10 shadow-none'
-          }`}
-        >
-          {/* Brand Logo & Clean Title (Vital RP) */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="relative">
-              <VitalLogo className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
-            </div>
-            <div className="flex items-center">
-              <span className="text-white font-display font-extrabold text-base sm:text-xl tracking-wider leading-none">
-                Vital <span className="text-[#F97316]">RP</span>
-              </span>
-            </div>
+    <header className="fixed inset-x-0 top-0 z-50">
+      <div
+        className={`border-b transition-colors duration-200 ${
+          isScrolled ? 'border-white/15 bg-dark-950' : 'border-white/10 bg-dark-950/80'
+        }`}
+      >
+        <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center gap-6 px-4 sm:px-8 lg:px-12">
+          {/* Brand */}
+          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Vital RP home">
+            <VitalLogo className="h-8 w-8 shrink-0" />
+            <span className="font-display text-lg font-semibold leading-none text-white">
+              Vital <span className="text-vital-500">RP</span>
+            </span>
           </Link>
 
-          {/* Desktop Center Navigation Pills */}
-          <nav
-            aria-label="Main Navigation"
-            className="hidden lg:flex items-center gap-1 bg-dark-950/40 p-1 rounded-full border border-white/5"
-            onMouseLeave={() => setHoveredNavIndex(null)}
-          >
-            {navLinks.map((link, index) => {
-              const isHovered = hoveredNavIndex === index;
-              return (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onMouseEnter={() => setHoveredNavIndex(index)}
-                  className="relative px-3.5 py-1.5 text-sm font-display font-semibold  text-gray-300 hover:text-white transition-colors duration-200 rounded"
-                >
-                  {isHovered && (
-                    <motion.div
-                      layoutId="navbar-pill-indicator"
-                      className="absolute inset-0 bg-white/10 rounded-full -z-10 border border-white/10"
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          {/* Main links */}
+          <nav aria-label="Main Navigation" className="hidden min-w-0 flex-1 lg:block">
+            <ul className="flex items-center">
+              {navLinks.map((link) => (
+                <li key={link.name}>
+                  <a
+                    href={link.href}
+                    aria-current={isCurrent(link.href) ? 'page' : undefined}
+                    className={linkClass(link.href)}
+                  >
+                    {link.name}
+                    <span
+                      className={`absolute inset-x-2.5 bottom-0 h-px bg-vital-500 transition-opacity duration-150 xl:inset-x-3 ${
+                        isCurrent(link.href) ? 'opacity-100' : 'opacity-0'
+                      }`}
                     />
-                  )}
-                  <span className="relative z-10">{link.name}</span>
-                </a>
-              );
-            })}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </nav>
 
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Desktop Forums Hover Pill */}
-            <div
-              className="relative hidden xl:block"
-              onMouseEnter={handleForumsMouseEnter}
-              onMouseLeave={handleForumsMouseLeave}
-            >
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-400 hover:text-white hover:bg-white/5 rounded transition-colors"
-              >
-                <MessageSquare size={14} />
-                <span>Forums</span>
-              </button>
-              <AnimatePresence>
-                {isForumsHovered && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-vital-500 text-dark-950 text-xs font-tech font-black px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none"
-                  >
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-vital-500 rotate-45" />
-                    Coming Soon!
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-
-
-            {/* Photo Contest Button */}
-            <button
-              onClick={handleContestClick}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-vital-300 hover:text-white bg-vital-500/10 hover:bg-vital-500/20 rounded border border-vital-500/30 hover:border-vital-400/60 transition-all active:scale-95 group"
-              title="Vital RP Photo Contest"
-            >
-              <Camera size={14} className="text-vital-400 group-hover:rotate-12 transition-transform duration-300" />
-              <span>Contest</span>
-              <span className="relative flex h-2 w-2">
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-vital-500"></span>
-              </span>
-            </button>
-
-            {/* Tebex Store (Temporarily Disabled) */}
-            <div
-              className="relative hidden md:block"
-              onMouseEnter={() => setIsStoreHovered(true)}
-              onMouseLeave={() => setIsStoreHovered(false)}
-            >
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                onClick={handleStoreClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-400 opacity-60 cursor-not-allowed rounded transition-colors border border-white/5 bg-white/[0.02]"
-                title="Temporarily unavailable"
-              >
-                <ShoppingCart size={14} className="text-gray-400" />
-                <span>Store</span>
-              </button>
-              <AnimatePresence>
-                {isStoreHovered && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
-                  >
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-vital-500/40 rotate-45" />
-                    <span>Temporarily unavailable</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Discord */}
-            <a
-              href="https://discord.gg/vitalrp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-display font-semibold  text-gray-300 hover:text-[#5865F2] hover:bg-[#5865F2]/10 rounded transition-colors border border-transparent hover:border-[#5865F2]/30"
-              title="Join VitalRP Discord"
-            >
-              <DiscordLogo className="w-3.5 h-3.5 text-[#5865F2]" />
-              <span>Discord</span>
-            </a>
-
-            {/* FiveM Play/Connect CTA */}
-            <a
-              href="https://connect.vitalrp.net"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-vital-600 hover:bg-vital-500 text-white font-display font-semibold text-sm  active:scale-95 transition-all"
-            >
-              <Gamepad2 size={14} />
-              <span>Play</span>
-            </a>
-
-            {/* Special Admin Link: ONLY visible when user holds Discord Admin role - Shield icon with tooltip */}
+          {/* Actions, set apart from the links by a divider */}
+          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0 lg:border-l lg:border-white/10 lg:pl-6">
             {user && isAdmin && (
-              <div
-                className="relative hidden sm:inline-flex items-center justify-center"
-                onMouseEnter={() => setIsAdminHovered(true)}
-                onMouseLeave={() => setIsAdminHovered(false)}
+              <Link
+                href="/admin"
+                className="hidden h-9 items-center px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white xl:inline-flex"
               >
-                <Link
-                  href="/admin"
-                  aria-label="Admin Console"
-                  className="p-2 rounded bg-vital-500/15 hover:bg-vital-500/25 text-vital-400 hover:text-white border border-vital-500/30 hover:border-vital-500/60 transition-all active:scale-95 group flex items-center justify-center"
-                >
-                  <Shield size={15} className="text-vital-400 group-hover:text-white transition-colors" />
-                </Link>
-                <AnimatePresence>
-                  {isAdminHovered && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-dark-900/95 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold px-2.5 py-1 rounded whitespace-nowrap z-50  pointer-events-none flex items-center gap-1.5 backdrop-blur-md"
-                    >
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-900 border-t border-l border-vital-500/40 rotate-45" />
-                      <Shield size={11} className="text-vital-400" />
-                      <span>Admin Console</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                Admin
+              </Link>
             )}
 
-            {/* Profile Button / Discord Login Trigger */}
-            <div className="flex items-center pl-1 sm:pl-2 border-l border-white/10">
-              {loading ? (
-                <div className="w-9 h-9 rounded-full bg-dark-800 animate-pulse border border-white/10" />
-              ) : user ? (
-                /* Profile Button: displays ONLY Discord avatar in 1:1 circular ratio */
-                <ProfileDropdown />
-              ) : (
-                /* Login Button */
-                <button
-                  onClick={() => login('/')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 text-[#8a94fd] hover:text-white border border-[#5865F2]/30 transition-all text-sm font-display font-semibold "
-                  title="Sign in with Discord"
-                >
-                  <DiscordLogo className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Login</span>
-                </button>
-              )}
-            </div>
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden h-9 items-center px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white xl:inline-flex"
+            >
+              Discord
+            </a>
 
-            {/* Mobile Hamburger Button */}
+            <a
+              href={PLAY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${buttonBase} hidden bg-vital-500 text-dark-950 hover:bg-vital-400 sm:inline-flex`}
+            >
+              Play
+            </a>
+
+            {loading ? (
+              <div className="h-9 w-9 rounded-full border border-white/10 bg-dark-800" aria-hidden />
+            ) : user ? (
+              <ProfileDropdown />
+            ) : (
+              <button
+                onClick={() => login('/')}
+                title="Sign in with Discord"
+                className={`${buttonBase} border border-white/20 text-white hover:bg-white/10`}
+              >
+                <DiscordLogo className="h-4 w-4 text-[#8a94fd]" />
+                <span className="hidden sm:inline">Login</span>
+                <span className="sr-only sm:hidden">Login with Discord</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               aria-label="Toggle mobile menu"
               aria-expanded={isMobileMenuOpen}
-              className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-white/5 rounded transition-colors ml-1"
+              className="inline-flex h-9 w-9 items-center justify-center rounded text-gray-300 transition-colors hover:bg-white/5 hover:text-white lg:hidden"
             >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {isMobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Mobile Glassmorphic Drawer Menu */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="lg:hidden max-w-7xl mx-auto mt-2 pointer-events-auto"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="max-h-[calc(100svh-56px)] overflow-y-auto border-b border-white/15 bg-dark-950 lg:hidden"
           >
-            <div className="bg-dark-900/95  border border-white/15 rounded p-5 divide-y divide-white/10 space-y-4">
-              {/* Navigation Links */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="mx-auto max-w-[1440px] px-4 pb-6 pt-2 sm:px-8">
+              <ul className="divide-y divide-white/10">
                 {navLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-center px-4 py-2.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 hover:text-vital-400 font-display font-semibold text-sm  border border-white/5 transition-colors"
-                  >
-                    {link.name}
-                  </a>
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      aria-current={isCurrent(link.href) ? 'page' : undefined}
+                      className={`flex h-12 items-center font-display text-base font-medium transition-colors ${
+                        isCurrent(link.href) ? 'text-vital-400' : 'text-gray-200 hover:text-white'
+                      }`}
+                    >
+                      {link.name}
+                    </a>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
-              {/* Action Buttons */}
-              <div className="pt-4 space-y-2">
-                {/* Photo Contest Mobile Button */}
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleContestClick();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded bg-vital-500/10 hover:bg-vital-500/20 text-vital-300 border border-vital-500/30 font-display font-semibold text-sm  transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <Camera size={16} className="text-vital-400" />
-                    <span>VitalRP Photo Contest</span>
-                  </div>
-                  <span className="flex items-center gap-1.5 text-xs text-vital-400 bg-vital-500/20 px-2 py-0.5 rounded border border-vital-500/30">
-                    Live <span className="w-1.5 h-1.5 rounded-full bg-vital-400 " />
-                  </span>
-                </button>
-
+              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4 sm:grid-cols-1">
                 <a
-                  href="https://connect.vitalrp.net"
+                  href={PLAY_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-vital-600 text-white font-display font-semibold text-sm "
+                  className={`${buttonBase} h-11 bg-vital-500 text-dark-950 hover:bg-vital-400 sm:hidden`}
                 >
-                  <Gamepad2 size={16} />
-                  <span>Connect to Server (FiveM)</span>
+                  Play
                 </a>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div
-                    className="relative"
-                    title="Temporarily unavailable"
-                  >
-                    <button
-                      type="button"
-                      disabled
-                      aria-disabled="true"
-                      onClick={(e) => {
-                        e.preventDefault();
-                      }}
-                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded bg-dark-800/60 text-gray-400 font-display font-semibold text-sm  border border-white/5 cursor-not-allowed opacity-60"
-                      title="Temporarily unavailable"
-                    >
-                      <ShoppingCart size={14} className="text-gray-400" />
-                      <span>Store</span>
-                      <span className="text-xs text-vital-400/90 font-mono tracking-tight ml-0.5">(Unavailable)</span>
-                    </button>
-                  </div>
-
-                  <a
-                    href="https://discord.gg/vitalrp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-2 rounded bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#8a94fd] font-display font-semibold text-sm  border border-[#5865F2]/30 transition-colors"
-                  >
-                    <DiscordLogo className="w-3.5 h-3.5" />
-                    <span>Discord</span>
-                  </a>
-                </div>
-
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded bg-dark-800/50 text-gray-400 font-display font-semibold text-sm  border border-white/5">
-                  <MessageSquare size={14} />
-                  <span>Forums (Coming Soon)</span>
-                </div>
+                <a
+                  href={DISCORD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${buttonBase} h-11 border border-white/20 text-white hover:bg-white/10`}
+                >
+                  Discord
+                </a>
               </div>
 
-              {/* User Account / Profile in Mobile Menu */}
-              <div className="pt-4">
+              {/* Account */}
+              <div className="mt-4 border-t border-white/10 pt-4">
                 {user ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -513,37 +257,34 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                           )}&background=f97316&color=fff`
                         }
                         alt={user.displayName}
-                        className="w-10 h-10 rounded-full border border-white/20 aspect-square object-cover"
+                        className="aspect-square h-10 w-10 rounded-full border border-white/20 object-cover"
                         width={40}
                         height={40}
                       />
-                      <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-center gap-2">
-                          <span className="text-white font-display font-bold text-sm truncate">
+                          <span className="truncate font-display text-sm font-semibold text-white">
                             {user.displayName}
                           </span>
                           {isAdmin && (
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-tech font-bold  bg-vital-500/20 text-vital-400 border border-vital-500/30 shrink-0">
+                            <span className="shrink-0 rounded border border-vital-500/30 bg-vital-500/20 px-1.5 py-0.5 text-[10px] font-tech font-bold text-vital-400">
                               Admin
                             </span>
                           )}
                         </div>
                         {user.username && (
-                          <span className="text-gray-400 text-xs truncate">
-                            @{user.username}
-                          </span>
+                          <span className="truncate text-xs text-gray-400">@{user.username}</span>
                         )}
                       </div>
                     </div>
 
-                    {/* Mobile Display Name Changer */}
                     {!isEditingMobileName ? (
                       <button
                         onClick={() => {
                           setMobileName(user.displayName || '');
                           setIsEditingMobileName(true);
                         }}
-                        className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-tech transition-colors"
+                        className="flex w-full items-center justify-between rounded bg-white/5 px-3 py-2 text-xs font-tech text-gray-300 transition-colors hover:bg-white/10"
                       >
                         <span>Change Display Name</span>
                         <Edit2 size={12} className="text-vital-400" />
@@ -556,12 +297,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                           onChange={(e) => setMobileName(e.target.value)}
                           placeholder="New name"
                           maxLength={32}
-                          className="flex-1 bg-dark-800 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-vital-500"
+                          className="flex-1 rounded border border-white/15 bg-dark-800 px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:border-vital-500 focus:outline-none"
                         />
                         <button
                           type="submit"
                           disabled={isSavingMobileName}
-                          className="p-2 rounded-lg bg-vital-500 text-white"
+                          className="rounded bg-vital-500 p-2 text-dark-950"
+                          aria-label="Save display name"
                         >
                           {isSavingMobileName ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -572,24 +314,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                         <button
                           type="button"
                           onClick={() => setIsEditingMobileName(false)}
-                          className="p-2 rounded-lg bg-white/5 text-gray-400"
+                          className="rounded bg-white/5 p-2 text-gray-400"
+                          aria-label="Cancel"
                         >
                           <X size={14} />
                         </button>
                       </form>
                     )}
 
-                    {/* Admin Console button on mobile ONLY if verified admin */}
                     {isAdmin && (
                       <Link
                         href="/admin"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded bg-vital-500/10 text-vital-400 border border-vital-500/25 text-sm font-display font-semibold "
+                        className="flex w-full items-center justify-between rounded border border-vital-500/25 bg-vital-500/10 px-3 py-2.5 font-display text-sm font-medium text-vital-400"
                       >
-                        <div className="flex items-center gap-2">
-                          <Shield size={14} />
-                          <span>Admin Console</span>
-                        </div>
+                        <span>Admin Console</span>
                         <ExternalLink size={12} />
                       </Link>
                     )}
@@ -599,7 +338,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                         setIsMobileMenuOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center justify-center gap-2 py-2 rounded text-sm font-display font-semibold  text-red-400 bg-red-500/10 border border-red-500/20"
+                      className="flex w-full items-center justify-center gap-2 rounded border border-red-500/20 bg-red-500/10 py-2.5 font-display text-sm font-medium text-red-400"
                     >
                       <LogOut size={14} />
                       <span>Log Out</span>
@@ -611,9 +350,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
                       setIsMobileMenuOpen(false);
                       login('/');
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded bg-[#5865F2] hover:bg-[#4752c4] text-white font-display font-semibold text-sm /20"
+                    className={`${buttonBase} h-11 w-full bg-[#5865F2] text-white hover:bg-[#4752c4] sm:hidden`}
                   >
-                    <DiscordLogo className="w-4 h-4" />
+                    <DiscordLogo className="h-4 w-4" />
                     <span>Login with Discord</span>
                   </button>
                 )}
@@ -622,130 +361,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenStore }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
-
-    {/* Fullscreen Cinematic Camera Viewfinder & Flash Transition to Photo Contest */}
-    <AnimatePresence>
-      {isTransitioningToContest && (
-        <motion.div
-          key="contest-transition-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-auto bg-dark-950/95 backdrop-blur-xl overflow-hidden select-none"
-        >
-          {/* Background Radial Glow */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.18)_0%,transparent_75%)]" />
-
-          {/* Viewfinder HUD Framing */}
-          <motion.div
-            initial={{ scale: 1.15, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="absolute inset-4 sm:inset-10 border border-white/10 rounded-2xl pointer-events-none flex flex-col justify-between p-4 sm:p-8"
-          >
-            {/* Corner Viewfinder Brackets */}
-            <div className="absolute top-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-l-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-            <div className="absolute top-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-t-2 border-r-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-l-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 sm:w-12 sm:h-12 border-b-2 border-r-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-
-            {/* Top HUD Stats */}
-            <div className="flex items-center justify-between text-xs sm:text-xs font-tech tracking-widest text-amber-400 uppercase">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-bold text-white tracking-wider">REC</span>
-                <span className="text-gray-400 hidden sm:inline">4K UHD 60FPS</span>
-              </div>
-              <div className="flex items-center gap-3 sm:gap-6 text-gray-300">
-                <span>ISO 200</span>
-                <span>f/1.4</span>
-                <span>1/1000s</span>
-                <span className="text-amber-400 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
-                  RAW
-                </span>
-              </div>
-            </div>
-
-            {/* Center Target Crosshair and Focus Box */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <motion.div
-                initial={{ scale: 1.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center justify-center relative"
-              >
-                {/* Viewfinder Reticle Grid */}
-                <div className="w-40 h-40 sm:w-56 sm:h-56 border border-amber-400/60 rounded-xl flex items-center justify-center relative shadow-[0_0_40px_rgba(245,158,11,0.25)] bg-amber-500/5">
-                  {/* Inner Crosshairs */}
-                  <div className="absolute w-4 h-4 border-t-2 border-l-2 border-amber-400 top-2.5 left-2.5" />
-                  <div className="absolute w-4 h-4 border-t-2 border-r-2 border-amber-400 top-2.5 right-2.5" />
-                  <div className="absolute w-4 h-4 border-b-2 border-l-2 border-amber-400 bottom-2.5 left-2.5" />
-                  <div className="absolute w-4 h-4 border-b-2 border-r-2 border-amber-400 bottom-2.5 right-2.5" />
-
-                  {/* Center Camera Icon with subtle pulse */}
-                  <motion.div
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ duration: 0.5, repeat: Infinity, ease: 'easeInOut' }}
-                    className="p-4 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-                  >
-                    <Camera size={44} className="text-amber-400" />
-                  </motion.div>
-                </div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12, duration: 0.25 }}
-                  className="mt-6 text-center"
-                >
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-400 text-xs sm:text-xs font-tech font-bold uppercase tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 " />
-                    Focus Locked
-                  </div>
-                  <h2 className="text-2xl sm:text-4xl font-display font-black text-white tracking-wider uppercase mt-2 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
-                    Entering Photo Contest
-                  </h2>
-                  <p className="text-gray-400 text-xs sm:text-sm font-tech tracking-wider mt-1">
-                    contest.vitalrp.net
-                  </p>
-                </motion.div>
-              </motion.div>
-            </div>
-
-            {/* Bottom HUD Info */}
-            <div className="flex items-center justify-between text-xs sm:text-xs font-tech tracking-widest text-gray-400 uppercase">
-              <div className="flex items-center gap-3">
-                <span>[ AF-C TRACKING ]</span>
-                <span className="hidden sm:inline">[ MATRIX 3D ]</span>
-              </div>
-              <div className="text-amber-400 font-bold tracking-wider">
-                VITAL RP PHOTO CONTEST
-              </div>
-              <div className="flex items-center gap-2">
-                <span>BATT 98%</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Mechanical Shutter Blade Clasp */}
-          <motion.div
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: [0, 0, 1, 1] }}
-            transition={{ duration: 0.85, times: [0, 0.45, 0.65, 1], ease: 'easeInOut' }}
-            className="absolute inset-0 bg-black pointer-events-none origin-center"
-          />
-
-          {/* Blinding Camera Flash Strobe */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0, 1, 0.35, 1] }}
-            transition={{ duration: 0.85, times: [0, 0.4, 0.48, 0.68, 0.85], ease: 'easeOut' }}
-            className="absolute inset-0 bg-gradient-to-tr from-amber-100 via-white to-amber-50 pointer-events-none"
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </>
+    </header>
   );
 };
