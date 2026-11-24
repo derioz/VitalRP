@@ -50,12 +50,9 @@ None. `@radix-ui/react-accordion`, `framer-motion` (unused by this page), `lucid
 
 ## Images and licensing
 
-All imagery is official promotional material downloaded from rockstargames.com/VI, resized to WebP, and stored locally. It is not hotlinked.
+All imagery is official promotional material from Rockstar's own pages (rockstargames.com/VI and its "Only in Leonida" place pages), resized to WebP and stored locally, not hotlinked. The hero is the Vice City bay skyline; each of the six regions uses the image Rockstar published for that place (Vice City sign at sunset, Leonida Keys causeway, Starlet Motel in Port Gellhorn, Ambrosia motorcycle club, Grassrivers wetlands, Mount Kalaga canyon road). No placeholders remain.
 
-**Confirm before going live.** Rockstar's fan-content terms should be checked, particularly because Vital runs a merch store. Every image is credited "Rockstar Games" in the page and the closing disclaimer states the project is unofficial. Swap or remove images by editing `GTA6_IMAGES` in `lib/gta6/content.ts`.
-
-Missing assets (placeholders in the Leonida stage, marked "Image slot"):
-Leonida Keys, Port Gellhorn, Ambrosia, Grassrivers and Mount Kalaga National Park have no approved region-specific image. The images used for Vice City, underworld, living world and closing are general promotional art chosen for mood, not claims about a location.
+**Permissions.** Rockstar's published policy (support.rockstargames.com, "Policy on posting copyrighted Rockstar Games material") tolerates non-commercial fan use and reserves the right to remove material at any time. It does not cover commercial use. Vital sells merchandise, so this is a judgment call for the owner: keep credits visible (each image is labeled Rockstar Games and the closing states the project is unofficial), and be ready to swap images by editing `GTA6_IMAGES` and `regions` in `lib/gta6/content.ts` if asked to remove them. For certainty, email copyright@take2games.com.
 
 ## Not confirmed on purpose
 

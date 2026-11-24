@@ -41,12 +41,12 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[50%_70%]"
+          className="object-cover object-[50%_45%]"
         />
       </div>
       {/* Neutral darkening so text sits on calm sky and the base stays dark */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/5 to-[#0a0a0a]" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/35 to-transparent lg:via-black/25" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-transparent to-[#0a0a0a]" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/30 to-transparent lg:via-black/20" />
 
       <div className="g6-wrap flex flex-1 flex-col pt-28 sm:pt-32 lg:pt-40">
         <p className="g6-tag g6-tag-live">Concept development</p>

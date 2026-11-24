@@ -23,15 +23,11 @@ export const GTA6_SECTIONS = [
 export const GTA6_IMAGES = {
   hero: {
     src: '/gta6/hero-skyline.webp',
-    alt: 'A city skyline and harbor at dusk, from Rockstar Games promotional material for Grand Theft Auto VI',
+    alt: 'A city skyline across a turquoise bay under a bright sky, from Rockstar Games promotional material for Grand Theft Auto VI',
   },
   vision: {
     src: '/gta6/vision-dusk.webp',
     alt: 'Two characters standing on a glass-walled balcony above a city skyline at dusk, Rockstar Games promotional art for Grand Theft Auto VI',
-  },
-  viceCity: {
-    src: '/gta6/vice-city.webp',
-    alt: 'Two characters leaning on a green sports car on a beach in front of high rise towers, Rockstar Games promotional image',
   },
   underworld: {
     src: '/gta6/underworld.webp',
@@ -93,10 +89,8 @@ export interface Region {
   name: string;
   summary: string;
   themes: string[];
-  /** Verified official promotional image, if we have one. */
-  image?: { src: string; alt: string };
-  /** Flat stand-in color used until approved imagery exists. */
-  tone: string;
+  /** Official Rockstar promotional image from the "Only in Leonida" pages. */
+  image: { src: string; alt: string };
 }
 
 export const regions: Region[] = [
@@ -112,8 +106,7 @@ export const regions: Region[] = [
       'Street gangs',
       'Urban communities',
     ],
-    image: GTA6_IMAGES.viceCity,
-    tone: '#2a1a24',
+    image: { src: '/gta6/region-vice-city.webp', alt: 'The VICE CITY sign lit at sunset among palm trees with a jet overhead, Rockstar Games promotional image for Grand Theft Auto VI' },
   },
   {
     id: 'leonida-keys',
@@ -127,7 +120,7 @@ export const regions: Region[] = [
       'Waterfront businesses',
       'Resorts and coastal living',
     ],
-    tone: '#0f3a3d',
+    image: { src: '/gta6/region-leonida-keys.webp', alt: 'A seaplane over turquoise water and a causeway linking the islands of the Leonida Keys, Rockstar Games promotional image' },
   },
   {
     id: 'port-gellhorn',
@@ -141,7 +134,7 @@ export const regions: Region[] = [
       'Trucking companies',
       'Local criminal organizations',
     ],
-    tone: '#3b2316',
+    image: { src: '/gta6/region-port-gellhorn.webp', alt: 'The Starlet Motel sign glowing at dusk among palm trees in Port Gellhorn, Rockstar Games promotional image' },
   },
   {
     id: 'ambrosia',
@@ -154,7 +147,7 @@ export const regions: Region[] = [
       'Motorcycle clubs',
       'Small-town communities',
     ],
-    tone: '#3d3014',
+    image: { src: '/gta6/region-ambrosia.webp', alt: 'A motorcycle club riding down a main road past roadside signs in Ambrosia, Rockstar Games promotional image' },
   },
   {
     id: 'grassrivers',
@@ -168,7 +161,7 @@ export const regions: Region[] = [
       'Outdoor activities',
       'Search and rescue',
     ],
-    tone: '#17341f',
+    image: { src: '/gta6/region-grassrivers.webp', alt: 'Trucks and a helicopter crossing flooded wetlands in Grassrivers, Rockstar Games promotional image' },
   },
   {
     id: 'mount-kalaga',
@@ -182,7 +175,7 @@ export const regions: Region[] = [
       'Outdoor recreation',
       'Wilderness roleplay',
     ],
-    tone: '#1d2c33',
+    image: { src: '/gta6/region-mount-kalaga.webp', alt: 'A road winding through a red rock canyon in Mount Kalaga National Park, Rockstar Games promotional image' },
   },
 ];
 
