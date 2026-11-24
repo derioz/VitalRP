@@ -57,31 +57,15 @@ export function Leonida() {
               i === active ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            {r.image ? (
-              <>
-                <Image
-                  src={r.image.src}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  className="object-cover object-[50%_60%]"
-                />
-                <div className="absolute inset-0 bg-black/45" />
-              </>
-            ) : (
-              <div className="absolute inset-0" style={{ backgroundColor: r.tone }}>
-                <span
-                  aria-hidden
-                  className="g6-display absolute -right-4 -top-10 select-none text-[clamp(14rem,34vw,34rem)] leading-none text-white/[0.06] lg:right-8"
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <p className="g6-mono absolute right-12 top-12 hidden text-xs text-white/50 lg:block">
-                  Image slot: approved Rockstar imagery needed
-                </p>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/90 via-transparent to-[#0a0a0a]/50" />
+            <Image
+              src={r.image.src}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover object-[50%_55%]"
+            />
+            <div className="absolute inset-0 bg-black/35" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/85 via-transparent to-[#0a0a0a]/40" />
           </div>
         ))}
 
