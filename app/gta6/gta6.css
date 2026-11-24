@@ -64,7 +64,7 @@
 .g6-section {
   position: relative;
   padding-block: 96px;
-  scroll-margin-top: 120px;
+  scroll-margin-top: 108px;
 }
 @media (min-width: 1024px) {
   .g6-section { padding-block: 120px; }
