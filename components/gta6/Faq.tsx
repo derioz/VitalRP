@@ -10,7 +10,7 @@ export function Faq() {
       <div className="g6-wrap grid gap-x-12 gap-y-12 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-40">
-            <p className="g6-mono pb-6 text-sm text-[#a39b90]">08</p>
+            <p className="g6-mono pb-6 text-sm text-[#a39b90]">06</p>
             <h2
               id="g6-faq-title"
               className="g6-display text-[clamp(2.75rem,5.5vw,5rem)] text-white"

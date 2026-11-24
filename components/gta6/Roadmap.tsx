@@ -11,7 +11,7 @@ export function Roadmap() {
             id="g6-roadmap-title"
             className="g6-display text-[clamp(2.75rem,5.5vw,5rem)] text-white lg:col-span-5"
           >
-            <span className="g6-mono mr-5 inline-block w-6 align-baseline text-sm text-[#a39b90]">05</span><span>Roadmap</span>
+            <span className="g6-mono mr-5 inline-block w-6 align-baseline text-sm text-[#a39b90]">04</span><span>Roadmap</span>
           </h2>
           <p className="g6-body max-w-[56ch] text-lg lg:col-span-6 lg:col-start-7">
             Five phases, in order. We have no dates to give, so there are none here. A phase gets

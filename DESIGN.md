@@ -7,7 +7,7 @@ Status: concept development. Nothing on the page is a confirmed feature.
 - **Product.** A concept page for Vital Roleplay's possible GTA VI server, for players deciding whether to follow it.
 - **Character.** Cinematic, restrained, honest about what is not decided.
 - **World.** Dusk over a South Florida style coast: near-black ink, warm paper whites, the city's own sunset in the photographs.
-- **Moments.** The Rockstar promotional photographs (hero, vision, Vice City, underworld, living world, closing) and the interactive supply chain. Everything else stays quiet.
+- **Moments.** The Rockstar promotional photographs (hero, vision, regions, closing) and the interactive supply chain. Everything else stays quiet.
 - **Signature.** The status marker: a small ring before every concept and phase ("Concept", "Upcoming"), filled orange only for the current phase. It makes the unconfirmed nature of every idea visible.
 
 ## System
@@ -66,3 +66,7 @@ No launch date, no countdown, no percentages, no named native businesses, no Wea
 ## Recommended CMS integration
 
 Move `articles` (and later `concepts`, `regions`) to a Supabase table, e.g. `gta6_articles(slug, category, title, description, body, image_url, published_at, published bool)`, reading only `published = true` rows on the server. Reuse the existing admin console and role checks so staff can write and publish from `/admin`. No database changes were made.
+
+## Update
+
+The Roleplay concepts and Development journal sections were removed at the owner's request, along with their components, data and images. The hero image file is `hero-bay.webp` (renamed from `hero-skyline.webp` so CDN and browser caches fetch the new photo).

@@ -10,9 +10,7 @@ import { SectionNav } from './SectionNav';
 import { Vision } from './Vision';
 import { Principles } from './Principles';
 import { Leonida } from './Leonida';
-import { Concepts } from './Concepts';
 import { Roadmap } from './Roadmap';
-import { Journal } from './Journal';
 import { Community } from './Community';
 import { Faq } from './Faq';
 import { Closing } from './Closing';
@@ -34,9 +32,7 @@ export function Gta6Page() {
         <Vision />
         <Principles />
         <Leonida />
-        <Concepts />
         <Roadmap />
-        <Journal />
         <Community />
         <Faq />
         <Closing />
