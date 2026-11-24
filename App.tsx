@@ -7,6 +7,7 @@ import { MerchProduct } from './spa/pages/MerchProduct';
 import { MerchPolicies } from './spa/pages/MerchPolicies';
 import { MerchOrders } from './spa/pages/MerchOrders';
 import { RulesPage } from './spa/pages/RulesPage';
+import { Gta6 } from './spa/pages/Gta6';
 import { AdminLayout } from './spa/pages/admin/AdminLayout';
 import { Dashboard } from './spa/pages/admin/Dashboard';
 import { UsersPage } from './spa/pages/admin/Users';
@@ -47,6 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rules" element={<RulesPage />} />
+          <Route path="/gta6" element={<Gta6 />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merch/policies" element={<MerchPolicies />} />

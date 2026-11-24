@@ -1,0 +1,193 @@
+/*
+ * GTA VI concept page. Everything is scoped under .g6 so nothing here
+ * touches the rest of the site.
+ */
+
+.g6 {
+  --g6-ink: #0a0a0a;
+  --g6-raise: #111010;
+  --g6-line: rgb(255 255 255 / 0.1);
+  --g6-text: #f4efe8;
+  --g6-text-2: #d3cbc0;
+  --g6-text-3: #a39b90;
+  --g6-orange: #f97316;
+  --g6-rose: #e8789e;
+  --g6-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  background: var(--g6-ink);
+  color: var(--g6-text);
+}
+
+.g6 ::selection {
+  background: var(--g6-orange);
+  color: #0a0a0a;
+}
+
+/* Type */
+.g6-display {
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  text-wrap: pretty;
+}
+
+.g6-display.g6-sm {
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.g6-mono {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.g6-body {
+  color: var(--g6-text-2);
+  line-height: 1.65;
+}
+
+/* Layout */
+.g6-wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+@media (min-width: 640px) {
+  .g6-wrap { padding-inline: 32px; }
+}
+@media (min-width: 1024px) {
+  .g6-wrap { padding-inline: 48px; }
+}
+
+.g6-section {
+  position: relative;
+  padding-block: 96px;
+  scroll-margin-top: 120px;
+}
+@media (min-width: 1024px) {
+  .g6-section { padding-block: 120px; }
+}
+
+.g6-rule { border-top: 1px solid var(--g6-line); }
+
+/* Buttons: one definition, used everywhere */
+.g6-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  padding-inline: 24px;
+  border-radius: 6px;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 150ms var(--g6-ease), color 150ms var(--g6-ease),
+    border-color 150ms var(--g6-ease), transform 100ms var(--g6-ease);
+}
+.g6-btn:active { transform: translateY(1px); }
+.g6-btn:focus-visible,
+.g6 a:focus-visible,
+.g6 button:focus-visible {
+  outline: 2px solid var(--g6-orange);
+  outline-offset: 3px;
+}
+.g6-btn-primary {
+  background: var(--g6-orange);
+  color: #0a0a0a;
+}
+.g6-btn-primary:hover { background: #fb923c; }
+.g6-btn-quiet {
+  background: rgb(10 10 10 / 0.35);
+  color: var(--g6-text);
+  border-color: rgb(255 255 255 / 0.35);
+}
+.g6-btn-quiet:hover {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.6);
+}
+
+/* Concept status marker, the page's signature detail */
+.g6-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--g6-text-2);
+}
+.g6-tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--g6-rose);
+  border-radius: 9999px;
+}
+.g6-tag-live::before {
+  background: var(--g6-orange);
+  border-color: var(--g6-orange);
+}
+
+/* Ruled lists */
+.g6-list > li {
+  border-top: 1px solid var(--g6-line);
+  padding-block: 14px;
+}
+.g6-list > li:last-child { border-bottom: 1px solid var(--g6-line); }
+
+/* Reveal: only armed after hydration, so content is visible without JS */
+.g6-reveal[data-armed='true'] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.g6-reveal[data-armed='true'][data-in='true'] {
+  opacity: 1;
+  transform: none;
+  transition: opacity 700ms var(--g6-ease), transform 700ms var(--g6-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g6-reveal[data-armed='true'] {
+    opacity: 1;
+    transform: none;
+  }
+  .g6 * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Hide the scrollbar on the section strip */
+.g6-strip { scrollbar-width: none; -ms-overflow-style: none; }
+.g6-strip::-webkit-scrollbar { display: none; }
+
+/* Paper sections: warm light surface for rhythm against the dark run */
+.g6-paper {
+  background: #eee3d2;
+  color: #17120d;
+}
+.g6-paper ::selection { background: #17120d; color: #eee3d2; }
+.g6-paper-body { color: #4a3f35; line-height: 1.65; }
+.g6-paper-accent { color: #b43f0a; }
+.g6-paper-rule { border-top: 1px solid rgb(23 18 13 / 0.18); }
+.g6-paper a:focus-visible,
+.g6-paper button:focus-visible { outline-color: #b43f0a; }
+
+/* Notes: a quiet aside, not a code block */
+.g6-note {
+  margin-top: 28px;
+  max-width: 52ch;
+  padding-left: 16px;
+  border-left: 1px solid var(--g6-rose);
+  color: var(--g6-text-3);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.g6-paper .g6-tag { color: #4a3f35; }
+.g6-paper .g6-tag::before { border-color: #b43f0a; }
