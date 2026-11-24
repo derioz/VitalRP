@@ -33,11 +33,16 @@ const navLinks = [
   { name: 'About', href: '/#values' },
   { name: 'Rules', href: '/rules' },
   { name: 'GTA VI', href: '/gta6' },
-  { name: 'Wiki', href: '/wiki' },
-  { name: 'Merch', href: '/merch' },
   { name: 'FAQ', href: '/#faq' },
   { name: 'Join', href: '/#join' },
 ];
+
+/** GTA VI entry point: sunset gradient on the label only, no glow. */
+const GtaLabel = () => (
+  <span className="bg-[linear-gradient(90deg,#f0709f,#fb923c_55%,#a98bf0)] bg-clip-text font-semibold text-transparent transition-[filter] duration-150 group-hover/gta:brightness-125">
+    GTA VI
+  </span>
+);
 
 const DISCORD_URL = 'https://discord.gg/vitalrp';
 const PLAY_URL = 'https://connect.vitalrp.net';
@@ -92,6 +97,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setIsEditingMobileName(false);
   };
 
+  const onGta = !!pathname && pathname.startsWith('/gta6');
+
   const isCurrent = (href: string) => !href.includes('#') && href === pathname;
 
   const linkClass = (href: string) =>
@@ -121,22 +128,38 @@ export const Navbar: React.FC<NavbarProps> = () => {
           {/* Main links */}
           <nav aria-label="Main Navigation" className="hidden min-w-0 flex-1 lg:block">
             <ul className="flex items-center">
-              {navLinks.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    aria-current={isCurrent(link.href) ? 'page' : undefined}
-                    className={linkClass(link.href)}
-                  >
-                    {link.name}
-                    <span
-                      className={`absolute inset-x-2.5 bottom-0 h-px bg-vital-500 transition-opacity duration-150 xl:inset-x-3 ${
-                        isCurrent(link.href) ? 'opacity-100' : 'opacity-0'
+              {navLinks.map((link) => {
+                const isGtaTab = onGta && link.href === '/gta6';
+                return (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      data-gta-tab={isGtaTab ? '' : undefined}
+                      aria-current={isCurrent(link.href) ? 'page' : undefined}
+                      className={`${linkClass(link.href)} ${link.href === '/gta6' ? 'group/gta' : ''} ${
+                        isGtaTab
+                          ? 'z-10 border-x border-white/10 bg-[#140e17]'
+                          : ''
                       }`}
-                    />
-                  </a>
-                </li>
-              ))}
+                    >
+                      {link.href === '/gta6' ? <GtaLabel /> : link.name}
+                      {isGtaTab ? (
+                        <>
+                          {/* Dusk rule on top, and a seal that opens the tab into the bar below */}
+                          <span className="absolute inset-x-0 top-0 h-0.5 bg-[linear-gradient(90deg,#d65f93,#f97316_60%,#8e6bd8)]" />
+                          <span className="absolute inset-x-0 -bottom-px h-px bg-[#140e17]" />
+                        </>
+                      ) : (
+                        <span
+                          className={`absolute inset-x-2.5 bottom-0 h-px bg-vital-500 transition-opacity duration-150 xl:inset-x-3 ${
+                            isCurrent(link.href) ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 
@@ -215,11 +238,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       href={link.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       aria-current={isCurrent(link.href) ? 'page' : undefined}
-                      className={`flex h-12 items-center font-display text-base font-medium transition-colors ${
+                      className={`group/gta flex h-12 items-center font-display text-base font-medium transition-colors ${
                         isCurrent(link.href) ? 'text-vital-400' : 'text-gray-200 hover:text-white'
                       }`}
                     >
-                      {link.name}
+                      {link.href === '/gta6' ? <GtaLabel /> : link.name}
                     </a>
                   </li>
                 ))}

@@ -4,69 +4,93 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GTA6_SECTIONS } from '@/lib/gta6/content';
 
 /**
- * Secondary navigation. Appears once the hero is mostly scrolled past and
- * sits under the site header. Plain anchors, so it also works without JS.
+ * Secondary navigation for the GTA VI section. It is the second row of the
+ * site header: it shares the active GTA VI tab's surface, starts under that
+ * tab on wide screens, and is only rendered on /gta6.
  */
 export function SectionNav() {
-  const [visible, setVisible] = useState(false);
   const [active, setActive] = useState<string>('overview');
+  const [offset, setOffset] = useState<number | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
 
+  // Line the first link up under the GTA VI tab in the main bar.
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.7);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const measure = () => {
+      const tab = document.querySelector<HTMLElement>('[data-gta-tab]');
+      if (tab && window.innerWidth >= 1024) setOffset(Math.round(tab.getBoundingClientRect().left));
+      else setOffset(null);
+    };
+    measure();
+    const raf = requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
+    document.fonts?.ready.then(measure);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measure);
+    };
   }, []);
 
+  // Active section = the last one whose top has passed 35% of the viewport.
   useEffect(() => {
     const els = GTA6_SECTIONS.map((s) => document.getElementById(s.id)).filter(
       (el): el is HTMLElement => !!el
     );
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hit = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (hit) setActive(hit.target.id);
-      },
-      { rootMargin: '-30% 0px -60% 0px', threshold: [0, 0.01, 0.5] }
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    let raf = 0;
+    const update = () => {
+      let current = els[0]?.id ?? 'overview';
+      for (const el of els) {
+        if (el.getBoundingClientRect().top <= window.innerHeight * 0.35) current = el.id;
+      }
+      setActive(current);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
-  // Keep the active link in view on small screens.
+  // Keep the active link in view when the strip scrolls (small screens).
   useEffect(() => {
-    const link = stripRef.current?.querySelector<HTMLElement>('[aria-current="true"]');
-    link?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    const strip = stripRef.current;
+    const link = strip?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!strip || !link) return;
+    const left = link.offsetLeft - strip.clientWidth / 2 + link.clientWidth / 2;
+    strip.scrollTo({ left, behavior: 'auto' });
   }, [active]);
 
   return (
     <nav
       aria-label="GTA VI sections"
-      className={`fixed inset-x-0 top-14 z-40 border-b border-white/10 bg-[#0a0a0a] transition-[opacity,transform] duration-200 ${
-        visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
-      }`}
-      aria-hidden={!visible}
+      className="fixed inset-x-0 top-[57px] z-40 border-b border-white/10 bg-[#140e17]"
     >
-      <div ref={stripRef} className="g6-strip g6-wrap flex gap-1 overflow-x-auto">
+      {/* Carries the dusk rule on small screens, where the main bar has no tab */}
+      <span className="absolute left-0 top-0 h-0.5 w-24 bg-[linear-gradient(90deg,#d65f93,#f97316)] lg:hidden" />
+      <div
+        ref={stripRef}
+        className="g6-strip mx-auto flex h-11 max-w-[1440px] items-stretch overflow-x-auto px-1 sm:px-5 lg:px-12"
+        style={offset !== null ? { paddingLeft: offset } : undefined}
+      >
         {GTA6_SECTIONS.map((s) => {
           const isActive = active === s.id;
           return (
             <a
               key={s.id}
               href={`#${s.id}`}
-              tabIndex={visible ? 0 : -1}
               aria-current={isActive ? 'true' : undefined}
-              className={`relative flex h-11 shrink-0 items-center px-3 text-sm transition-colors ${
-                isActive ? 'text-white' : 'text-[#a39b90] hover:text-white'
+              className={`relative flex shrink-0 items-center px-3 font-display text-sm font-medium transition-colors duration-150 ${
+                isActive ? 'text-white' : 'text-[#b4a9b9] hover:text-white'
               }`}
             >
               {s.label}
               <span
-                className={`absolute inset-x-3 bottom-0 h-px transition-opacity ${
-                  isActive ? 'bg-[#f97316] opacity-100' : 'opacity-0'
+                className={`absolute inset-x-3 bottom-0 h-0.5 bg-[linear-gradient(90deg,#d65f93,#f97316)] transition-opacity duration-150 ${
+                  isActive ? 'opacity-100' : 'opacity-0'
                 }`}
               />
             </a>
