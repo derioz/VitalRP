@@ -7,7 +7,7 @@ export function Community() {
     <section id="community" aria-labelledby="g6-community-title" className="g6-section g6-rule">
       <div className="g6-wrap grid gap-x-12 gap-y-12 lg:grid-cols-12">
         <Reveal className="lg:col-span-6">
-          <p className="g6-mono pb-6 text-sm text-[#a39b90]">07</p>
+          <p className="g6-mono pb-6 text-sm text-[#a39b90]">05</p>
           <h2
             id="g6-community-title"
             className="g6-display text-[clamp(3rem,7vw,6.5rem)] text-white"

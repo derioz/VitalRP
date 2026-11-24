@@ -5,7 +5,7 @@ import './gta6.css';
 
 const title = 'GTA VI: The Next Chapter | Vital Roleplay';
 const description =
-  "Vital Roleplay's concept development for Grand Theft Auto VI. Our vision, roleplay concepts and roadmap for a story-first, roleplay-heavy server. Unofficial community project.";
+  "Vital Roleplay's concept development for Grand Theft Auto VI. Our vision, the regions of Leonida and our roadmap for a story-first, roleplay-heavy server. Unofficial community project.";
 
 export const metadata: Metadata = {
   title,
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/gta6/og.jpg',
+        url: '/gta6/og-bay.jpg',
         width: 1200,
         height: 630,
         alt: 'A city skyline and harbor at dusk, from Rockstar Games promotional material for Grand Theft Auto VI',
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title,
     description,
-    images: ['/gta6/og.jpg'],
+    images: ['/gta6/og-bay.jpg'],
   },
   alternates: { canonical: 'https://vitalrp.net/gta6' },
 };
