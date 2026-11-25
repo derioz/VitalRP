@@ -180,7 +180,7 @@ export const Hero: React.FC = () => {
       {/* ------------------------------------------------------------------- */}
       {/* LAYER 3 & 4: FOREGROUND CONTENT (Multiplane Text & CTAs) */}
       {/* ------------------------------------------------------------------- */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 xl:px-20 pt-16 sm:pt-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">
         <div className="max-w-xl lg:max-w-2xl flex flex-col items-start text-left">
           {/* LAYER 3: HEADLINE & COPY CONTAINER */}
           <motion.div

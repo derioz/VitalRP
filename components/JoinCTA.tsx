@@ -19,7 +19,7 @@ const DiscordLogo = ({ className }: { className?: string }) => (
 
 export const JoinCTA: React.FC = () => {
   return (
-    <section id="join" className="py-24 relative overflow-hidden scroll-mt-24">
+    <section id="join" className="relative scroll-mt-14 overflow-hidden py-20 md:py-32">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
@@ -34,7 +34,7 @@ export const JoinCTA: React.FC = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div>
-          <h2 className="text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight max-w-3xl">
+          <h2 className="text-balance text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight max-w-3xl">
             Ready to start your <span className="text-vital-500">legacy</span>?
           </h2>
           <p className="text-xl text-gray-200 mb-10 font-sans max-w-2xl">

@@ -25,10 +25,10 @@ const steps = [
 
 /** The route from visitor to player, in order. */
 export const HowToJoin: React.FC = () => (
-  <section id="how-to-join" aria-labelledby="how-to-join-title" className="relative scroll-mt-16 border-t border-white/10 bg-dark-900 py-20 md:py-24">
+  <section id="how-to-join" aria-labelledby="how-to-join-title" className="relative scroll-mt-14 border-t border-white/10 bg-dark-900 py-16 md:py-24">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl">
-        <h2 id="how-to-join-title" className="mb-5 text-3xl font-display font-black tracking-tight text-white md:text-5xl">
+        <h2 id="how-to-join-title" className="mb-4 text-balance text-3xl font-display font-black tracking-tight text-white md:text-5xl">
           How to get in
         </h2>
         <p className="text-lg leading-relaxed text-gray-300">
@@ -37,20 +37,20 @@ export const HowToJoin: React.FC = () => (
       </div>
 
       {/* The line runs from joining to playing. It slows across the review. */}
-      <InView as="ol" className="route mt-12 grid gap-10 lg:grid-cols-3 lg:gap-8">
+      <InView as="ol" className="route mt-10 grid gap-10 md:mt-12 md:grid-cols-3 md:gap-6 lg:gap-8">
         {steps.map((step, i) => (
-          <li key={step.title} className="route-step relative flex flex-col pl-6 lg:pl-0 lg:pt-6">
+          <li key={step.title} className="route-step relative flex flex-col pl-6 md:pl-0 md:pt-6">
             <span className="route-track" aria-hidden="true">
               <span className="route-fill" />
             </span>
             <span className="route-number font-tech tabular-nums text-vital-500" aria-hidden="true">
               {i + 1}
             </span>
-            <h3 className="mt-3 text-2xl font-display font-bold text-white">{step.title}</h3>
+            <h3 className="mt-3 text-balance text-2xl font-display font-bold text-white md:min-h-[2lh] md:text-xl lg:text-2xl xl:min-h-0">{step.title}</h3>
             <p className="mt-3 max-w-[44ch] flex-1 leading-relaxed text-gray-300">{step.body}</p>
             {step.action && (
               <div className="mt-6">
-                <Button href={step.action.href} variant={step.action.variant} target="_blank" rel="noopener noreferrer">
+                <Button href={step.action.href} variant={step.action.variant} className="md:px-3 lg:px-6" target="_blank" rel="noopener noreferrer">
                   {step.action.label}
                 </Button>
               </div>

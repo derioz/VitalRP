@@ -50,28 +50,23 @@ export const Rules: React.FC = () => {
   const unavailable = failed || (published !== null && coreRules.length === 0);
 
   return (
-    <section id="rules" className="py-20 relative overflow-hidden scroll-mt-20">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-dark-950/95 z-0" />
-
-      {/* Top separator line */}
-      <div className="absolute top-0 left-0 w-full h-px bg-white/10 z-20" />
+    <section id="rules" className="relative scroll-mt-14 overflow-hidden pb-16 pt-8 md:pb-24 md:pt-12">
+      {/* Same surface as the values above: how we play is one chapter */}
+      <div className="absolute inset-0 bg-dark-900/95 z-0" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="mb-12 max-w-3xl">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
-              Ten rules everyone follows
-            </h2>
-            <p className="text-gray-300 text-base md:text-lg leading-relaxed font-sans">
-              The foundations of everyday life in Los Santos. Every player is expected to know and follow these.
-            </p>
-          </div>
+        <div className="mb-10 max-w-3xl md:mb-12">
+          <h2 className="text-balance text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
+            Ten rules everyone follows
+          </h2>
+          <p className="text-gray-300 text-base md:text-lg leading-relaxed font-sans">
+            The foundations of everyday life in Los Santos. Every player is expected to know and follow these.
+          </p>
         </div>
 
         {unavailable ? (
-          <p role="status" className="mb-10 border-y border-white/10 py-6 text-gray-200">
+          <p role="status" className="mb-8 border-y border-white/10 py-6 text-gray-200">
             The current rules could not be loaded here.{' '}
             <a href="/rules" className="text-vital-400 underline underline-offset-4 hover:text-vital-300">
               Read them on the rules page
@@ -82,7 +77,7 @@ export const Rules: React.FC = () => {
           /* Two columns read downwards, so the numbers stay in order */
           <ul
             aria-busy={!published}
-            className="mb-10 grid border-t border-white/10 md:grid-flow-col md:grid-cols-2 md:grid-rows-5 md:gap-x-10"
+            className="mb-8 grid border-t border-white/10 md:grid-flow-col md:grid-cols-2 md:grid-rows-5 md:gap-x-10"
           >
             {published
               ? coreRules.map((rule) => (
@@ -100,24 +95,20 @@ export const Rules: React.FC = () => {
           </ul>
         )}
 
-        {/* Bottom Legislation Banner */}
-        <div className="p-6 md:p-8 rounded border border-white/10 bg-dark-900/80">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div>
-              <h3 className="text-xl font-display font-black text-white tracking-tight">
-                Need the complete server legislation?
-              </h3>
-              <p className="text-sm text-gray-300 mt-1 max-w-2xl font-sans leading-relaxed">
-                Robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island guidelines are in the full rulebook{published ? ` of ${published.length} rules` : ''}.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
-              <Button href="/rules" icon={<FileText className="w-4 h-4" />}>
-                View all rules
-              </Button>
-            </div>
+        {/* The way on to the full rulebook */}
+        <div className="flex flex-col items-start gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-xl font-display font-black text-white tracking-tight">
+              Need the complete server legislation?
+            </h3>
+            <p className="text-sm text-gray-300 mt-1 max-w-[65ch] font-sans leading-relaxed">
+              Robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island guidelines are in the full rulebook{published ? ` of ${published.length} rules` : ''}.
+            </p>
           </div>
+
+          <Button href="/rules" icon={<FileText className="w-4 h-4" />} className="flex-shrink-0">
+            View all rules
+          </Button>
         </div>
       </div>
 

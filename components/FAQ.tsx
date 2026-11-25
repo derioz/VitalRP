@@ -24,50 +24,47 @@ export const FAQ: React.FC = () => {
   const reducedMotion = useReducedMotion();
 
   return (
-    <section id="faq" className="py-24 bg-dark-800 relative scroll-mt-24">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section id="faq" className="relative scroll-mt-14 bg-dark-800 py-16 md:py-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <h2 className="text-balance text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
+              Common questions
+            </h2>
+            <p className="text-gray-300">Answers to what new players ask most.</p>
+          </div>
 
-        <div className="mb-12">
-          <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
-            Common questions
-          </h2>
-          <p className="text-gray-300">Answers to what new players ask most.</p>
+          <div className="border-t border-white/15 lg:col-span-8">
+            {faqs.map((faq, index) => (
+              <div key={faq.question} className="border-b border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  className="flex min-h-16 w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:bg-white/5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-vital-400"
+                >
+                  <span className="text-lg font-bold text-white font-display">{faq.question}</span>
+                  <span className={`shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-vital-500' : 'text-gray-400'}`}>
+                    {openIndex === index ? <Minus size={20} aria-hidden="true" /> : <Plus size={20} aria-hidden="true" />}
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {openIndex === index && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="max-w-[65ch] pb-6 leading-relaxed text-gray-300">{faq.answer}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
         </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="border border-white/10 rounded bg-dark-900 overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-white/5 transition-colors"
-              >
-                <span className="text-lg font-bold text-white font-display">{faq.question}</span>
-                <span className={`transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-vital-500' : 'text-gray-400'}`}>
-                  {openIndex === index ? <Minus size={20} /> : <Plus size={20} />}
-                </span>
-              </button>
-
-              <AnimatePresence>
-                {openIndex === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <div className="px-6 pb-6 pt-0 text-gray-300 leading-relaxed border-t border-white/5 mt-2 pt-4">
-                      {faq.answer}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-
       </div>
     </section>
   );

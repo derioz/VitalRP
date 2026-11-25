@@ -97,10 +97,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   };
 
   return (
-    <footer className="bg-dark-950 pt-20 pb-10 border-t border-white/5">
+    <footer className="bg-dark-950 pt-16 pb-24 xl:pb-10 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-2">
+        <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-16">
+          <div className="md:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
               <VitalLogo className="w-10 h-10 flex-shrink-0" />
               <span className="text-2xl font-display font-bold text-white">VITAL RP</span>
@@ -111,10 +111,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
           </div>
 
           <div>
-            <h4 className="text-white font-display font-bold mb-6">QUICK LINKS</h4>
-            <ul className="space-y-4">
+            <h4 className="text-white font-display font-bold mb-3">QUICK LINKS</h4>
+            <ul className="grid w-fit grid-flow-col grid-rows-5 gap-x-12">
               {links.map((item) => (
-                <li key={item.label} className="w-fit">
+                <li key={item.label} className="flex min-h-11 w-fit items-center">
                   {item.isUnavailable ? (
                     <div
                       className="group relative flex items-center cursor-not-allowed select-none"
@@ -123,7 +123,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
                       <span className="text-gray-400 group-hover:text-gray-400 transition-colors text-sm font-tech  block">
                         {item.label}
                       </span>
-                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-dark-900 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20">
+                      <span className="absolute bottom-full -right-6 px-2 py-0.5 bg-dark-900 border border-vital-500/40 text-vital-400 text-xs font-tech font-bold rounded opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20">
                         Temporarily unavailable
                       </span>
                     </div>
@@ -132,7 +132,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
                       <span className="text-gray-400 text-sm font-tech  group-hover:text-vital-500 transition-colors">
                         {item.label}
                       </span>
-                      <span className="absolute left-full ml-3 px-2 py-0.5 bg-vital-500 text-white text-xs font-bold rounded opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none">
+                      <span className="absolute bottom-full left-0 px-2 py-0.5 bg-vital-500 text-white text-xs font-bold rounded opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
                         SOON
                       </span>
                     </div>
@@ -142,7 +142,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
                       target={item.isExternal ? "_blank" : undefined}
                       rel={item.isExternal ? "noreferrer" : undefined}
                       onClick={(e) => handleLinkClick(e, item)}
-                      className="text-gray-400 hover:text-vital-500 transition-colors text-sm font-tech  block"
+                      className="flex min-h-11 items-center text-gray-400 hover:text-vital-500 transition-colors text-sm font-tech"
                     >
                       {item.label}
                     </a>
@@ -154,20 +154,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
 
           <div>
             <h4 className="text-white font-display font-bold mb-6">SOCIALS</h4>
-            <div className="flex gap-4">
-              <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-vital-600 hover:text-white transition-all" aria-label="Discord">
+            <div className="flex flex-wrap gap-3">
+              <a href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" className="w-11 h-11 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-vital-600 hover:text-white transition-all" aria-label="Discord">
                 <DiscordLogo className="w-5 h-5" />
               </a>
-              <a href="https://x.com/vital_roleplay/" target="_blank" rel="noreferrer" className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all" aria-label="X (Twitter)">
+              <a href="https://x.com/vital_roleplay/" target="_blank" rel="noreferrer" className="w-11 h-11 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all" aria-label="X (Twitter)">
                 <XLogo className="w-5 h-5" />
               </a>
-              <a href="https://www.youtube.com/@VitalRP" target="_blank" rel="noreferrer" className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all" aria-label="YouTube">
+              <a href="https://www.youtube.com/@VitalRP" target="_blank" rel="noreferrer" className="w-11 h-11 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all" aria-label="YouTube">
                 <Youtube size={20} />
               </a>
-              <a href="https://www.instagram.com/vital_roleplay/" target="_blank" rel="noreferrer" className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all" aria-label="Instagram">
+              <a href="https://www.instagram.com/vital_roleplay/" target="_blank" rel="noreferrer" className="w-11 h-11 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all" aria-label="Instagram">
                 <Instagram size={20} />
               </a>
-              <a href="https://www.tiktok.com/@vitalroleplay_" target="_blank" rel="noreferrer" className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-[#00f2ea] hover:text-black transition-all" aria-label="TikTok">
+              <a href="https://www.tiktok.com/@vitalroleplay_" target="_blank" rel="noreferrer" className="w-11 h-11 rounded bg-dark-800 flex items-center justify-center text-gray-400 hover:bg-[#00f2ea] hover:text-black transition-all" aria-label="TikTok">
                 <TikTokLogo className="w-5 h-5" />
               </a>
             </div>
