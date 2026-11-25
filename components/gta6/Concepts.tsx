@@ -1,6 +1,5 @@
 import React from 'react';
 import { concepts, sectionNo } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
 import { SupplyChain } from './SupplyChain';
 import { InlineList } from './InlineList';
 
@@ -33,7 +32,7 @@ export function Concepts() {
         <div className="lg:col-span-8">
           <ol className="border-t border-white/10">
             {concepts.map((c, i) => (
-              <Reveal as="li" key={c.slug} className="border-b border-white/10">
+              <li key={c.slug} className="border-b border-white/10">
                 <article id={`concept-${c.slug}`} className="grid gap-x-8 gap-y-4 py-9 sm:grid-cols-[3rem_1fr] lg:py-12">
                   <span className="g6-mono pt-2 text-sm text-[#a39b90]">{String(i + 1).padStart(2, '0')}</span>
                   <div>
@@ -58,7 +57,7 @@ export function Concepts() {
                     )}
                   </div>
                 </article>
-              </Reveal>
+              </li>
             ))}
           </ol>
         </div>

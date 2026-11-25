@@ -3,20 +3,18 @@
 import React, { useEffect, useRef } from 'react';
 
 /**
- * Restrained entrance: content is visible by default (no JS, SSR), and is
- * only hidden after hydration when it sits below the fold. Honors
- * prefers-reduced-motion by never arming.
+ * Marks an element when it scrolls into view so CSS can play its one motion.
+ * Content is visible by default (no JS, SSR). `data-armed` is only set after
+ * hydration for elements below the fold, and never under reduced motion.
  */
-export function Reveal({
+export function InView({
   children,
   className = '',
-  delay = 0,
   as: Tag = 'div',
 }: {
   children: React.ReactNode;
   className?: string;
-  delay?: number;
-  as?: 'div' | 'li' | 'p' | 'h2' | 'h3';
+  as?: 'div' | 'ol' | 'ul';
 }) {
   const ref = useRef<HTMLElement | null>(null);
 
@@ -24,8 +22,7 @@ export function Reveal({
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 0.9) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.85) return;
 
     el.dataset.armed = 'true';
     const io = new IntersectionObserver(
@@ -35,7 +32,7 @@ export function Reveal({
           io.disconnect();
         }
       },
-      { rootMargin: '0px 0px -8% 0px' }
+      { rootMargin: '0px 0px -15% 0px' }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -43,11 +40,7 @@ export function Reveal({
 
   const Component = Tag as React.ElementType;
   return (
-    <Component
-      ref={ref}
-      className={`g6-reveal ${className}`}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-    >
+    <Component ref={ref} className={className}>
       {children}
     </Component>
   );

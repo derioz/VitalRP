@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { GTA6_SECTIONS } from '@/lib/gta6/content';
+import { SlidingIndicator } from './SlidingIndicator';
 
 /**
  * Secondary navigation for the GTA VI section. It is the second row of the
@@ -55,7 +56,7 @@ export function SectionNav() {
       <span className="absolute left-0 top-0 h-0.5 w-24 bg-[linear-gradient(90deg,#d65f93,#f97316)] lg:hidden" />
       <div ref={stripRef} className="g6-strip overflow-x-auto">
         {/* w-max + mx-auto centers the links, and lets them scroll from the left when they overflow */}
-        <div className="mx-auto flex h-11 w-max items-stretch gap-1 px-3 sm:px-5">
+        <div className="relative mx-auto flex h-11 w-max items-stretch gap-1 px-3 sm:px-5">
           {GTA6_SECTIONS.map((s) => {
             const isActive = active === s.id;
             return (
@@ -68,14 +69,15 @@ export function SectionNav() {
                 }`}
               >
                 {s.label}
-                <span
-                  className={`absolute inset-x-3 bottom-0 h-0.5 bg-[linear-gradient(90deg,#d65f93,#f97316)] transition-opacity duration-150 ${
-                    isActive ? 'opacity-100' : 'opacity-0'
-                  }`}
-                />
               </a>
             );
           })}
+          <SlidingIndicator
+            selector='a[aria-current="true"]'
+            activeKey={active}
+            inset={12}
+            className="bottom-0 bg-[linear-gradient(90deg,#d65f93,#f97316)]"
+          />
         </div>
       </div>
     </nav>

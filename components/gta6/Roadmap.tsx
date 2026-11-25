@@ -1,6 +1,6 @@
 import React from 'react';
 import { roadmap, sectionNo } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
+import { InView } from './InView';
 
 export function Roadmap() {
   return (
@@ -19,14 +19,14 @@ export function Roadmap() {
           </p>
         </div>
 
-        <ol className="mt-16 grid gap-10 lg:mt-24 lg:grid-cols-5 lg:gap-0">
+        <InView as="ol" className="g6-track mt-16 grid gap-10 lg:mt-24 lg:grid-cols-5 lg:gap-0">
           {roadmap.map((p) => {
             const current = p.status === 'current';
             return (
-              <Reveal as="li" key={p.number} className="relative lg:pr-8">
-                <div
-                  className={`mb-6 hidden h-px lg:block ${current ? 'bg-[#f97316]' : 'bg-white/15'}`}
-                />
+              <li key={p.number} className="relative lg:pr-8">
+                <div className="relative mb-6 hidden h-px bg-white/15 lg:block">
+                  {current && <span className="g6-track-live absolute inset-0 bg-[#f97316]" />}
+                </div>
                 <div className="flex items-baseline gap-4 lg:block">
                   <span className={`g6-mono text-sm ${current ? 'text-[#f97316]' : 'text-[#a39b90]'}`}>
                     {p.number}
@@ -43,10 +43,10 @@ export function Roadmap() {
                 <p className={`mt-4 max-w-[30ch] leading-relaxed ${current ? 'text-[#f4efe8]' : 'text-[#a39b90]'}`}>
                   {p.body}
                 </p>
-              </Reveal>
+              </li>
             );
           })}
-        </ol>
+        </InView>
       </div>
     </section>
   );

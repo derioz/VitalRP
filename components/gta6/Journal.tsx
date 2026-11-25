@@ -1,7 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { articles, plannedTopics, sectionNo, type Article } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
 
 /**
  * Preview card for a published development article. Not rendered until
@@ -61,14 +60,14 @@ export function Journal() {
           </div>
         ) : (
           <div className="mt-14 grid gap-x-12 gap-y-12 lg:grid-cols-12">
-            <Reveal className="lg:col-span-5">
+            <div className="lg:col-span-5">
               <p className="text-2xl leading-snug text-white">No entries yet.</p>
               <p className="g6-body mt-4 max-w-[44ch] text-lg">
                 When the team has something real to say, it goes here: concepts, decisions and
                 what we change our minds about. We will not post filler to make this look busy.
               </p>
-            </Reveal>
-            <Reveal delay={80} className="lg:col-span-5 lg:col-start-8">
+            </div>
+            <div className="lg:col-span-5 lg:col-start-8">
               <p className="g6-mono mb-4 text-sm text-[#a39b90]">Topics we plan to write about</p>
               <ul className="g6-list">
                 {plannedTopics.map((t) => (
@@ -78,7 +77,7 @@ export function Journal() {
                   </li>
                 ))}
               </ul>
-            </Reveal>
+            </div>
           </div>
         )}
       </div>

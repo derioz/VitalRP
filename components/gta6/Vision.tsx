@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { GTA6_IMAGES, sectionNo, visionPoints } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
+import { InView } from './InView';
 
 export function Vision() {
   return (
@@ -10,7 +10,7 @@ export function Vision() {
         <div className="grid gap-x-12 gap-y-12 lg:grid-cols-12">
           <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">{sectionNo('vision')}</p>
 
-          <Reveal className="lg:col-span-11">
+          <div className="lg:col-span-11">
             <h2
               id="g6-vision-title"
               className="g6-display text-[clamp(3rem,8vw,7.5rem)] text-white"
@@ -18,10 +18,10 @@ export function Vision() {
               Roleplay,
               <br className="hidden sm:block" /> Reimagined.
             </h2>
-          </Reveal>
+          </div>
 
           <div className="lg:col-span-5 lg:col-start-2">
-            <Reveal>
+            <div>
               <p className="max-w-[46ch] text-xl leading-relaxed text-[#f4efe8] sm:text-2xl">
                 GTA VI gives Vital the chance to rethink what a roleplay server is for.
               </p>
@@ -31,19 +31,17 @@ export function Vision() {
                 people playing in it. That means putting time into the parts of roleplay that last:
                 who you work for, who you owe, who you answer to, and what people say about you.
               </p>
-            </Reveal>
+            </div>
           </div>
 
           <div className="lg:col-span-4 lg:col-start-9">
-            <Reveal delay={80}>
-              <ul className="g6-list">
+            <InView as="ul" className="g6-list g6-stagger">
                 {visionPoints.map((p) => (
                   <li key={p.label} className="g6-display g6-sm text-xl text-white sm:text-2xl">
                     {p.label}
                   </li>
                 ))}
-              </ul>
-            </Reveal>
+            </InView>
           </div>
         </div>
       </div>

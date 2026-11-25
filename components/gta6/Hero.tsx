@@ -35,36 +35,49 @@ export function Hero() {
       className="relative isolate flex min-h-[100svh] flex-col overflow-hidden"
     >
       <div ref={layerRef} className="absolute inset-x-0 -top-[4%] -z-10 h-[108%] will-change-transform">
-        <Image
-          src={GTA6_IMAGES.hero.src}
-          alt={GTA6_IMAGES.hero.alt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[50%_45%]"
-        />
+        {/* Inner wrapper, so the entrance never fights the parallax transform */}
+        <div className="g6-hero-photo absolute inset-0">
+          <Image
+            src={GTA6_IMAGES.hero.src}
+            alt={GTA6_IMAGES.hero.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[50%_45%]"
+          />
+        </div>
       </div>
       {/* Neutral darkening so text sits on calm sky and the base stays dark */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-transparent to-[#0a0a0a]" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/30 to-transparent lg:via-black/20" />
 
       <div className="g6-wrap flex flex-1 flex-col pt-28 sm:pt-32 lg:pt-40">
-        <p className="g6-tag g6-tag-live">Concept development</p>
+        <p className="g6-tag g6-tag-live g6-enter">Concept development</p>
 
         <h1
           id="g6-hero-title"
           className="g6-display mt-6 max-w-[14ch] text-[clamp(3.25rem,8vw,7.5rem)] text-white sm:max-w-[16ch]"
         >
-          <span className="block">A New City.</span>
-          <span className="block">A New Beginning.</span>
+          <span className="g6-line">
+            <span style={{ animationDelay: '180ms' }}>A New City.</span>
+          </span>{' '}
+          <span className="g6-line">
+            <span style={{ animationDelay: '420ms' }}>A New Beginning.</span>
+          </span>
         </h1>
 
-        <p className="mt-8 max-w-[46ch] text-lg leading-relaxed text-[#f4efe8] sm:text-xl">
+        <p
+          className="g6-enter mt-8 max-w-[46ch] text-lg leading-relaxed text-[#f4efe8] sm:text-xl"
+          style={{ animationDelay: '620ms' }}
+        >
           Vital Roleplay is planning its next chapter in Grand Theft Auto VI. Same commitment to
           characters and stories, in a new state and a new setting.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center gap-3">
+        <div
+          className="g6-enter mt-10 flex flex-wrap items-center gap-3"
+          style={{ animationDelay: '740ms' }}
+        >
           <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary">
             Join Our Discord
           </a>

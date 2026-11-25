@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LORE_DISCLAIMER, LORE_STATEMENT, loreTopics, sectionNo, type LoreTopic } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
 import { InlineList } from './InlineList';
 
 /**
@@ -27,7 +26,7 @@ function Credit() {
 
 function TopicBody({ topic }: { topic: LoreTopic }) {
   return (
-    <div className="max-w-[60ch]">
+    <div className="g6-open-in max-w-[60ch]">
       <p className="text-xl leading-snug text-[#f4efe8]">{topic.summary}</p>
       <p className="g6-tag mt-5">What we intend to do</p>
       <ul className="g6-body mt-3 space-y-3 text-base">
@@ -90,27 +89,27 @@ export function Lore() {
       <div className="g6-wrap">
         <div className="grid gap-x-12 gap-y-8 lg:grid-cols-12">
           <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">{sectionNo('lore')}</p>
-          <Reveal className="lg:col-span-11">
+          <div className="lg:col-span-11">
             <h2
               id="g6-lore-title"
               className="g6-display text-[clamp(2.75rem,6.6vw,6.25rem)] text-white"
             >
               Built around the lore of GTA&nbsp;VI
             </h2>
-          </Reveal>
+          </div>
 
-          <Reveal className="lg:col-span-6 lg:col-start-2">
+          <div className="lg:col-span-6 lg:col-start-2">
             <p className="max-w-[28ch] text-[clamp(1.5rem,2.6vw,2.25rem)] leading-[1.2] text-[#f4efe8]">
               &ldquo;{LORE_STATEMENT}&rdquo;
             </p>
-          </Reveal>
-          <Reveal delay={80} className="lg:col-span-4 lg:col-start-9">
+          </div>
+          <div className="lg:col-span-4 lg:col-start-9">
             <p className="g6-body text-lg">
               We want players to feel like they are living in Rockstar&apos;s world, not on a heavily
               modified version of it. We build on the foundation Rockstar made rather than replace
               it with a fictional world of our own.
             </p>
-          </Reveal>
+          </div>
         </div>
 
         <div className="mt-16 grid gap-x-12 gap-y-10 lg:mt-24 lg:grid-cols-12">
@@ -161,9 +160,8 @@ export function Lore() {
                     aria-hidden={t.id !== shown}
                     fill
                     sizes="40vw"
-                    className={`object-cover transition-opacity duration-500 ${
-                      t.id === shown ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className="g6-photo object-cover"
+                    data-on={t.id === shown}
                   />
                 ))}
               </div>

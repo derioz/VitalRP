@@ -1,12 +1,12 @@
 import React from 'react';
 import { communityWays, DISCORD_URL, sectionNo } from '@/lib/gta6/content';
-import { Reveal } from './Reveal';
+import { InView } from './InView';
 
 export function Community() {
   return (
     <section id="community" aria-labelledby="g6-community-title" className="g6-section g6-rule">
       <div className="g6-wrap grid gap-x-12 gap-y-12 lg:grid-cols-12">
-        <Reveal className="lg:col-span-6">
+        <div className="lg:col-span-6">
           <p className="g6-mono pb-6 text-sm text-[#a39b90]">{sectionNo('community')}</p>
           <h2
             id="g6-community-title"
@@ -23,10 +23,10 @@ export function Community() {
               Join Our Discord
             </a>
           </div>
-        </Reveal>
+        </div>
 
-        <Reveal delay={80} className="lg:col-span-5 lg:col-start-8 lg:pt-14">
-          <ul className="g6-list">
+        <div className="lg:col-span-5 lg:col-start-8 lg:pt-14">
+          <InView as="ul" className="g6-list g6-stagger">
             {communityWays.map((w, i) => (
               <li key={w} className="flex gap-5 text-lg text-[#f4efe8]">
                 <span className="g6-mono w-6 pt-1 text-sm text-[#a39b90]">
@@ -35,8 +35,8 @@ export function Community() {
                 {w}
               </li>
             ))}
-          </ul>
-        </Reveal>
+          </InView>
+        </div>
       </div>
     </section>
   );
