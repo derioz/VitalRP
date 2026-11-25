@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { GTA6_SECTIONS } from '@/lib/gta6/content';
-import { SlidingIndicator } from './SlidingIndicator';
+import { SlidingIndicator } from '../SlidingIndicator';
 
 /**
  * Secondary navigation for the GTA VI section. It is the second row of the

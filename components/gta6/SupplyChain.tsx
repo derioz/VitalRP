@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ArrowDown, Pause, Play, RotateCcw } from 'lucide-react';
 import { supplyChain } from '@/lib/gta6/content';
-import { InView } from './InView';
+import { InView } from '../InView';
 
 /** Time each player holds the dinner during a walk-through, long enough to read. */
 const DWELL = 4500;

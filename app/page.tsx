@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { Features } from '@/components/Features';
@@ -18,61 +19,64 @@ import { StoreModal } from '@/components/StoreModal';
 export default function HomePage() {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative transition-colors duration-700">
-      {/* Floating Admin Controls Bar (Only shows if authorized server-side) */}
-      <AdminControls />
+    /* Reduced motion drops movement from every animation on the page */
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-dark-950 text-white selection:bg-vital-500 selection:text-white relative transition-colors duration-700">
+        {/* Floating Admin Controls Bar (Only shows if authorized server-side) */}
+        <AdminControls />
 
-      {/* Global Ambient Background */}
-      <ParallaxBackground />
+        {/* Global Ambient Background */}
+        <ParallaxBackground />
 
-      {/* Redesigned Floating Navbar */}
-      <Navbar onOpenStore={() => setIsStoreOpen(true)} />
+        {/* Redesigned Floating Navbar */}
+        <Navbar onOpenStore={() => setIsStoreOpen(true)} />
 
-      {/* Main Content - Modular Section Slots */}
-      <main className="relative z-10 flex flex-col">
-        {/* Hero Section */}
-        <div id="home-slot" className="relative w-full">
-          <Hero />
+        {/* Main Content - Modular Section Slots */}
+        <main className="relative z-10 flex flex-col">
+          {/* Hero Section */}
+          <div id="home-slot" className="relative w-full">
+            <Hero />
+          </div>
+
+          {/* How to join */}
+          <HowToJoin />
+
+          {/* Features Section */}
+          <div id="features-slot" className="relative w-full">
+            <Features />
+          </div>
+
+          {/* Values Section */}
+          <div id="values-slot" className="relative w-full">
+            <Values />
+          </div>
+
+          {/* Rules Section */}
+          <div id="rules-slot" className="relative w-full">
+            <Rules />
+          </div>
+
+          {/* FAQ Section */}
+          <div id="faq-slot" className="relative w-full">
+            <FAQ />
+          </div>
+
+          {/* Join CTA Section */}
+          <div id="join-slot" className="relative w-full">
+            <JoinCTA />
+          </div>
+        </main>
+
+        {/* Footer */}
+        <div className="relative z-10">
+          <Footer onOpenStore={() => setIsStoreOpen(true)} />
         </div>
 
-        {/* How to join */}
-        <HowToJoin />
+        {/* Tebex Store Modal */}
+        <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
 
-        {/* Features Section */}
-        <div id="features-slot" className="relative w-full">
-          <Features />
-        </div>
-
-        {/* Values Section */}
-        <div id="values-slot" className="relative w-full">
-          <Values />
-        </div>
-
-        {/* Rules Section */}
-        <div id="rules-slot" className="relative w-full">
-          <Rules />
-        </div>
-
-        {/* FAQ Section */}
-        <div id="faq-slot" className="relative w-full">
-          <FAQ />
-        </div>
-
-        {/* Join CTA Section */}
-        <div id="join-slot" className="relative w-full">
-          <JoinCTA />
-        </div>
-      </main>
-
-      {/* Footer */}
-      <div className="relative z-10">
-        <Footer onOpenStore={() => setIsStoreOpen(true)} />
+        <ScrollToTop />
       </div>
-
-      {/* Tebex Store Modal */}
-      <StoreModal isOpen={isStoreOpen} onClose={() => setIsStoreOpen(false)} />
-
-      <ScrollToTop />
-    </div>
+    </MotionConfig>
   );
 }

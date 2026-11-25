@@ -1,0 +1,44 @@
+/*
+ * The route from joining to playing. Visible by default: the line is complete
+ * and the numbers are lit unless the section is armed below the fold, and it is
+ * never armed under reduced motion.
+ */
+.route-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: rgb(255 255 255 / 0.15);
+}
+.route-fill {
+  position: absolute;
+  inset: 0;
+  background: #f97316;
+  transform-origin: top left;
+}
+@media (min-width: 1024px) {
+  .route-track { inset: 0 0 auto 0; width: auto; height: 1px; }
+}
+
+/* Each leg takes over where the last ended; the review leg is the slow one */
+.route-step:nth-child(1) { --leg-delay: 150ms; --leg-time: 500ms; }
+.route-step:nth-child(2) { --leg-delay: 650ms; --leg-time: 1300ms; }
+.route-step:nth-child(3) { --leg-delay: 1950ms; --leg-time: 450ms; }
+
+.route[data-armed='true'] .route-fill { transform: scaleY(0); }
+.route[data-armed='true'] .route-number { color: #9ca3af; }
+.route[data-armed='true'][data-in='true'] .route-fill {
+  transform: none;
+  transition: transform var(--leg-time) cubic-bezier(0.45, 0, 0.35, 1) var(--leg-delay);
+}
+.route[data-armed='true'][data-in='true'] .route-number {
+  color: #f97316;
+  transition: color 250ms linear var(--leg-delay);
+}
+@media (min-width: 1024px) {
+  .route[data-armed='true']:not([data-in='true']) .route-fill { transform: scaleX(0); }
+}
+
+/* Anchor jumps are instant for people who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+}

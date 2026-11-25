@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button } from './Button';
+import { InView } from './InView';
+import './HowToJoin.css';
 
 const DISCORD_URL = 'https://discord.gg/vitalrp';
 const CONNECT_URL = 'https://connect.vitalrp.net';
@@ -34,10 +36,14 @@ export const HowToJoin: React.FC = () => (
         </p>
       </div>
 
-      <ol className="mt-12 grid gap-10 lg:grid-cols-3 lg:gap-8">
+      {/* The line runs from joining to playing. It slows across the review. */}
+      <InView as="ol" className="route mt-12 grid gap-10 lg:grid-cols-3 lg:gap-8">
         {steps.map((step, i) => (
-          <li key={step.title} className="flex flex-col border-t border-white/15 pt-6">
-            <span className="font-tech tabular-nums text-vital-500" aria-hidden="true">
+          <li key={step.title} className="route-step relative flex flex-col pl-6 lg:pl-0 lg:pt-6">
+            <span className="route-track" aria-hidden="true">
+              <span className="route-fill" />
+            </span>
+            <span className="route-number font-tech tabular-nums text-vital-500" aria-hidden="true">
               {i + 1}
             </span>
             <h3 className="mt-3 text-2xl font-display font-bold text-white">{step.title}</h3>
@@ -51,7 +57,7 @@ export const HowToJoin: React.FC = () => (
             )}
           </li>
         ))}
-      </ol>
+      </InView>
     </div>
   </section>
 );

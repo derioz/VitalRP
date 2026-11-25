@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DISCORD_URL, LIFE_NOTE, lifestyles, sectionNo } from '@/lib/gta6/content';
 import { InlineList } from './InlineList';
-import { SlidingIndicator } from './SlidingIndicator';
+import { SlidingIndicator } from '../SlidingIndicator';
 
 /**
  * "Life in Leonida". The functional base is shadcn/ui Tabs (Radix: arrow keys,

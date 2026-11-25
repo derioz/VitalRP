@@ -1,0 +1,1 @@
+import{h as e,r as t}from"./AuthProvider-B71WnUS7.js";import{u as n}from"./chunk-OB3PAWPO-CQEx3Yag.js";import{t as r}from"./CharacterEditorView-IbQIoeae.js";e();var i=t(),a=()=>{let{slug:e}=n();return(0,i.jsx)(r,{initialSlug:e,isNew:!1})};export{a as WikiCharacterEdit};
