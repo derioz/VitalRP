@@ -1,0 +1,1 @@
+import{h as e,r as t}from"./AuthProvider-B71WnUS7.js";import{t as n}from"./CharacterEditorView-DXozhzIo.js";e();var r=t(),i=()=>(0,r.jsx)(n,{isNew:!0});export{i as WikiCharacterNew};

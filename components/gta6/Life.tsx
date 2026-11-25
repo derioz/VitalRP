@@ -41,6 +41,14 @@ export function Life() {
                 <TabsTrigger
                   key={l.id}
                   value={l.id}
+                  // Radix focuses a clicked tab from script, which the browser treats
+                  // like keyboard focus. Marking pointer use keeps the ring for keys only.
+                  onPointerDown={(e) => {
+                    e.currentTarget.dataset.pointer = 'true';
+                  }}
+                  onBlur={(e) => {
+                    delete e.currentTarget.dataset.pointer;
+                  }}
                   className="group relative -mb-px flex items-baseline gap-3 border-b-2 border-transparent pb-4 pt-1 text-left text-[#17120d]/60 hover:text-[#17120d] data-[state=active]:text-[#17120d]"
                 >
                   <span className="g6-mono text-xs">{String(i + 1).padStart(2, '0')}</span>
