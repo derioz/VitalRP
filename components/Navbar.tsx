@@ -8,6 +8,7 @@ import { Menu, X, LogOut, ExternalLink, Edit2, Check, Loader2 } from 'lucide-rea
 import { VitalLogo } from './VitalLogo';
 import { useAuth } from './AuthProvider';
 import { ProfileDropdown } from './ProfileDropdown';
+import { SlidingIndicator } from './SlidingIndicator';
 
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg
@@ -43,6 +44,53 @@ const GtaLabel = () => (
     GTA VI
   </span>
 );
+
+/** Homepage sections, in page order, and the navigation entry each belongs to. */
+const HOME_SECTIONS: [string, string][] = [
+  ['home', '/'],
+  ['how-to-join', '/#how-to-join'],
+  ['features', '/#features'],
+  ['values', '/#values'],
+  ['rules', '/rules'],
+  ['faq', '/#faq'],
+  ['join', '/#how-to-join'],
+];
+
+/** The entry for the section the reader is in: the last whose top passed 35% of the screen. */
+function useHomeSection(enabled: boolean) {
+  const [current, setCurrent] = useState('/');
+
+  useEffect(() => {
+    if (!enabled) return;
+    let raf = 0;
+    const update = () => {
+      let next = '/';
+      for (const [id, href] of HOME_SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.35) next = href;
+      }
+      // The last section may be too short to reach that line
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        next = HOME_SECTIONS[HOME_SECTIONS.length - 1][1];
+      }
+      setCurrent(next);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [enabled]);
+
+  return current;
+}
 
 const DISCORD_URL = 'https://discord.gg/vitalrp';
 const PLAY_URL = 'https://connect.vitalrp.net';
@@ -101,8 +149,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const onHome = pathname === '/';
   // Pages that exist to bring new players in lead with the Discord at every width
   const joinFirst = onGta || onHome;
+  const section = useHomeSection(onHome);
 
-  const isCurrent = (href: string) => !href.includes('#') && href === pathname;
+  const isCurrent = (href: string) =>
+    onHome ? href === section : !href.includes('#') && href === pathname;
 
   const linkClass = (href: string) =>
     `relative flex h-14 items-center whitespace-nowrap px-2.5 text-sm font-display font-medium transition-colors duration-150 xl:px-3 ${
@@ -130,7 +180,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
           {/* Main links */}
           <nav aria-label="Main Navigation" className="hidden min-w-0 flex-1 lg:block">
-            <ul className="flex items-center">
+            <ul className="relative flex items-center">
               {navLinks.map((link) => {
                 const isGtaTab = onGta && link.href === '/gta6';
                 return (
@@ -138,7 +188,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     <a
                       href={link.href}
                       data-gta-tab={isGtaTab ? '' : undefined}
-                      aria-current={isCurrent(link.href) ? 'page' : undefined}
+                      data-section-current={onHome && isCurrent(link.href) ? 'true' : undefined}
+                      aria-current={isCurrent(link.href) ? (onHome ? 'location' : 'page') : undefined}
                       className={`${linkClass(link.href)} ${link.href === '/gta6' ? 'group/gta' : ''} ${
                         isGtaTab
                           ? 'z-10 border-x border-white/10 bg-[#140e17]'
@@ -152,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                           <span className="absolute inset-x-0 top-0 h-0.5 bg-[linear-gradient(90deg,#d65f93,#f97316_60%,#8e6bd8)]" />
                           <span className="absolute inset-x-0 -bottom-px h-px bg-[#140e17]" />
                         </>
-                      ) : (
+                      ) : onHome ? null : (
                         <span
                           className={`absolute inset-x-2.5 bottom-0 h-px bg-vital-500 transition-opacity duration-150 xl:inset-x-3 ${
                             isCurrent(link.href) ? 'opacity-100' : 'opacity-0'
@@ -163,6 +214,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   </li>
                 );
               })}
+              {/* On the homepage one underline travels with the reader */}
+              {onHome && (
+                <li aria-hidden="true" className="contents">
+                  <SlidingIndicator
+                    selector='a[data-section-current="true"]'
+                    activeKey={section}
+                    inset={10}
+                    base="pointer-events-none absolute left-0 w-[100px] origin-left opacity-0 data-[ready=true]:transition-transform data-[ready=true]:duration-[420ms] data-[ready=true]:ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:!transition-none"
+                    className="bottom-0 h-0.5 bg-vital-500"
+                  />
+                </li>
+              )}
             </ul>
           </nav>
 

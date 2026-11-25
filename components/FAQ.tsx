@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
 
 const faqs = [
@@ -21,6 +21,7 @@ const faqs = [
 
 export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const reducedMotion = useReducedMotion();
 
   return (
     <section id="faq" className="py-24 bg-dark-800 relative scroll-mt-24">
@@ -55,7 +56,7 @@ export const FAQ: React.FC = () => {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <div className="px-6 pb-6 pt-0 text-gray-300 leading-relaxed border-t border-white/5 mt-2 pt-4">
                       {faq.answer}

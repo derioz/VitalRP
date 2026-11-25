@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { communityWays, DISCORD_URL, GTA6_IMAGES } from '@/lib/gta6/content';
-import { InView } from './InView';
+import { InView } from '../InView';
 
 export function Closing() {
   return (

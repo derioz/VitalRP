@@ -29,21 +29,23 @@ const DiscordIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+
 export const Hero: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
   // Nothing is shown until the server list has actually answered
-  const [server, setServer] = useState<{ state: 'unknown' | 'offline' | 'online'; players: number }>({
-    state: 'unknown',
-    players: 0,
-  });
+  const [server, setServer] = useState<{
+    state: 'pending' | 'unknown' | 'offline' | 'online';
+    players: number;
+  }>({ state: 'pending', players: 0 });
 
   // Fetch live CFX server population without polling overhead
   useEffect(() => {
     let isMounted = true;
     const fetchStats = async () => {
-      let next: typeof server = { state: 'unknown', players: 0 };
+      let next: { state: 'unknown' | 'offline' | 'online'; players: number } = { state: 'unknown', players: 0 };
       try {
         const response = await fetch(getApiUrl('/api/cfx/population'));
         if (response.ok) {
@@ -66,85 +68,16 @@ export const Hero: React.FC = () => {
     };
   }, []);
 
-  // -------------------------------------------------------------------------
-  // ADVANCED 2026 SCROLL-LINKED PARALLAX ENGINE
-  // Driven directly via compositor motion values tied to viewport scroll progress
-  // -------------------------------------------------------------------------
+  // The artwork drifts a little slower than the page. Text and buttons stay put
+  // and fully visible for as long as they are on screen.
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end start'],
   });
-
-  // Layer 1: Background Artwork (~0.25x perceived scroll rate)
-  // Progress 0% to 15%: Initial rest
-  // Progress 15% to 45%: Parallax begins
-  // Progress 45% to 75%: Scale and vertical offset increase
-  // Progress 75% to 100%: Opacity subtly softens and subtle blur appears
   const bgScrollY = useTransform(scrollYProgress, [0, 0.15, 0.6, 1], [0, 0, 48, 85]);
   const bgScale = useTransform(scrollYProgress, [0, 0.15, 0.65, 1], [1.0, 1.0, 1.025, 1.05]);
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.75, 1], [1, 1, 0.7]);
-  const bgBlur = useTransform(
-    scrollYProgress,
-    [0, 0.75, 1],
-    ['blur(0px)', 'blur(0px)', 'blur(3px)']
-  );
 
-  // Layer 2: Lighting & Gradient Overlay (~0.4x perceived rate)
-  const overlayScrollY = useTransform(scrollYProgress, [0, 0.15, 0.6, 1], [0, 0, 22, 45]);
-  const bottomGradientOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.5, 0.8, 1],
-    [0.75, 0.85, 0.95, 1]
-  );
-  const bottomGradientHeight = useTransform(
-    scrollYProgress,
-    [0, 0.6, 1],
-    ['11rem', '13rem', '17rem']
-  );
-
-  // Layer 3: Hero Headline & Statements (~0.7x perceived rate)
-  // Fades and translates upward smoothly without flying off the screen
-  const headlineScrollY = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.55, 0.85],
-    [0, 0, -45, -90]
-  );
-  const headlineOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.18, 0.55, 0.8],
-    [1, 1, 0.28, 0]
-  );
-  const headlineScale = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.7],
-    [1, 1, 0.97]
-  );
-  const headlineLetterSpacing = useTransform(
-    scrollYProgress,
-    [0, 0.6],
-    ['0em', '-0.015em']
-  );
-
-  // Layer 4: CTA & Server Information (~0.85x perceived rate)
-  // Slightly stronger movement for genuine multiplane depth
-  const ctaScrollY = useTransform(
-    scrollYProgress,
-    [0, 0.12, 0.5, 0.8],
-    [0, 0, -60, -125]
-  );
-  const ctaOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.48, 0.72],
-    [1, 1, 0.2, 0]
-  );
-  const ctaScale = useTransform(
-    scrollYProgress,
-    [0, 0.12, 0.65],
-    [1, 1, 0.95]
-  );
-
-  // Scroll Indicator (Quickly fades out within first 12% scroll)
-  const indicatorY = useTransform(scrollYProgress, [0, 0.12], [0, 16]);
+  // The scroll cue leaves as soon as it has been followed
   const indicatorOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
 
   // -------------------------------------------------------------------------
@@ -202,8 +135,6 @@ export const Hero: React.FC = () => {
           x: bgTranslateX,
           y: bgCombinedY,
           scale: prefersReducedMotion ? 1 : bgScale,
-          opacity: prefersReducedMotion ? 1 : bgOpacity,
-          filter: prefersReducedMotion ? 'blur(0px)' : bgBlur,
           transformStyle: 'preserve-3d',
         }}
         initial={
@@ -231,12 +162,7 @@ export const Hero: React.FC = () => {
       {/* ------------------------------------------------------------------- */}
       {/* LAYER 2: LIGHTING & GRADIENT READABILITY OVERLAYS */}
       {/* ------------------------------------------------------------------- */}
-      <motion.div
-        style={{
-          y: prefersReducedMotion ? 0 : overlayScrollY,
-        }}
-        className="absolute inset-0 pointer-events-none z-[1] will-change-transform"
-      >
+      <div className="absolute inset-0 pointer-events-none z-[1]">
         {/* Left-to-right directional readability gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/70 via-35% md:via-45% to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-dark-950/80 via-transparent to-transparent max-w-2xl" />
@@ -246,16 +172,10 @@ export const Hero: React.FC = () => {
 
         {/* Subtle vignette */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(5,5,5,0.45)_100%)]" />
-      </motion.div>
+      </div>
 
-      {/* Dynamic Bottom Transition Gradient (Smooth dissolve into next section) */}
-      <motion.div
-        style={{
-          height: prefersReducedMotion ? '12rem' : bottomGradientHeight,
-          opacity: prefersReducedMotion ? 0.85 : bottomGradientOpacity,
-        }}
-        className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-dark-950 via-dark-950/70 to-transparent pointer-events-none z-[2] will-change-[height,opacity]"
-      />
+      {/* Bottom dissolve into the next section */}
+      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-dark-950 via-dark-950/70 to-transparent opacity-85 pointer-events-none z-[2]" />
 
       {/* ------------------------------------------------------------------- */}
       {/* LAYER 3 & 4: FOREGROUND CONTENT (Multiplane Text & CTAs) */}
@@ -264,22 +184,14 @@ export const Hero: React.FC = () => {
         <div className="max-w-xl lg:max-w-2xl flex flex-col items-start text-left">
           {/* LAYER 3: HEADLINE & COPY CONTAINER */}
           <motion.div
-            style={{
-              x: fgOffsetX,
-              y: prefersReducedMotion ? 0 : headlineScrollY,
-              opacity: prefersReducedMotion ? 1 : headlineOpacity,
-              scale: prefersReducedMotion ? 1 : headlineScale,
-              letterSpacing: prefersReducedMotion ? '0em' : headlineLetterSpacing,
-              transformStyle: 'preserve-3d',
-              translateZ: prefersReducedMotion ? 0 : 25,
-            }}
+            style={{ x: fgOffsetX, y: fgOffsetY }}
             className="w-full flex flex-col items-start will-change-transform"
           >
             {/* Main Headline */}
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.22, ease: 'easeOut' }}
+              transition={{ duration: 0.7, delay: 0.05, ease: EASE_OUT }}
               className="mb-5 sm:mb-6"
             >
               <h1 className="select-none text-6xl sm:text-7xl md:text-8xl lg:text-[6.5rem] font-display font-black text-white leading-[0.9] tracking-tight">
@@ -291,7 +203,7 @@ export const Hero: React.FC = () => {
             <motion.p
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.35, ease: 'easeOut' }}
+              transition={{ duration: 0.6, delay: 0.14, ease: EASE_OUT }}
               className="text-lg sm:text-xl lg:text-[1.35rem] font-sans text-gray-100 leading-snug mb-3 max-w-xl"
             >
               A serious roleplay community built around characters, stories, and the moments that make Los Santos feel alive.
@@ -301,7 +213,7 @@ export const Hero: React.FC = () => {
             <motion.p
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.45, ease: 'easeOut' }}
+              transition={{ duration: 0.6, delay: 0.2, ease: EASE_OUT }}
               className="text-base font-sans text-gray-300 leading-relaxed mb-7 sm:mb-8 max-w-lg"
             >
               Your choices matter. Your character has a story. What happens next is up to you.
@@ -309,47 +221,60 @@ export const Hero: React.FC = () => {
           </motion.div>
 
           {/* LAYER 4: CTA & SERVER METADATA */}
-          <motion.div
-            style={{
-              y: prefersReducedMotion ? 0 : ctaScrollY,
-              opacity: prefersReducedMotion ? 1 : ctaOpacity,
-              scale: prefersReducedMotion ? 1 : ctaScale,
-            }}
-            className="w-full flex flex-col items-start will-change-transform"
-          >
+          <div className="w-full flex flex-col items-start">
             {/* Live population */}
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.55, ease: 'easeOut' }}
+              transition={{ duration: 0.55, delay: 0.26, ease: EASE_OUT }}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-tech tabular-nums text-gray-200 mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
             >
-              {server.state !== 'unknown' && (
-                <>
-                  <span className="inline-flex basis-full items-center gap-2 text-white sm:basis-auto">
-                    <span
-                      className={`h-2 w-2 rounded-full ${server.state === 'online' ? 'bg-vital-500' : 'bg-gray-500'}`}
-                      aria-hidden="true"
-                    />
-                    {server.state === 'offline'
-                      ? 'Server offline'
-                      : server.players > 0
-                        ? `${server.players} ${server.players === 1 ? 'player' : 'players'} in the city`
-                        : 'Server online'}
-                  </span>
-                  <span className="hidden text-white/25 select-none sm:inline">/</span>
-                </>
-              )}
               <span>Whitelisted</span>
               <span className="text-white/25 select-none">/</span>
               <span>18+</span>
+              {/* Last in the row, so its arrival moves nothing. The space is held
+                  while the answer is pending. */}
+              {server.state !== 'unknown' && (
+                <motion.span
+                  key={server.state === 'pending' ? 'pending' : 'known'}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: server.state === 'pending' ? 0 : 1 }}
+                  transition={{ duration: 0.4, ease: EASE_OUT }}
+                  className="inline-flex min-h-5 basis-full items-center gap-2 text-white sm:basis-auto"
+                >
+                  {server.state !== 'pending' && (
+                    <>
+                      <span className="mr-1 hidden text-white/25 select-none sm:inline" aria-hidden="true">/</span>
+                      <span className="relative flex h-2 w-2" aria-hidden="true">
+                        {/* One ring when the answer lands: this figure is live */}
+                        {server.state === 'online' && !prefersReducedMotion && (
+                          <motion.span
+                            className="absolute inset-0 rounded-full bg-vital-500"
+                            initial={{ scale: 1, opacity: 0.8 }}
+                            animate={{ scale: 3.2, opacity: 0 }}
+                            transition={{ duration: 1.2, delay: 0.25, ease: 'easeOut' }}
+                          />
+                        )}
+                        <span
+                          className={`h-2 w-2 rounded-full ${server.state === 'online' ? 'bg-vital-500' : 'bg-gray-500'}`}
+                        />
+                      </span>
+                      {server.state === 'offline'
+                        ? 'Server offline'
+                        : server.players > 0
+                          ? `${server.players} ${server.players === 1 ? 'player' : 'players'} in the city`
+                          : 'Server online'}
+                    </>
+                  )}
+                </motion.span>
+              )}
             </motion.div>
 
             {/* Minimalist CTAs */}
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.65, ease: 'easeOut' }}
+              transition={{ duration: 0.55, delay: 0.3, ease: EASE_OUT }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto"
             >
               <Button
@@ -365,7 +290,7 @@ export const Hero: React.FC = () => {
                 How to get in
               </Button>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -373,13 +298,7 @@ export const Hero: React.FC = () => {
       {/* SCROLL INDICATOR (Fades within first 12% scroll) */}
       {/* ------------------------------------------------------------------- */}
       <motion.div
-        style={{
-          y: prefersReducedMotion ? 0 : indicatorY,
-          opacity: prefersReducedMotion ? 1 : indicatorOpacity,
-        }}
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.85 }}
+        style={{ opacity: prefersReducedMotion ? 1 : indicatorOpacity }}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 [@media(max-height:640px)]:hidden flex flex-col items-center gap-2 pointer-events-none select-none will-change-[transform,opacity]"
       >
         <span className="text-xs font-tech text-gray-300">
@@ -390,7 +309,7 @@ export const Hero: React.FC = () => {
             animate={prefersReducedMotion ? {} : { y: ['-100%', '100%'] }}
             transition={{
               duration: 2.2,
-              repeat: Infinity,
+              repeat: 2,
               ease: 'easeInOut',
             }}
             className="w-full h-1/2 bg-vital-500 rounded-full"

@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { GTA6_IMAGES, sectionNo, visionPoints } from '@/lib/gta6/content';
-import { InView } from './InView';
+import { InView } from '../InView';
 
 export function Vision() {
   return (
