@@ -5,7 +5,7 @@ import './gta6.css';
 
 const title = 'GTA VI: The Next Chapter | Vital Roleplay';
 const description =
-  "Vital Roleplay's concept development for Grand Theft Auto VI. Our vision, the regions of Leonida and our roadmap for a story-first, roleplay-heavy server. Unofficial community project.";
+  "Vital Roleplay's concept development for Grand Theft Auto VI. How we plan to build around the lore of GTA VI, life in Leonida, and our roadmap for a story-first, roleplay-heavy server. Unofficial community project.";
 
 export const metadata: Metadata = {
   title,

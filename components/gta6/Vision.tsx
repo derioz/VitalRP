@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { GTA6_IMAGES, visionPoints } from '@/lib/gta6/content';
+import { GTA6_IMAGES, sectionNo, visionPoints } from '@/lib/gta6/content';
 import { Reveal } from './Reveal';
 
 export function Vision() {
@@ -8,7 +8,7 @@ export function Vision() {
     <section id="vision" aria-labelledby="g6-vision-title" className="g6-section pb-0 lg:pb-0">
       <div className="g6-wrap">
         <div className="grid gap-x-12 gap-y-12 lg:grid-cols-12">
-          <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">02</p>
+          <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">{sectionNo('vision')}</p>
 
           <Reveal className="lg:col-span-11">
             <h2

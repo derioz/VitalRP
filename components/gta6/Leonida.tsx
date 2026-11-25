@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
-import { regions } from '@/lib/gta6/content';
+import { regions, sectionNo } from '@/lib/gta6/content';
 
 /**
  * Regional showcase. The tab pattern follows the WAI-ARIA tabs practice
@@ -33,7 +33,7 @@ export function Leonida() {
     <section id="leonida" aria-labelledby="g6-leonida-title" className="relative scroll-mt-28">
       <div className="g6-wrap g6-section pb-12 lg:pb-16">
         <div className="grid gap-x-12 gap-y-8 lg:grid-cols-12">
-          <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">03</p>
+          <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">{sectionNo('leonida')}</p>
           <h2
             id="g6-leonida-title"
             className="g6-display text-[clamp(3rem,8vw,7.5rem)] text-white lg:col-span-11"
