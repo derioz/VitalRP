@@ -11,10 +11,10 @@ export const VitalLogo: React.FC<VitalLogoProps> = ({
     ...props
 }) => (
     <img
-        src="https://r2.fivemanage.com/image/qlWrCeXTQdqx.png"
+        src="/home/logo-128.webp"
         alt={alt}
-        width={1254}
-        height={1254}
+        width={128}
+        height={128}
         className={`aspect-square object-contain ${className}`}
         {...props}
     />

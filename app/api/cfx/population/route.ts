@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 export const revalidate = 30; // Next.js ISR route revalidation in seconds
 
+const CFX_SERVER_ID = '3yyqyxy';
+
 interface CFXServerData {
   clients?: number;
   sv_maxclients?: number;
@@ -15,18 +17,17 @@ interface CFXApiResponse {
 }
 
 export async function GET() {
-  const serverId = process.env.CFX_SERVER_ID || 'ogpvmv';
+  // The public join code that connect.vitalrp.net redirects to.
+  const serverId = CFX_SERVER_ID;
   const cfxUrl = `https://frontend.cfx-services.net/api/servers/single/${serverId}`;
 
-  // Default fallback payload if CFX is unreachable or offline
-  const fallbackResponse = {
-    online: false,
-    players: 0,
-    max: 2048,
-    serverId,
-    timestamp: Date.now(),
-    cached: false,
-  };
+  // "offline" means the server list has no such server running. "unknown" means
+  // we could not find out, and the site must not claim either way.
+  const unavailable = (status: 'offline' | 'unknown') =>
+    NextResponse.json(
+      { status, online: false, players: 0, max: 0, serverId, timestamp: Date.now() },
+      { status: 200 }
+    );
 
   try {
     const controller = new AbortController();
@@ -45,13 +46,13 @@ export async function GET() {
 
     if (!response.ok) {
       console.warn(`CFX API returned non-200 status: ${response.status}`);
-      return NextResponse.json(fallbackResponse, { status: 200 });
+      return unavailable(response.status === 404 ? 'offline' : 'unknown');
     }
 
     const data: CFXApiResponse = await response.json();
 
     if (!data || !data.Data) {
-      return NextResponse.json(fallbackResponse, { status: 200 });
+      return unavailable('unknown');
     }
 
     const clients = typeof data.Data.clients === 'number' ? data.Data.clients : 0;
@@ -59,6 +60,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
+        status: 'online',
         online: true,
         players: clients,
         max: maxClients,
@@ -74,6 +76,6 @@ export async function GET() {
     );
   } catch (error: any) {
     console.warn('CFX population fetch failed or timed out:', error.message || error);
-    return NextResponse.json(fallbackResponse, { status: 200 });
+    return unavailable('unknown');
   }
 }

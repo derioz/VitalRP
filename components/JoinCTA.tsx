@@ -23,8 +23,10 @@ export const JoinCTA: React.FC = () => {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983&auto=format&fit=crop"
-          alt="Night City Atmosphere"
+          src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=60&w=1200&auto=format&fit=crop"
+          loading="lazy"
+          decoding="async"
+          alt=""
           className="w-full h-full object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/90 to-dark-900/80"></div>
@@ -36,16 +38,16 @@ export const JoinCTA: React.FC = () => {
             Ready to start your <span className="text-vital-500">legacy</span>?
           </h2>
           <p className="text-xl text-gray-200 mb-10 font-sans max-w-2xl">
-            Create a character, join the whitelist, and step into Los Santos.
+            Join the Discord, apply in the whitelist channel, then step into Los Santos.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
-              Connect to server
+            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
+              Join the Discord
             </Button>
 
-            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noreferrer" variant="outline" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
-              Join the Discord
+            <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
+              Already whitelisted? Connect
             </Button>
           </div>
         </div>

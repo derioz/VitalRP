@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import {
   motion,
   useScroll,
@@ -12,9 +11,9 @@ import {
 } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './Button';
+import { getApiUrl } from '@/lib/api-config';
 
 // EXACT Unmodified Remote Asset & Social Constants
-const HERO_IMAGE = 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png';
 const DISCORD_URL = 'https://discord.gg/vitalrp';
 
 const DiscordIcon = ({ className }: { className?: string }) => (
@@ -34,11 +33,9 @@ export const Hero: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  const [serverStats, setServerStats] = useState<{
-    online: boolean;
-    players: number;
-  }>({
-    online: false,
+  // Nothing is shown until the server list has actually answered
+  const [server, setServer] = useState<{ state: 'unknown' | 'offline' | 'online'; players: number }>({
+    state: 'unknown',
     players: 0,
   });
 
@@ -46,19 +43,19 @@ export const Hero: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchStats = async () => {
+      let next: typeof server = { state: 'unknown', players: 0 };
       try {
-        const response = await fetch('/api/cfx/population');
-        if (!response.ok) return;
-        const data = await response.json();
-        if (isMounted && data) {
-          setServerStats({
-            online: Boolean(data.online),
-            players: Number(data.players) || 0,
-          });
+        const response = await fetch(getApiUrl('/api/cfx/population'));
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.status === 'online' || data?.status === 'offline') {
+            next = { state: data.status, players: Number(data.players) || 0 };
+          }
         }
       } catch {
-        // Retain initial status on network error
+        // Unknown: the status line is hidden
       }
+      if (isMounted) setServer(next);
     };
 
     fetchStats();
@@ -188,18 +185,6 @@ export const Hero: React.FC = () => {
     rawMouseY.set(0);
   };
 
-  // Smooth scroll to next section
-  const handleEnterLosSantos = () => {
-    const target =
-      document.getElementById('features-slot') ||
-      document.getElementById('features');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      window.location.hash = 'features';
-    }
-  };
-
   return (
     <section
       id="home"
@@ -228,16 +213,19 @@ export const Hero: React.FC = () => {
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         className="absolute inset-0 w-full h-full pointer-events-none will-change-transform"
       >
-        <Image
-          src={HERO_IMAGE}
-          alt="Vital RP - Los Santos"
-          fill
-          priority
-          unoptimized
-          quality={90}
-          sizes="100vw"
-          className="object-cover object-[75%_center] lg:object-[80%_center] select-none"
-        />
+        <picture>
+          {/* Tall screens only ever show the right half, so they get just that */}
+          <source media="(max-aspect-ratio: 4/5)" srcSet="/home/hero-tall.webp" />
+          <img
+            src="/home/hero-1600.webp"
+            srcSet="/home/hero-960.webp 960w, /home/hero-1600.webp 1600w, /home/hero-2560.webp 2560w"
+            sizes="max(100vw, 234vh)"
+            alt="A police officer and a woman in sunglasses in front of a patrol car and the Los Santos skyline"
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 h-full w-full select-none object-cover object-[80%_center] [@media(max-aspect-ratio:4/5)]:object-[50%_center] [@media(max-aspect-ratio:4/5)_and_(min-width:640px)]:object-[15%_center]"
+          />
+        </picture>
       </motion.div>
 
       {/* ------------------------------------------------------------------- */}
@@ -336,13 +324,22 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.7, delay: 0.55, ease: 'easeOut' }}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-tech tabular-nums text-gray-200 mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
             >
-              <span className="inline-flex items-center gap-2 text-white">
-                <span className="h-2 w-2 rounded-full bg-vital-500" />
-                {serverStats.online && serverStats.players > 0
-                  ? `${serverStats.players} players in the city`
-                  : 'City is live'}
-              </span>
-              <span className="text-white/25 select-none">/</span>
+              {server.state !== 'unknown' && (
+                <>
+                  <span className="inline-flex basis-full items-center gap-2 text-white sm:basis-auto">
+                    <span
+                      className={`h-2 w-2 rounded-full ${server.state === 'online' ? 'bg-vital-500' : 'bg-gray-500'}`}
+                      aria-hidden="true"
+                    />
+                    {server.state === 'offline'
+                      ? 'Server offline'
+                      : server.players > 0
+                        ? `${server.players} ${server.players === 1 ? 'player' : 'players'} in the city`
+                        : 'Server online'}
+                  </span>
+                  <span className="hidden text-white/25 select-none sm:inline">/</span>
+                </>
+              )}
               <span>Whitelisted</span>
               <span className="text-white/25 select-none">/</span>
               <span>18+</span>
@@ -356,21 +353,16 @@ export const Hero: React.FC = () => {
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto"
             >
               <Button
-                onClick={handleEnterLosSantos}
-                size="lg"
-                icon={<ArrowRight size={18} />}
-              >
-                Enter Los Santos
-              </Button>
-              <Button
                 href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="outline"
                 size="lg"
                 icon={<DiscordIcon className="w-5 h-5 fill-current" />}
               >
                 Join the Discord
+              </Button>
+              <Button href="#how-to-join" variant="outline" size="lg" icon={<ArrowRight size={18} />}>
+                How to get in
               </Button>
             </motion.div>
           </motion.div>
@@ -388,7 +380,7 @@ export const Hero: React.FC = () => {
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.85 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none select-none will-change-[transform,opacity]"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 [@media(max-height:640px)]:hidden flex flex-col items-center gap-2 pointer-events-none select-none will-change-[transform,opacity]"
       >
         <span className="text-xs font-tech text-gray-300">
           Scroll

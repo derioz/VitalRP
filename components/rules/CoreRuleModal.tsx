@@ -10,6 +10,7 @@ import { FormattedRuleText } from './FormattedRuleText';
 interface CoreRuleModalProps {
   rule: Rule | null;
   ruleNumber?: number;
+  categoryTitle?: string;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ interface CoreRuleModalProps {
 export const CoreRuleModal: React.FC<CoreRuleModalProps> = ({
   rule,
   ruleNumber,
+  categoryTitle,
   onClose,
 }) => {
   // ESC key listener & body scroll lock
@@ -38,7 +40,7 @@ export const CoreRuleModal: React.FC<CoreRuleModalProps> = ({
 
   if (!rule) return null;
 
-  const category = RULE_CATEGORIES.find((c) => c.id === rule.category);
+  const category = categoryTitle || RULE_CATEGORIES.find((c) => c.id === rule.category)?.title;
   const formattedNumber = ruleNumber
     ? ruleNumber < 10
       ? `0${ruleNumber}`
@@ -75,7 +77,7 @@ export const CoreRuleModal: React.FC<CoreRuleModalProps> = ({
               )}
               {category && (
                 <span className="text-sm font-tech text-gray-300">
-                  {category.title}
+                  {category}
                 </span>
               )}
             </div>
