@@ -1,0 +1,1 @@
+import{h as e,r as t}from"./AuthProvider-B71WnUS7.js";import{u as n}from"./chunk-OB3PAWPO-CQEx3Yag.js";import{t as r}from"./CharacterDirectoryView-Cl8t3sj_.js";e();var i=t(),a=({categorySlug:e})=>(0,i.jsx)(r,{initialCategory:e}),o=()=>{let{slug:e}=n();return(0,i.jsx)(a,{categorySlug:e||`characters`})};export{o as WikiCategory};

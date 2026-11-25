@@ -15,7 +15,7 @@
   background: #f97316;
   transform-origin: top left;
 }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .route-track { inset: 0 0 auto 0; width: auto; height: 1px; }
 }
 
@@ -34,7 +34,7 @@
   color: #f97316;
   transition: color 250ms linear var(--leg-delay);
 }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .route[data-armed='true']:not([data-in='true']) .route-fill { transform: scaleX(0); }
 }
 

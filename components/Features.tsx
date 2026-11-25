@@ -36,19 +36,15 @@ const worldFeatures = [
   { title: 'Cayo Perico Extraction', description: 'Custom missions on Cayo Perico: complete objectives, survive hostile territory, extract with rare loot.' },
 ];
 
-const SectionLabel = ({ label }: { label: string }) => (
-  <h3 className="text-xl font-display font-bold text-white mb-6 pb-3 border-b border-white/10">{label}</h3>
-);
-
 export const Features: React.FC = () => {
   return (
-    <section id="features" className="py-24 relative overflow-hidden scroll-mt-24">
+    <section id="features" className="relative scroll-mt-14 overflow-hidden py-16 md:py-28">
       <div className="absolute inset-0 bg-dark-950/95 z-0"></div>
       <div className="absolute top-0 left-0 w-full h-px bg-white/10 z-20"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="mb-16 max-w-3xl">
-          <h2 className="text-3xl md:text-5xl font-display font-black text-white mb-5 tracking-tight">
+        <div className="mb-10 max-w-3xl md:mb-12">
+          <h2 className="text-balance text-3xl md:text-5xl font-display font-black text-white mb-4 tracking-tight">
             What you can do in Vital RP
           </h2>
           <p className="text-gray-300 text-lg leading-relaxed">
@@ -56,15 +52,17 @@ export const Features: React.FC = () => {
           </p>
         </div>
 
-        <SectionLabel label="In-game opportunities" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-10 gap-y-10 mb-20">
+        {/* Three ways to live in the city. Below desktop each group spreads its items across. */}
+        <div className="grid grid-cols-1 gap-y-12 lg:grid-cols-3 lg:gap-x-10">
           {opportunities.map((group) => (
             <div key={group.title}>
-              <h4 className="font-display font-bold text-vital-500 mb-4">{group.title}</h4>
-              <ul className="space-y-4">
+              <h3 className="mb-5 border-b border-white/15 pb-3 text-xl font-display font-bold text-vital-500">
+                {group.title}
+              </h3>
+              <ul className="grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-1">
                 {group.items.map((item) => (
                   <li key={item.name} className="text-[15px] leading-relaxed text-gray-300">
-                    <strong className="block text-white font-semibold">{item.name}</strong>
+                    <strong className="mb-1 block text-white font-semibold">{item.name}</strong>
                     {item.text}
                   </li>
                 ))}
@@ -73,15 +71,18 @@ export const Features: React.FC = () => {
           ))}
         </div>
 
-        <SectionLabel label="World and features" />
-        <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-8">
-          {worldFeatures.map((feature) => (
-            <div key={feature.title} className="border-t border-white/10 pt-4">
-              <dt className="font-display font-bold text-white mb-1.5">{feature.title}</dt>
-              <dd className="text-gray-300 text-[15px] leading-relaxed">{feature.description}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Heading in the first column, features across the other two */}
+        <div className="mt-16 grid gap-y-6 border-t border-white/15 pt-10 md:mt-20 lg:grid-cols-3 lg:gap-x-10">
+          <h3 className="text-xl font-display font-bold text-white">World and features</h3>
+          <dl className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:col-span-2">
+            {worldFeatures.map((feature) => (
+              <div key={feature.title}>
+                <dt className="font-display font-bold text-white mb-1.5">{feature.title}</dt>
+                <dd className="max-w-[44ch] text-gray-300 text-[15px] leading-relaxed">{feature.description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </section>
   );

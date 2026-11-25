@@ -1,1 +1,0 @@
-import{h as e,r as t}from"./AuthProvider-B71WnUS7.js";import{u as n}from"./chunk-OB3PAWPO-CQEx3Yag.js";import{WikiEntityView as r}from"./WikiEntityView-BxsvKqLk.js";e();var i=t();function a(){let{id:e}=n();return(0,i.jsx)(r,{id:e})}export{a as WikiEntityRoute};
