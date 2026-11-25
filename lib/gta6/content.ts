@@ -20,7 +20,7 @@ export const GTA6_SECTIONS = [
 /** Approved promotional images live in /public/gta6. Credit: Rockstar Games. */
 export const GTA6_IMAGES = {
   hero: {
-    src: '/gta6/hero-bay.webp',
+    src: '/gta6/hero-vice-city.webp',
     alt: 'A city skyline across a turquoise bay under a bright sky, from Rockstar Games promotional material for Grand Theft Auto VI',
   },
   vision: {
