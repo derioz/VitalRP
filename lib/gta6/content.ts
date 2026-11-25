@@ -30,7 +30,7 @@ export function sectionNo(id: (typeof GTA6_SECTIONS)[number]['id']): string {
 export const GTA6_IMAGES = {
   hero: {
     src: '/gta6/hero-vice-city.webp',
-    alt: 'A city skyline across a turquoise bay under a bright sky, from Rockstar Games promotional material for Grand Theft Auto VI',
+    alt: 'Vice City at dusk under a purple sky, with a lit arena, a Ferris wheel on the bay and port cranes on the horizon, from Rockstar Games promotional material for Grand Theft Auto VI',
   },
   vision: {
     src: '/gta6/vision-dusk.webp',
@@ -65,7 +65,7 @@ export const regions: Region[] = [
     id: 'vice-city',
     name: 'Vice City',
     summary:
-      'The densest part of the state: nightlife, entertainment, luxury property and corporate offices, with street gangs and neighborhood communities underneath.',
+      'We picture the densest roleplay here: nightlife, entertainment, luxury property and corporate offices, with street gangs and neighborhood communities underneath.',
     themes: [
       'Nightlife and entertainment',
       'Luxury real estate',
@@ -79,7 +79,7 @@ export const regions: Region[] = [
     id: 'leonida-keys',
     name: 'Leonida Keys',
     summary:
-      'Island life built around the water. Charter captains, marina owners and resort staff depend on the same tourists and the same weather.',
+      'We would build island life around the water, where charter captains, marina owners and resort staff depend on the same tourists and the same weather.',
     themes: [
       'Fishing charters',
       'Marinas',
@@ -93,7 +93,7 @@ export const regions: Region[] = [
     id: 'port-gellhorn',
     name: 'Port Gellhorn',
     summary:
-      'A working port town. Steady paychecks, cheap rooms and the local crews who know who owes whom.',
+      'This could be a working port town: steady paychecks, cheap rooms and local crews who know who owes whom.',
     themes: [
       'Blue-collar employment',
       'Motels',
@@ -107,7 +107,7 @@ export const regions: Region[] = [
     id: 'ambrosia',
     name: 'Ambrosia',
     summary:
-      'Small-town Leonida where the plants and workshops are the largest employers and the clubhouse is the largest social club.',
+      'We picture small-town roleplay where plants and workshops could be the biggest employers and a clubhouse the biggest social club.',
     themes: [
       'Industrial businesses',
       'Manufacturing',
@@ -120,7 +120,7 @@ export const regions: Region[] = [
     id: 'grassrivers',
     name: 'Grassrivers',
     summary:
-      'Slower and quieter than the coast. Guides, anglers and locals who know the water, and the people who go looking when someone does not come back.',
+      'We would keep this slower and quieter than the coast, with guides, anglers, locals who know the water and the people who go looking when someone does not come back.',
     themes: [
       'Wildlife',
       'Fishing',
@@ -134,7 +134,7 @@ export const regions: Region[] = [
     id: 'mount-kalaga',
     name: 'Mount Kalaga National Park',
     summary:
-      'Protected wilderness for rangers, campers and anyone who wants to get away from the city for a weekend.',
+      'Protected wilderness could be a place for rangers, campers and anyone who wants to get away from the city for a weekend.',
     themes: [
       'Park rangers',
       'Camping',
@@ -481,7 +481,7 @@ export const lifestyles: Lifestyle[] = [
       'A hearing where the paperwork matters as much as the evidence',
       'A coastal call-out that needs three agencies to cooperate',
     ],
-    connections: ['Vice Beach Police (seen on patrol cars)', 'Police boats and helicopters', 'The Coast Guard'],
+    connections: ['Police patrols', 'Police boats and helicopters', 'The Coast Guard'],
     image: {
       src: '/gta6/life-public-servant.webp',
       alt: 'Police officers and a patrol car on a neon-lit Vice City street at night, Rockstar Games promotional image',
@@ -530,7 +530,7 @@ export const concepts: Concept[] = [
     title: 'Business ownership',
     summary:
       'Instead of filling the map with custom interiors and invented brands, build on the businesses Rockstar already put in the world. A player could own a franchise, lease a unit or run a shop without waiting for us to build the building.',
-    native: 'Existing names, storefronts and interiors come first.',
+    native: 'Existing names, storefronts and interiors would come first.',
     items: [
       'Franchise ownership',
       'Commercial leases',
@@ -547,8 +547,8 @@ export const concepts: Concept[] = [
     slug: 'interconnected-economy',
     title: 'Interconnected economy',
     summary:
-      'Businesses that need each other create roleplay without anyone writing it. One plate of fish can involve five players and five conversations. Crafting loops and repeated fetch tasks give way to people who depend on other people.',
-    native: 'Built from the fictional economy the game already has.',
+      'Businesses that need each other would create roleplay without anyone writing it. One plate of fish could involve five players and five conversations, with crafting loops and repeated fetch tasks giving way to people who depend on other people.',
+    native: "We would build on the game's own fictional economy.",
     items: [],
   },
   {
@@ -556,7 +556,7 @@ export const concepts: Concept[] = [
     title: 'Civilian careers',
     summary:
       'A civilian career should be as rewarding to play as a criminal one. Most of these jobs do not need their own script. They need a world that gives them clients, licenses, a place to work and someone to answer to.',
-    native: 'Workplaces are native locations, not invented ones.',
+    native: 'Workplaces would be native locations where possible.',
     items: [
       'Attorneys',
       'Realtors',
@@ -592,8 +592,8 @@ export const concepts: Concept[] = [
     slug: 'criminal-underworld',
     title: 'The underworld',
     summary:
-      'Crime that runs on relationships, reputation and consequences. Fewer scripted missions and constant gunfights, more territory that is earned and lost through people, and debts that are still there next week.',
-    native: "Rockstar's established organizations first, original stories inside them.",
+      'We want crime that runs on relationships, reputation and consequences: fewer scripted missions and constant gunfights, more territory that is earned and lost through people, and debts that are still there next week.',
+    native: "We would start with Rockstar's organizations and write original stories inside them.",
     items: [
       'Territory',
       'Connections',
@@ -608,7 +608,7 @@ export const concepts: Concept[] = [
     slug: 'government-and-emergency-services',
     title: 'Institutions',
     summary:
-      'Law enforcement, emergency services, courts and government that players can work inside, appeal to and argue with. The paperwork, hearings and meetings are part of the roleplay, not a gate in front of it.',
+      'Law enforcement, emergency services, courts and government that players could work inside, appeal to and argue with. The paperwork, hearings and meetings would be part of the roleplay, not a gate in front of it.',
     native: 'Native agencies, names and uniforms, where we can confirm them.',
     items: [
       'Law enforcement',
@@ -625,8 +625,8 @@ export const concepts: Concept[] = [
     slug: 'a-living-world',
     title: 'A living world',
     summary:
-      'Events that keep going after the announcement. A storm is not a ten minute staff event. It closes a marina, which delays a delivery, which sparks an insurance dispute, which ends up on the news.',
-    native: 'Tied to real regions and the culture of each one.',
+      'We want events that keep going after the announcement. A storm would not be a ten minute staff event. It could close a marina, delay a delivery, spark an insurance dispute and end up on the news.',
+    native: 'Events would be tied to each region and its culture.',
     items: [
       'Hurricanes',
       'Power outages',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LORE_DISCLAIMER, LORE_STATEMENT, loreTopics, sectionNo, type LoreTopic } from '@/lib/gta6/content';
@@ -18,6 +18,9 @@ import { InlineList } from './InlineList';
  * item like the original.
  */
 
+/** Height of the site header plus the section strip. */
+const HEADER_CLEARANCE = 108;
+
 function Credit() {
   return <p className="g6-mono mt-3 text-xs text-[#a39b90]">Promotional image, Rockstar Games</p>;
 }
@@ -26,7 +29,8 @@ function TopicBody({ topic }: { topic: LoreTopic }) {
   return (
     <div className="max-w-[60ch]">
       <p className="text-xl leading-snug text-[#f4efe8]">{topic.summary}</p>
-      <ul className="g6-body mt-5 space-y-3 text-base">
+      <p className="g6-tag mt-5">What we intend to do</p>
+      <ul className="g6-body mt-3 space-y-3 text-base">
         {topic.points.map((p) => (
           <li key={p} className="flex gap-3">
             <span aria-hidden className="mt-[0.7em] h-px w-3 shrink-0 bg-[#e8789e]" />
@@ -60,9 +64,25 @@ export function Lore() {
   // The frame keeps showing the last topic after an item is collapsed
   const [shown, setShown] = useState<string>(loreTopics[0].id);
 
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const settle = useRef<number>(0);
+  useEffect(() => () => window.clearTimeout(settle.current), []);
+
   const onChange = (value: string) => {
     setOpen(value);
-    if (value) setShown(value);
+    window.clearTimeout(settle.current);
+    if (!value) return;
+    setShown(value);
+    // Closing a longer item above can carry the tapped heading off screen.
+    // Once both panels have finished moving, bring it back below the header.
+    settle.current = window.setTimeout(() => {
+      const item = itemRefs.current[value];
+      if (!item) return;
+      const { top } = item.getBoundingClientRect();
+      if (top >= HEADER_CLEARANCE && top < window.innerHeight * 0.75) return;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollBy({ top: top - HEADER_CLEARANCE - 8, behavior: reduced ? 'instant' : 'smooth' });
+    }, 280);
   };
 
   return (
@@ -103,7 +123,14 @@ export function Lore() {
               className="border-t border-white/10"
             >
               {loreTopics.map((t, i) => (
-                <AccordionItem key={t.id} value={t.id} className="border-white/10">
+                <AccordionItem
+                  key={t.id}
+                  value={t.id}
+                  ref={(el) => {
+                    itemRefs.current[t.id] = el;
+                  }}
+                  className="border-white/10"
+                >
                   <AccordionTrigger className="items-baseline gap-5 py-5 text-white hover:text-[#fdba74] data-[state=open]:text-white">
                     <span className="flex items-baseline gap-5 text-left">
                       <span className="g6-mono w-6 shrink-0 text-sm text-[#a39b90]">

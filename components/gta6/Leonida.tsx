@@ -31,8 +31,8 @@ export function Leonida() {
 
   return (
     <section id="leonida" aria-labelledby="g6-leonida-title" className="relative scroll-mt-28">
-      <div className="g6-wrap g6-section pb-12 lg:pb-16">
-        <div className="grid gap-x-12 gap-y-8 lg:grid-cols-12">
+      <div className="g6-wrap g6-section pb-10 lg:pb-12 lg:pt-16">
+        <div className="grid gap-x-12 gap-y-6 lg:grid-cols-12">
           <p className="g6-mono hidden pt-3 text-sm text-[#a39b90] lg:col-span-1 lg:block">{sectionNo('leonida')}</p>
           <h2
             id="g6-leonida-title"
@@ -47,7 +47,7 @@ export function Leonida() {
         </div>
       </div>
 
-      <div className="relative isolate min-h-[760px] overflow-hidden border-y border-white/10 lg:min-h-[78svh]">
+      <div className="relative isolate overflow-hidden border-y border-white/10 lg:min-h-[640px]">
         {/* Stacked backgrounds, crossfaded with opacity only */}
         {regions.map((r, i) => (
           <div
@@ -64,18 +64,20 @@ export function Leonida() {
               sizes="100vw"
               className="object-cover object-[50%_55%]"
             />
-            <div className="absolute inset-0 bg-black/35" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/85 via-transparent to-[#0a0a0a]/40" />
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/85 via-[#0a0a0a]/20 to-[#0a0a0a]/60" />
+            {/* Large screens: calm both text columns, leave the middle of the photograph open */}
+            <div className="absolute inset-0 hidden bg-gradient-to-r from-[#0a0a0a]/70 via-transparent to-[#0a0a0a]/75 lg:block" />
           </div>
         ))}
 
-        <div className="g6-wrap grid min-h-[inherit] gap-10 py-10 lg:grid-cols-12 lg:py-16">
+        <div className="g6-wrap grid content-start gap-8 py-8 lg:grid-cols-12 lg:gap-10 lg:py-14">
+          {/* Small screens wrap, so all six regions are visible at once */}
           <div
             role="tablist"
             aria-label="Regions of Leonida"
-            aria-orientation="vertical"
             onKeyDown={onKeyDown}
-            className="g6-strip -mx-5 flex gap-6 overflow-x-auto px-5 lg:col-span-6 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0"
+            className="flex flex-wrap gap-x-6 gap-y-1 lg:col-span-6 lg:flex-col lg:flex-nowrap lg:self-start"
           >
             {regions.map((r, i) => {
               const selected = i === active;
@@ -91,16 +93,20 @@ export function Leonida() {
                   aria-controls="g6-region-panel"
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setActive(i)}
-                  className={`group flex shrink-0 items-baseline gap-4 text-left transition-colors ${
-                    selected ? 'text-white' : 'text-white/50 hover:text-white/85'
+                  className={`group flex min-h-[44px] items-baseline gap-2 py-1 text-left transition-colors [text-shadow:0_1px_12px_rgb(0_0_0/0.7)] lg:gap-4 ${
+                    selected ? 'text-white' : 'text-white/75 hover:text-white'
                   }`}
                 >
                   <span
-                    className={`g6-mono w-6 text-sm ${selected ? 'text-[#f97316]' : 'text-[#a39b90]'}`}
+                    className={`g6-mono text-sm lg:w-6 ${selected ? 'text-[#fdba74]' : 'text-[#e4ddd2]'}`}
                   >
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <span className="g6-display whitespace-nowrap text-[clamp(1.75rem,4.2vw,3.75rem)] lg:whitespace-normal">
+                  <span
+                    className={`g6-display text-[clamp(1.5rem,4.2vw,3.75rem)] ${
+                      selected ? 'underline decoration-[#f97316] decoration-2 underline-offset-8' : ''
+                    }`}
+                  >
                     {r.name}
                   </span>
                 </button>
@@ -112,7 +118,7 @@ export function Leonida() {
             role="tabpanel"
             id="g6-region-panel"
             aria-labelledby={`g6-tab-${region.id}`}
-            className="flex flex-col justify-end lg:col-span-5 lg:col-start-8"
+            className="flex flex-col [text-shadow:0_1px_12px_rgb(0_0_0/0.6)] lg:col-span-5 lg:col-start-8 lg:pt-2"
           >
             <p className="g6-tag">Concept</p>
             <p className="mt-4 text-xl leading-relaxed text-[#f4efe8] sm:text-2xl">{region.summary}</p>

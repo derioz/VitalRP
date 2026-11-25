@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LIFE_NOTE, lifestyles, sectionNo } from '@/lib/gta6/content';
+import { DISCORD_URL, LIFE_NOTE, lifestyles, sectionNo } from '@/lib/gta6/content';
 import { Reveal } from './Reveal';
 import { InlineList } from './InlineList';
 
@@ -105,6 +105,16 @@ export function Life() {
         </Tabs>
 
         <p className="g6-note g6-paper-body mt-14 lg:ml-[calc(8.333%+1rem)]">{LIFE_NOTE}</p>
+
+        {/* The ask sits where interest peaks, before the text-heavy concepts */}
+        <div className="g6-paper-rule mt-14 flex flex-col items-start gap-6 pt-8 sm:flex-row sm:items-center sm:justify-between lg:ml-[calc(8.333%+1rem)]">
+          <p className="g6-display g6-sm max-w-[24ch] text-2xl sm:text-3xl">
+            Which of these would you play? Tell us in the Discord.
+          </p>
+          <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary shrink-0">
+            Join Our Discord
+          </a>
+        </div>
       </div>
     </section>
   );

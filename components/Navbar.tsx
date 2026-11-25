@@ -174,28 +174,44 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </Link>
             )}
 
-            <a
-              href={DISCORD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden h-9 items-center px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white xl:inline-flex"
-            >
-              Discord
-            </a>
+            {/* The GTA VI page has one action: join the Discord. Play and Login
+                belong to the FiveM server, so they are left off there. */}
+            {onGta ? (
+              <a
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${buttonBase} bg-vital-500 text-dark-950 hover:bg-vital-400`}
+              >
+                <DiscordLogo className="h-4 w-4" />
+                Join Discord
+              </a>
+            ) : (
+              <>
+                <a
+                  href={DISCORD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden h-9 items-center px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white xl:inline-flex"
+                >
+                  Discord
+                </a>
 
-            <a
-              href={PLAY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${buttonBase} hidden bg-vital-500 text-dark-950 hover:bg-vital-400 sm:inline-flex`}
-            >
-              Play
-            </a>
+                <a
+                  href={PLAY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${buttonBase} hidden bg-vital-500 text-dark-950 hover:bg-vital-400 sm:inline-flex`}
+                >
+                  Play
+                </a>
+              </>
+            )}
 
-            {loading ? (
-              <div className="h-9 w-9 rounded-full border border-white/10 bg-dark-800" aria-hidden />
-            ) : user ? (
+            {user ? (
               <ProfileDropdown />
+            ) : onGta ? null : loading ? (
+              <div className="h-9 w-9 rounded-full border border-white/10 bg-dark-800" aria-hidden />
             ) : (
               <button
                 onClick={() => login('/')}
@@ -248,27 +264,30 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 ))}
               </ul>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4 sm:grid-cols-1">
-                <a
-                  href={PLAY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${buttonBase} h-11 bg-vital-500 text-dark-950 hover:bg-vital-400 sm:hidden`}
-                >
-                  Play
-                </a>
-                <a
-                  href={DISCORD_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${buttonBase} h-11 border border-white/20 text-white hover:bg-white/10`}
-                >
-                  Discord
-                </a>
-              </div>
+              {/* On /gta6 the Join Discord button stays in the bar, so none is repeated here */}
+              {!onGta && (
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4 sm:grid-cols-1">
+                  <a
+                    href={PLAY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${buttonBase} h-11 bg-vital-500 text-dark-950 hover:bg-vital-400 sm:hidden`}
+                  >
+                    Play
+                  </a>
+                  <a
+                    href={DISCORD_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${buttonBase} h-11 border border-white/20 text-white hover:bg-white/10`}
+                  >
+                    Discord
+                  </a>
+                </div>
+              )}
 
               {/* Account */}
-              <div className="mt-4 border-t border-white/10 pt-4">
+              <div className={`mt-4 border-t border-white/10 pt-4 ${onGta && !user ? 'hidden' : ''}`}>
                 {user ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
