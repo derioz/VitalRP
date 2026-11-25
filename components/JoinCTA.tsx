@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from './Button';
 import { Gamepad2 } from 'lucide-react';
+import './Poster.css';
 
 const DiscordLogo = ({ className }: { className?: string }) => (
   <svg
@@ -17,41 +18,44 @@ const DiscordLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
+/* On orange the usual orange button and focus ring disappear, so both turn dark */
+const ON_ORANGE = 'w-full sm:w-auto !px-4 sm:!px-8 focus-visible:!outline-dark-950';
+
 export const JoinCTA: React.FC = () => {
   return (
-    <section id="join" className="relative scroll-mt-14 overflow-hidden py-20 md:py-32">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img
-          src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=60&w=1200&auto=format&fit=crop"
-          loading="lazy"
-          decoding="async"
-          alt=""
-          className="w-full h-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/90 to-dark-900/80"></div>
-      </div>
+    <section id="join" aria-labelledby="join-title" className="finale relative scroll-mt-14 overflow-hidden bg-vital-600 text-dark-950">
+      <div className="finale-body relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center px-4 pt-20 sm:px-6 lg:px-8 lg:py-20">
+        <h2 id="join-title" className="poster-title finale-title font-display font-black">
+          <span className="block whitespace-nowrap">Ready to </span>
+          <span className="block whitespace-nowrap">start your </span>
+          <span className="block whitespace-nowrap text-white">legacy?</span>
+        </h2>
+        <p className="mt-6 max-w-sm text-lg font-sans font-medium leading-relaxed md:text-xl">
+          Join the Discord, apply in the whitelist channel, then step into Los Santos.
+        </p>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div>
-          <h2 className="text-balance text-4xl md:text-6xl font-display font-black text-white mb-6 tracking-tight max-w-3xl">
-            Ready to start your <span className="text-vital-500">legacy</span>?
-          </h2>
-          <p className="text-xl text-gray-200 mb-10 font-sans max-w-2xl">
-            Join the Discord, apply in the whitelist channel, then step into Los Santos.
-          </p>
+        <div className="mt-8 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center lg:w-fit lg:flex-col lg:items-stretch">
+          <Button href="https://discord.gg/vitalrp" target="_blank" rel="noopener noreferrer" variant="secondary" size="lg" className={ON_ORANGE} icon={<DiscordLogo className="w-6 h-6" />}>
+            Join the Discord
+          </Button>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <Button href="https://discord.gg/vitalrp" target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full sm:w-auto" icon={<DiscordLogo className="w-6 h-6" />}>
-              Join the Discord
-            </Button>
-
-            <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="w-full sm:w-auto" icon={<Gamepad2 />}>
-              Already whitelisted? Connect
-            </Button>
-          </div>
+          <Button href="https://connect.vitalrp.net" target="_blank" rel="noopener noreferrer" variant="ghost" size="lg" className={`${ON_ORANGE} !border-dark-950 !text-dark-950 hover:!bg-dark-950/10`} icon={<Gamepad2 />}>
+            Already whitelisted? Connect
+          </Button>
         </div>
       </div>
+
+      <img
+        src="/home/finale-1220.webp"
+        srcSet="/home/finale-780.webp 780w, /home/finale-1220.webp 1220w"
+        sizes="(min-width: 1024px) min(58vw, 60rem), min(100vw, 40rem)"
+        width={1220}
+        height={800}
+        loading="lazy"
+        decoding="async"
+        alt=""
+        className="finale-art pointer-events-none select-none"
+      />
     </section>
   );
 };

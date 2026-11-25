@@ -12,6 +12,7 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { Button } from './Button';
 import { getApiUrl } from '@/lib/api-config';
+import './Poster.css';
 
 // EXACT Unmodified Remote Asset & Social Constants
 const DISCORD_URL = 'https://discord.gg/vitalrp';
@@ -30,6 +31,9 @@ const DiscordIcon = ({ className }: { className?: string }) => (
 );
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+
+/** The headline, set as a stack. The last line carries the brand colour. */
+const HEADLINE = ['What', 'happens', 'next is', 'up to you.'];
 
 export const Hero: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
@@ -77,9 +81,6 @@ export const Hero: React.FC = () => {
   const bgScrollY = useTransform(scrollYProgress, [0, 0.15, 0.6, 1], [0, 0, 48, 85]);
   const bgScale = useTransform(scrollYProgress, [0, 0.15, 0.65, 1], [1.0, 1.0, 1.025, 1.05]);
 
-  // The scroll cue leaves as soon as it has been followed
-  const indicatorOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
-
   // -------------------------------------------------------------------------
   // DESKTOP POINTER PARALLAX (Subtle Micro-Displacement, Zero Re-renders)
   // Max X: ±8px, Max Y: ±5px, additive to scroll parallax
@@ -124,7 +125,7 @@ export const Hero: React.FC = () => {
       ref={containerRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      className="relative w-full h-[100svh] min-h-[100svh] overflow-hidden flex items-center justify-start bg-dark-950 select-none"
+      className="hero relative flex w-full min-h-[100svh] flex-col overflow-hidden bg-dark-950 select-none"
       style={{ perspective: 1200 }}
     >
       {/* ------------------------------------------------------------------- */}
@@ -142,7 +143,7 @@ export const Hero: React.FC = () => {
         }
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute inset-0 w-full h-full pointer-events-none will-change-transform"
+        className="hero-art pointer-events-none will-change-transform"
       >
         <picture>
           {/* Tall screens only ever show the right half, so they get just that */}
@@ -154,69 +155,60 @@ export const Hero: React.FC = () => {
             alt="A police officer and a woman in sunglasses in front of a patrol car and the Los Santos skyline"
             fetchPriority="high"
             decoding="async"
-            className="absolute inset-0 h-full w-full select-none object-cover object-[80%_center] [@media(max-aspect-ratio:4/5)]:object-[50%_center] [@media(max-aspect-ratio:4/5)_and_(min-width:640px)]:object-[15%_center]"
+            className="hero-image"
           />
         </picture>
       </motion.div>
 
       {/* ------------------------------------------------------------------- */}
-      {/* LAYER 2: LIGHTING & GRADIENT READABILITY OVERLAYS */}
+      {/* LAYER 2: READABILITY SHADE (follows the composition, see Poster.css) */}
       {/* ------------------------------------------------------------------- */}
-      <div className="absolute inset-0 pointer-events-none z-[1]">
-        {/* Left-to-right directional readability gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/70 via-35% md:via-45% to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-950/80 via-transparent to-transparent max-w-2xl" />
-
-        {/* Soft top gradient for crisp navbar transparency */}
-        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-dark-950/85 via-dark-950/30 to-transparent" />
-
-        {/* Subtle vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(5,5,5,0.45)_100%)]" />
-      </div>
-
-      {/* Bottom dissolve into the next section */}
-      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-dark-950 via-dark-950/70 to-transparent opacity-85 pointer-events-none z-[2]" />
+      <div className="hero-shade pointer-events-none absolute inset-0 z-[1]" aria-hidden="true" />
 
       {/* ------------------------------------------------------------------- */}
       {/* LAYER 3 & 4: FOREGROUND CONTENT (Multiplane Text & CTAs) */}
       {/* ------------------------------------------------------------------- */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">
-        <div className="max-w-xl lg:max-w-2xl flex flex-col items-start text-left">
+      <div className="hero-body relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-start text-left">
           {/* LAYER 3: HEADLINE & COPY CONTAINER */}
           <motion.div
             style={{ x: fgOffsetX, y: fgOffsetY }}
             className="w-full flex flex-col items-start will-change-transform"
           >
-            {/* Main Headline */}
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.05, ease: EASE_OUT }}
-              className="mb-5 sm:mb-6"
-            >
-              <h1 className="select-none text-6xl sm:text-7xl md:text-8xl lg:text-[6.5rem] font-display font-black text-white leading-[0.9] tracking-tight">
+            {/* Main Headline: the lines arrive one after another */}
+            <h1 className="select-none font-display font-black text-white">
+              <span className="poster-title hero-title block">
+                {HEADLINE.map((line, i) => (
+                  <motion.span
+                    key={line}
+                    className={`block whitespace-nowrap ${i === HEADLINE.length - 1 ? 'text-vital-500' : ''}`}
+                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: '0.3em' }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.05 + i * 0.08, ease: EASE_OUT }}
+                  >
+                    {line}{' '}
+                  </motion.span>
+                ))}
+              </span>
+              {/* The name signs the line */}
+              <motion.span
+                initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.36, ease: EASE_OUT }}
+                className="mt-3 block text-2xl tracking-tight sm:mt-6 sm:text-3xl"
+              >
                 Vital <span className="text-vital-500">RP</span>
-              </h1>
-            </motion.div>
+              </motion.span>
+            </h1>
 
             {/* Main Description */}
             <motion.p
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.14, ease: EASE_OUT }}
-              className="text-lg sm:text-xl lg:text-[1.35rem] font-sans text-gray-100 leading-snug mb-3 max-w-xl"
-            >
-              A serious roleplay community built around characters, stories, and the moments that make Los Santos feel alive.
-            </motion.p>
-
-            {/* Secondary Line */}
-            <motion.p
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: EASE_OUT }}
-              className="text-base font-sans text-gray-300 leading-relaxed mb-7 sm:mb-8 max-w-lg"
+              transition={{ duration: 0.6, delay: 0.4, ease: EASE_OUT }}
+              className="mt-2 mb-4 sm:mb-5 max-w-md text-base font-sans leading-relaxed text-gray-200 sm:text-lg"
             >
-              Your choices matter. Your character has a story. What happens next is up to you.
+              A serious roleplay community built around characters, stories, and the moments that make Los Santos feel alive.
             </motion.p>
           </motion.div>
 
@@ -226,8 +218,8 @@ export const Hero: React.FC = () => {
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.26, ease: EASE_OUT }}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-tech tabular-nums text-gray-200 mb-8 sm:mb-9 py-2.5 border-y border-white/10 w-full sm:w-auto"
+              transition={{ duration: 0.55, delay: 0.44, ease: EASE_OUT }}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-tech tabular-nums text-gray-200 mb-4 sm:mb-6 py-2.5 border-y border-white/10 w-full sm:w-auto"
             >
               <span>Whitelisted</span>
               <span className="text-white/25 select-none">/</span>
@@ -274,7 +266,7 @@ export const Hero: React.FC = () => {
             <motion.div
               initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.3, ease: EASE_OUT }}
+              transition={{ duration: 0.55, delay: 0.48, ease: EASE_OUT }}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto"
             >
               <Button
@@ -293,29 +285,6 @@ export const Hero: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* ------------------------------------------------------------------- */}
-      {/* SCROLL INDICATOR (Fades within first 12% scroll) */}
-      {/* ------------------------------------------------------------------- */}
-      <motion.div
-        style={{ opacity: prefersReducedMotion ? 1 : indicatorOpacity }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 [@media(max-height:640px)]:hidden flex flex-col items-center gap-2 pointer-events-none select-none will-change-[transform,opacity]"
-      >
-        <span className="text-xs font-tech text-gray-300">
-          Scroll
-        </span>
-        <div className="w-[1.5px] h-7 bg-white/15 overflow-hidden relative rounded-full">
-          <motion.div
-            animate={prefersReducedMotion ? {} : { y: ['-100%', '100%'] }}
-            transition={{
-              duration: 2.2,
-              repeat: 2,
-              ease: 'easeInOut',
-            }}
-            className="w-full h-1/2 bg-vital-500 rounded-full"
-          />
-        </div>
-      </motion.div>
     </section>
   );
 };
