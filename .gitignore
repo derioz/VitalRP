@@ -42,3 +42,4 @@ _external_components/
 .playwright-mcp/
 .claude/settings.local.json
 .mcp.local.json
+.vercel

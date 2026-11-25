@@ -191,3 +191,15 @@
 
 .g6-paper .g6-tag { color: #4a3f35; }
 .g6-paper .g6-tag::before { border-color: #b43f0a; }
+
+/* Tab panel swap: a short, quiet fade-in when the selected lifestyle changes */
+.g6-swap[data-state='active'] { animation: g6-swap-in 320ms var(--g6-ease) both; }
+@keyframes g6-swap-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Paper variants of shared pieces */
+.g6-paper .g6-list > li { border-color: rgb(23 18 13 / 0.18); }
+.g6-paper .g6-list > li:last-child { border-color: rgb(23 18 13 / 0.18); }
+.g6-paper .g6-note { border-left-color: #b43f0a; color: #4a3f35; }

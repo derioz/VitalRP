@@ -8,9 +8,12 @@ import { StoreModal } from '@/components/StoreModal';
 import { Hero } from './Hero';
 import { SectionNav } from './SectionNav';
 import { Vision } from './Vision';
-import { Principles } from './Principles';
+import { Lore } from './Lore';
 import { Leonida } from './Leonida';
+import { Life } from './Life';
+import { Concepts } from './Concepts';
 import { Roadmap } from './Roadmap';
+import { Journal } from './Journal';
 import { Community } from './Community';
 import { Faq } from './Faq';
 import { Closing } from './Closing';
@@ -30,9 +33,12 @@ export function Gta6Page() {
       <main className="relative z-10">
         <Hero />
         <Vision />
-        <Principles />
+        <Lore />
         <Leonida />
+        <Life />
+        <Concepts />
         <Roadmap />
+        <Journal />
         <Community />
         <Faq />
         <Closing />

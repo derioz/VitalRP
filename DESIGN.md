@@ -70,3 +70,20 @@ Move `articles` (and later `concepts`, `regions`) to a Supabase table, e.g. `gta
 ## Update
 
 The Roleplay concepts and Development journal sections were removed at the owner's request, along with their components, data and images. The hero image file is `hero-bay.webp` (renamed from `hero-skyline.webp` so CDN and browser caches fetch the new photo).
+
+## Update: lore, lifestyles and structure
+
+Page order: Overview, Our Vision, GTA VI Lore, Explore Leonida, Life in Leonida, Concepts, Roadmap, Journal, Community, FAQ, Closing. Section numbers come from `sectionNo()` in `lib/gta6/content.ts`, so they follow `GTA6_SECTIONS` automatically. Core Principles was removed.
+
+| Section | Component | Source |
+|---|---|---|
+| GTA VI Lore | `Lore.tsx` | Pattern: "Media Accordion" (shadcnspace, accordion-05) from 21st.dev, rebuilt on the shadcn Accordion already in the project. One sticky frame crossfades on large screens, the image moves inside the open item on small ones. |
+| Life in Leonida | `Life.tsx` | shadcn/ui Tabs (`components/ui/tabs.tsx`, new dependency `@radix-ui/react-tabs`). Image-led selector idea from 21st.dev "Feature Showcase" (ruixen.ui), simplified: no card, no pill bar. |
+| Concepts | `Concepts.tsx` | Text-only ledger, own design. Native-first line on every row. |
+| FAQ | `Faq.tsx` | Unchanged shadcn Accordion, 12 new questions. |
+
+21st.dev retrievals used: Media Accordion (27691) and Feature Showcase (9309), both read as references. Free tier is two per day. Cinematic List (9860) was reviewed earlier and still inspires Explore Leonida. Aceternity UI and Cult UI were reviewed and not used: their effects (spotlight, glow, fanned stacks) conflict with the quiet chrome of this page.
+
+**Lore sources.** Everything named as "in Rockstar's materials" comes from rockstargames.com/VI (the Ultimate Edition cards and the "Only in Leonida" character pages): Stock 305, Rideout Customs, Sara's Unisex Salon, Electric Fang Tattoo, One-Eyed Willie's, PTT YOUNGIN$, Only Raw Records, Jack of Hearts, Real Dimez, Macca the Gator, Gambit Bay, Washington Beach, Stockyard, Lake Leonida, Watson Bay, Leonida Penitentiary, Coast Guard. "Vice Beach Police" is read off a patrol car in an official image. Weazel News and any police agency names are deliberately NOT listed as native because they were not found in those pages. Several businesses are marked by Rockstar as Ultimate Edition only; the page says so.
+
+**Images.** Eleven new official stills (`public/gta6/lore-*.webp`, `life-*.webp`), downloaded from rockstargames.com/VI, converted to 1920px WebP, stored locally. Same credit caption as the rest of the page.
