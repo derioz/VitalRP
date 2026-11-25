@@ -18,7 +18,12 @@ Status: concept development. Nothing on the page is a confirmed feature.
 - Rhythm: two warm paper sections (Six principles, Civilian life: `#eee3d2` ground, `#17120d` ink, `#b43f0a` accent for contrast) break the dark run. Section headings vary in scale and placement on purpose.
 - Regions without approved imagery use flat stand-in colors from `regions[].tone` and a large numeral, so the stage still reads as designed.
 - Radius: 6px on buttons and the supply chain. Everything else is square or hairline.
-- Motion: one restrained reveal (`Reveal`), 12% hero parallax, 700ms opacity crossfade between regions, 200ms accordion. All disabled under `prefers-reduced-motion`.
+- Motion explains where the reader is, what changed and how the parts connect. Easing `--g6-ease-out`. There is no scroll reveal on headings or body text.
+  - Main moment: the supply chain. A light runs along it once on first view; "Follow the dinner" hands the meal from player to player (4.5s each), pausing on any manual choice, offscreen or in a hidden tab.
+  - Opening: the hero photograph brightens and settles while the two headline sentences rise; 12% parallax on scroll.
+  - Selection: photographs fade and settle from a 1.07 push-in (`.g6-photo`), replaced text arrives (`.g6-arrive`), underlines travel (`SlidingIndicator`).
+  - Once on view (`InView`): the vision and community lists arrive item by item; the roadmap line draws only to the current phase.
+  - Reduced motion: no movement and instant scrolling; short fades remain.
 - Styles are scoped to `.g6` in [app/gta6/gta6.css](app/gta6/gta6.css). Nothing global changed.
 
 ## File map

@@ -53,9 +53,8 @@ export function Leonida() {
           <div
             key={r.id}
             aria-hidden
-            className={`absolute inset-0 -z-10 transition-opacity duration-700 ${
-              i === active ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="g6-photo absolute inset-0 -z-10"
+            data-on={i === active}
           >
             <Image
               src={r.image.src}
@@ -120,15 +119,26 @@ export function Leonida() {
             aria-labelledby={`g6-tab-${region.id}`}
             className="flex flex-col [text-shadow:0_1px_12px_rgb(0_0_0/0.6)] lg:col-span-5 lg:col-start-8 lg:pt-2"
           >
-            <p className="g6-tag">Concept</p>
-            <p className="mt-4 text-xl leading-relaxed text-[#f4efe8] sm:text-2xl">{region.summary}</p>
-            <ul className="g6-list mt-8 grid gap-x-8 sm:grid-cols-2">
-              {region.themes.map((t) => (
-                <li key={t} className="text-base text-[#f4efe8]">
-                  {t}
-                </li>
-              ))}
-            </ul>
+            {/* Keyed by region so each selection plays its arrival */}
+            <div key={region.id} className="g6-arrive">
+              <p className="g6-tag">Concept</p>
+              <p
+                className="mt-4 text-xl leading-relaxed text-[#f4efe8] sm:text-2xl"
+                style={{ '--i': 1 } as React.CSSProperties}
+              >
+                {region.summary}
+              </p>
+              <ul
+                className="g6-list mt-8 grid gap-x-8 sm:grid-cols-2"
+                style={{ '--i': 3 } as React.CSSProperties}
+              >
+                {region.themes.map((t) => (
+                  <li key={t} className="text-base text-[#f4efe8]">
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>

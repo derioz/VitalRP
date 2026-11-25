@@ -13,6 +13,7 @@
   --g6-orange: #f97316;
   --g6-rose: #e8789e;
   --g6-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --g6-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   background: var(--g6-ink);
   color: var(--g6-text);
 }
@@ -140,26 +141,160 @@
 }
 .g6-list > li:last-child { border-bottom: 1px solid var(--g6-line); }
 
-/* Reveal: only armed after hydration, so content is visible without JS */
-.g6-reveal[data-armed='true'] {
+/*
+ * Motion. It explains three things: where the reader is, what changed, and how
+ * the parts connect. Content is visible by default. Movement lives inside the
+ * no-preference query; reduced motion keeps short fades.
+ */
+
+/* Selected photograph: fades in, and (below) settles from a slight push-in */
+.g6-photo { opacity: 0; transition: opacity 200ms linear; }
+.g6-photo[data-on='true'] { opacity: 1; }
+
+/* Content that replaces other content */
+.g6-arrive,
+.g6-open-in { animation: g6-fade 200ms linear backwards; }
+
+/* Underline that travels between choices (see SlidingIndicator) */
+.g6-indicator {
+  position: absolute;
+  left: 0;
+  width: 100px;
+  height: 2px;
+  transform-origin: left center;
   opacity: 0;
-  transform: translateY(16px);
+  pointer-events: none;
 }
-.g6-reveal[data-armed='true'][data-in='true'] {
-  opacity: 1;
-  transform: none;
-  transition: opacity 700ms var(--g6-ease), transform 700ms var(--g6-ease);
+
+/* Supply chain: the line shows how far the dinner has travelled */
+.g6-chain-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.g6-chain-fill,
+.g6-chain-pass {
+  position: absolute;
+  inset: 0;
+  background: var(--g6-orange);
+  transform-origin: top left;
+}
+.g6-chain-fill { transform: scaleY(0); }
+.g6-chain-fill[data-on='true'] { transform: none; }
+.g6-chain-pass { opacity: 0; }
+@media (min-width: 1280px) {
+  .g6-chain-track { inset: 0 0 auto 0; width: auto; height: 2px; }
+  .g6-chain-fill { transform: scaleX(0); }
+}
+
+/* Headline mask: each sentence rises from behind its own baseline */
+.g6-line {
+  display: block;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  clip-path: inset(-0.2em -0.3em 0 -0.3em);
+}
+.g6-line > span { display: block; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Opening: the city lights come up, then the two sentences rise */
+  .g6-hero-photo { animation: g6-dusk 1800ms var(--g6-ease-out) backwards; }
+  .g6-line > span { animation: g6-line-rise 900ms var(--g6-ease-out) backwards; }
+  .g6-enter { animation: g6-rise-in 700ms var(--g6-ease-out) backwards; }
+
+  .g6-photo {
+    transform: scale(1.07);
+    transition: opacity 650ms var(--g6-ease-out), transform 1400ms var(--g6-ease-out);
+  }
+  .g6-photo[data-on='true'] { transform: none; }
+
+  .g6-arrive { animation: none; }
+  .g6-arrive > * {
+    animation: g6-rise-in 520ms var(--g6-ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  .g6-open-in { animation: g6-fade 420ms var(--g6-ease-out) 60ms backwards; }
+
+  .g6-indicator[data-ready='true'] { transition: transform 420ms var(--g6-ease-out); }
+
+  /* Lists that read as lists arrive item by item, once */
+  .g6-stagger[data-armed='true'] > li { opacity: 0; transform: translateX(-14px); }
+  .g6-stagger[data-armed='true'][data-in='true'] > li {
+    opacity: 1;
+    transform: none;
+    transition: opacity 500ms var(--g6-ease-out), transform 600ms var(--g6-ease-out);
+  }
+  .g6-stagger[data-in='true'] > li:nth-child(2) { transition-delay: 60ms; }
+  .g6-stagger[data-in='true'] > li:nth-child(3) { transition-delay: 120ms; }
+  .g6-stagger[data-in='true'] > li:nth-child(4) { transition-delay: 180ms; }
+  .g6-stagger[data-in='true'] > li:nth-child(5) { transition-delay: 240ms; }
+  .g6-stagger[data-in='true'] > li:nth-child(n + 6) { transition-delay: 300ms; }
+
+  /* Roadmap: draw to the current phase, then light its marker. Nothing further moves. */
+  .g6-track[data-armed='true'] .g6-track-live { transform: scaleX(0); transform-origin: left; }
+  .g6-track[data-armed='true'][data-in='true'] .g6-track-live {
+    transform: none;
+    transition: transform 1100ms var(--g6-ease-out) 150ms;
+  }
+  .g6-track[data-armed='true'] .g6-tag-live::before { background: transparent; }
+  .g6-track[data-armed='true'][data-in='true'] .g6-tag-live::before {
+    background: var(--g6-orange);
+    transition: background-color 400ms linear 800ms;
+  }
+
+  .g6-chain-fill { transition: transform 380ms var(--g6-ease-out); }
+  .g6-chain-fill[data-timing='true'] {
+    animation-name: g6-fill-y;
+    animation-timing-function: linear;
+  }
+  /* One pass along the chain on first view, to show which way it flows */
+  .g6-chain[data-in='true'] .g6-chain-pass {
+    animation: g6-pass 900ms var(--g6-ease-out) calc(var(--i) * 260ms + 150ms) both;
+  }
+  @media (min-width: 1280px) {
+    .g6-chain-fill[data-timing='true'] { animation-name: g6-fill-x; }
+  }
+}
+
+@keyframes g6-dusk {
+  from { transform: scale(1.09); filter: brightness(0.35) saturate(0.6); }
+  to { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+@keyframes g6-line-rise {
+  from { transform: translateY(115%); }
+  to { transform: none; }
+}
+@keyframes g6-rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes g6-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes g6-fill-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes g6-fill-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes g6-pass {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .g6-reveal[data-armed='true'] {
-    opacity: 1;
-    transform: none;
-  }
-  .g6 * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
+  /* The page scrolls instantly instead of gliding */
+  html:has(.g6) { scroll-behavior: auto !important; }
+  /* Height and icon movement stop; colour and opacity feedback stays */
+  .g6 [data-state][role='region'] { animation-duration: 0.01ms !important; }
+  .g6 svg { transition: none !important; }
+  .g6-btn:active { transform: none; }
 }
 
 /* Hide the scrollbar on the section strip */
@@ -191,13 +326,6 @@
 
 .g6-paper .g6-tag { color: #4a3f35; }
 .g6-paper .g6-tag::before { border-color: #b43f0a; }
-
-/* Tab panel swap: a short, quiet fade-in when the selected lifestyle changes */
-.g6-swap[data-state='active'] { animation: g6-swap-in 320ms var(--g6-ease) both; }
-@keyframes g6-swap-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
 
 /* Paper variants of shared pieces */
 .g6-paper .g6-list > li { border-color: rgb(23 18 13 / 0.18); }

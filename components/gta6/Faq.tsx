@@ -30,7 +30,7 @@ export function Faq() {
                 <AccordionTrigger className="g6-display g6-sm text-2xl text-white hover:text-[#fdba74] data-[state=open]:text-white sm:text-3xl">
                   {f.question}
                 </AccordionTrigger>
-                <AccordionContent className="g6-body max-w-[62ch] text-lg">{f.answer}</AccordionContent>
+                <AccordionContent className="g6-body g6-open-in max-w-[62ch] text-lg">{f.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
