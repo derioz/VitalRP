@@ -23,7 +23,7 @@ Status: concept development. Nothing on the page is a confirmed feature.
   - Main moment: the supply chain. A light runs along it once on first view; "Follow the dinner" hands the meal from player to player (4.5s each), pausing on any manual choice, offscreen or in a hidden tab.
   - Opening: the hero photograph brightens and settles while the two headline sentences rise; 12% parallax on scroll.
   - Selection: photographs fade and settle from a 1.07 push-in (`.g6-photo`), replaced text arrives (`.g6-arrive`), underlines travel (`SlidingIndicator`).
-  - Once on view (`InView`): the vision and community lists arrive item by item; the roadmap line draws only to the current phase.
+  - Once on view (`InView`): the vision list and the closing list of ways to help arrive item by item; the roadmap line draws only to the current phase.
   - Reduced motion: no movement and instant scrolling; short fades remain.
 - Styles are scoped to `.g6` in [app/gta6/gta6.css](app/gta6/gta6.css). Nothing global changed.
 
@@ -93,3 +93,16 @@ Page order: Overview, Our Vision, GTA VI Lore, Explore Leonida, Life in Leonida,
 **Lore sources.** Everything named as "in Rockstar's materials" comes from rockstargames.com/VI (the Ultimate Edition cards and the "Only in Leonida" character pages): Stock 305, Rideout Customs, Sara's Unisex Salon, Electric Fang Tattoo, One-Eyed Willie's, PTT YOUNGIN$, Only Raw Records, Jack of Hearts, Real Dimez, Macca the Gator, Gambit Bay, Washington Beach, Stockyard, Lake Leonida, Watson Bay, Leonida Penitentiary, Coast Guard. "Vice Beach Police" is read off a patrol car in an official image. Weazel News and any police agency names are deliberately NOT listed as native because they were not found in those pages. Several businesses are marked by Rockstar as Ultimate Edition only; the page says so.
 
 **Images.** Eleven new official stills (`public/gta6/lore-*.webp`, `life-*.webp`), downloaded from rockstargames.com/VI, converted to 1920px WebP, stored locally. Same credit caption as the rest of the page.
+
+## Update: distilled
+
+The page had grown to 22 screens on a phone. The owner approved these cuts; the removed copy is in git history before this change.
+
+Page order: Overview, Our Vision, GTA VI Lore, Explore Leonida, Life in Leonida, Concepts, Roadmap, FAQ, Closing. This replaces the order listed above.
+
+| Removed | Why | Where it went |
+|---|---|---|
+| Concepts: business ownership, civilian careers, news and entertainment, underworld, institutions | Repeated Lore and Life | Cut. Interconnected economy and A living world remain |
+| Development journal section and its planned topics | A whole section for "no entries yet" | One line under the roadmap (`#journal`). Article cards appear there once `articles` has entries |
+| Community section (`Community.tsx`) | A second join ask beside the closing screen | Its ways to help are in the closing screen (`#community`) |
+| Six FAQ answers (lore, native businesses, gangs, custom content, civilian roleplay, and one merged follow/contribute) | Restated Lore and Community | Six questions remain |

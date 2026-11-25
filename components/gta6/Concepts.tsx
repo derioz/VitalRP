@@ -23,8 +23,8 @@ export function Concepts() {
               Roleplay concepts
             </h2>
             <p className="g6-body mt-6 max-w-[34ch] text-lg">
-              Seven ideas we are exploring. Each one starts from what Rockstar already built, and
-              none of them is a promise.
+              Two ideas we are exploring. Both start from what Rockstar already built,
+              and neither is a promise.
             </p>
           </div>
         </div>

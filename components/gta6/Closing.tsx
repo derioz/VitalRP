@@ -1,10 +1,12 @@
 import React from 'react';
 import Image from 'next/image';
-import { DISCORD_URL, GTA6_IMAGES } from '@/lib/gta6/content';
+import { communityWays, DISCORD_URL, GTA6_IMAGES } from '@/lib/gta6/content';
+import { InView } from './InView';
 
 export function Closing() {
   return (
     <section
+      id="community"
       aria-labelledby="g6-closing-title"
       className="relative isolate flex min-h-[90svh] flex-col overflow-hidden border-t border-white/10"
     >
@@ -17,6 +19,8 @@ export function Closing() {
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#0a0a0a]/50 via-transparent to-[#0a0a0a]/90" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0a0a0a]/85 via-[#0a0a0a]/45 to-transparent" />
+      {/* Narrow screens: the text runs across the artwork, so shade all of it */}
+      <div className="absolute inset-0 -z-10 bg-[#0a0a0a]/50 lg:hidden" />
 
       <div className="g6-wrap flex flex-1 flex-col pt-24 lg:pt-32">
         <div className="lg:w-[50%]">
@@ -27,13 +31,22 @@ export function Closing() {
             The Next Chapter of Vital Starts Here.
           </h2>
           <p className="mt-8 max-w-[44ch] text-lg leading-relaxed text-[#f4efe8]">
-            Come to the Discord, read what we are thinking and tell us where we are wrong.
+            Nothing here is final, and the people who will play it should have a say. Come to the
+            Discord, read what we are thinking and tell us where we are wrong.
           </p>
           <div className="mt-10">
             <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary">
               Join Our Discord
             </a>
           </div>
+
+          <InView as="ul" className="g6-list g6-stagger mt-12 max-w-[34rem]">
+            {communityWays.map((w) => (
+              <li key={w} className="text-base text-[#f4efe8]">
+                {w}
+              </li>
+            ))}
+          </InView>
         </div>
 
         <p className="g6-mono mt-auto max-w-[72ch] pb-8 pt-24 text-xs leading-relaxed text-[#d3cbc0]">

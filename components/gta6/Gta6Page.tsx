@@ -13,8 +13,6 @@ import { Leonida } from './Leonida';
 import { Life } from './Life';
 import { Concepts } from './Concepts';
 import { Roadmap } from './Roadmap';
-import { Journal } from './Journal';
-import { Community } from './Community';
 import { Faq } from './Faq';
 import { Closing } from './Closing';
 
@@ -38,8 +36,6 @@ export function Gta6Page() {
         <Life />
         <Concepts />
         <Roadmap />
-        <Journal />
-        <Community />
         <Faq />
         <Closing />
       </main>
