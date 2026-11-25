@@ -350,6 +350,8 @@
 .g6-paper-rule { border-top: 1px solid rgb(23 18 13 / 0.18); }
 .g6-paper a:focus-visible,
 .g6-paper button:focus-visible { outline-color: #b43f0a; }
+/* A clicked tab already shows its underline; the ring is for keyboard users */
+.g6 button[data-pointer]:focus-visible { outline: none; }
 
 /* Notes: a quiet aside, not a code block */
 .g6-note {
