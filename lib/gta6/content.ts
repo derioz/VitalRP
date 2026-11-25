@@ -124,7 +124,7 @@ export const regions: Region[] = [
       'Trucking companies',
       'Local criminal organizations',
     ],
-    image: { src: '/gta6/region-port-gellhorn.webp', alt: 'The Starlet Motel sign glowing at dusk among palm trees in Port Gellhorn, Rockstar Games promotional image' },
+    image: { src: '/gta6/region-port-gellhorn-delights.webp', alt: 'The Delights Cabaret sign glowing over a rain-slick parking lot at night in Port Gellhorn, Rockstar Games promotional image' },
   },
   {
     id: 'ambrosia',
