@@ -48,6 +48,44 @@
   line-height: 1.65;
 }
 
+/* Hero headline: set to the width of the page, never taller than the screen allows.
+   The divisors are the measured widths, in ems, of the longest line at each size:
+   "Beginning." when the sentences stack, "A New Beginning." when they do not. */
+.g6-hero-measure { container-type: inline-size; }
+.g6-display.g6-hero-title {
+  font-size: min(100cqw / 4.4, 10svh);
+  line-height: 0.9;
+  text-shadow: 0 2px 28px rgb(0 0 0 / 0.5);
+}
+/* Phones: the stacked headline reaches higher up the photograph, so the shade does too */
+.g6-hero-shade {
+  background: linear-gradient(
+    to top,
+    var(--g6-ink) 0%,
+    rgb(10 10 10 / 0.9) 36%,
+    rgb(10 10 10 / 0.7) 60%,
+    rgb(10 10 10 / 0.5) 76%,
+    rgb(10 10 10 / 0.1) 94%
+  );
+}
+@media (min-width: 640px) {
+  .g6-display.g6-hero-title { font-size: min(100cqw / 7.25, 24svh); }
+  .g6-hero-shade {
+    background: linear-gradient(
+      to top,
+      var(--g6-ink) 0%,
+      rgb(10 10 10 / 0.88) 24%,
+      rgb(10 10 10 / 0.58) 46%,
+      rgb(10 10 10 / 0.12) 66%,
+      rgb(10 10 10 / 0) 80%
+    );
+  }
+}
+/* Landscape phones: give the buttons room */
+@media (min-width: 640px) and (max-height: 500px) {
+  .g6-display.g6-hero-title { font-size: min(100cqw / 7.25, 17svh); }
+}
+
 /* Layout */
 .g6-wrap {
   width: 100%;

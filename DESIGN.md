@@ -17,6 +17,7 @@ Status: concept development. Nothing on the page is a confirmed feature.
 - No card grids. Sections use six different compositions: asymmetric editorial split, sticky-heading ruled list, full-bleed tabbed stage, typographic run, broadcast rundown, text over photograph.
 - Rhythm: two warm paper sections (Six principles, Civilian life: `#eee3d2` ground, `#17120d` ink, `#b43f0a` accent for contrast) break the dark run. Section headings vary in scale and placement on purpose.
 - Regions without approved imagery use flat stand-in colors from `regions[].tone` and a large numeral, so the stage still reads as designed.
+- Hero: the one poster-scale moment. The headline is set to the width of the page along the base of the photograph (`.g6-hero-title`, capped by screen height), stacked to four lines on phones. The skyline stays open above it; status, summary and actions sit under a single rule. Section headings stay smaller than it.
 - Radius: 6px on buttons and the supply chain. Everything else is square or hairline.
 - Motion explains where the reader is, what changed and how the parts connect. Easing `--g6-ease-out`. There is no scroll reveal on headings or body text.
   - Main moment: the supply chain. A light runs along it once on first view; "Follow the dinner" hands the meal from player to player (4.5s each), pausing on any manual choice, offscreen or in a hidden tab.
