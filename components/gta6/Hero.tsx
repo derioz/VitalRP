@@ -2,9 +2,12 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ArrowDown } from 'lucide-react';
 import { DISCORD_URL, GTA6_IMAGES } from '@/lib/gta6/content';
 
+/**
+ * A poster: the city fills the screen, the headline is set to the width of the
+ * page along its base, and everything else sits under one rule.
+ */
 export function Hero() {
   const layerRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,60 +46,56 @@ export function Hero() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[50%_45%]"
+            className="object-cover object-[44%_50%] sm:object-[50%_45%]"
           />
         </div>
       </div>
-      {/* Neutral darkening so text sits on calm sky and the base stays dark */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-transparent to-[#0a0a0a]" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/30 to-transparent lg:via-black/20" />
+      {/* The sky and skyline stay open; the shade builds only where the type sits */}
+      <div className="g6-hero-shade absolute inset-0 -z-10" />
 
-      <div className="g6-wrap flex flex-1 flex-col pt-28 sm:pt-32 lg:pt-40">
-        <p className="g6-tag g6-tag-live g6-enter">Concept development</p>
-
-        <h1
-          id="g6-hero-title"
-          className="g6-display mt-6 max-w-[14ch] text-[clamp(3.25rem,8vw,7.5rem)] text-white sm:max-w-[16ch]"
-        >
-          <span className="g6-line">
-            <span style={{ animationDelay: '180ms' }}>A New City.</span>
-          </span>{' '}
-          <span className="g6-line">
-            <span style={{ animationDelay: '420ms' }}>A New Beginning.</span>
-          </span>
-        </h1>
-
-        <p
-          className="g6-enter mt-8 max-w-[46ch] text-lg leading-relaxed text-[#f4efe8] sm:text-xl"
-          style={{ animationDelay: '620ms' }}
-        >
-          Vital Roleplay is planning its next chapter in Grand Theft Auto VI. Same commitment to
-          characters and stories, in a new state and a new setting.
-        </p>
-
-        <div
-          className="g6-enter mt-10 flex flex-wrap items-center gap-3"
-          style={{ animationDelay: '740ms' }}
-        >
-          <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary">
-            Join Our Discord
-          </a>
-          <a href="#vision" className="g6-btn g6-btn-quiet">
-            Explore Our Vision
-          </a>
+      <div className="g6-wrap flex flex-1 flex-col justify-end pb-8 pt-28 sm:pb-12">
+        <div className="g6-hero-measure">
+          <h1 id="g6-hero-title" className="g6-display g6-hero-title text-white">
+            <span className="g6-line">
+              <span style={{ animationDelay: '180ms' }}>
+                A New <br className="sm:hidden" />
+                City.
+              </span>
+            </span>{' '}
+            <span className="g6-line">
+              <span style={{ animationDelay: '420ms' }}>
+                A New <br className="sm:hidden" />
+                Beginning.
+              </span>
+            </span>
+          </h1>
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-6 pb-8 pt-16 sm:pb-10">
-          <p className="g6-mono text-sm text-[#d3cbc0]">
-            Vital Roleplay <span className="text-[#a39b90]">/</span> Grand Theft Auto VI
-          </p>
-          <a
-            href="#vision"
-            className="g6-mono hidden items-center gap-2 text-sm text-[#d3cbc0] transition-colors hover:text-white sm:inline-flex"
-          >
-            Scroll
-            <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
-          </a>
+        <div
+          className="g6-enter mt-4 grid gap-x-12 gap-y-5 border-t border-white/30 pt-4 sm:mt-6 sm:gap-y-6 sm:pt-5 md:grid-cols-[1fr_auto] md:items-end lg:mt-9 lg:pt-7"
+          style={{ animationDelay: '620ms' }}
+        >
+          <div>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+              <p className="g6-tag g6-tag-live">Concept development</p>
+              <p className="g6-mono hidden text-[13px] text-[#d3cbc0] sm:block">
+                Vital Roleplay <span className="text-[#a39b90]">/</span> Grand Theft Auto VI
+              </p>
+            </div>
+            <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-[#f4efe8] sm:text-xl">
+              Vital Roleplay is planning its next chapter in Grand Theft Auto VI. Same commitment to
+              characters and stories, in a new state and a new setting.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 md:flex-nowrap [&>a]:flex-auto [&>a]:px-4 sm:[&>a]:px-6 md:[&>a]:flex-none">
+            <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary">
+              Join Our Discord
+            </a>
+            <a href="#vision" className="g6-btn g6-btn-quiet">
+              Explore Our Vision
+            </a>
+          </div>
         </div>
       </div>
     </section>
