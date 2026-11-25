@@ -6,18 +6,6 @@ import { Plus, Minus } from 'lucide-react';
 
 const faqs = [
   {
-    question: "How do I join?",
-    answer: "Join our Discord and submit an application in the dedicated whitelist channel. Applications are reviewed within 24–48 hours. Once yours is approved, connect to the server at connect.vitalrp.net."
-  },
-  {
-    question: "Is Vital RP a whitelist server?",
-    answer: "Yes, we are a whitelist community. However, our application process is straightforward. We want to ensure that players understand our rules and are committed to serious roleplay before joining."
-  },
-  {
-    question: "What is the age requirement?",
-    answer: "You must be 18 years or older to join Vital RP. We cover mature themes and expect a level of maturity from our player base that aligns with an adult community."
-  },
-  {
     question: "Do I need a high-end PC?",
     answer: "We optimize our assets heavily. If you can run base GTA V at 60 FPS, you should have a smooth experience on Vital RP. We recommend 16GB of RAM for the best texture loading."
   },
@@ -28,7 +16,7 @@ const faqs = [
   {
     question: "Is controller support enabled?",
     answer: "Yes! Driving and flying work perfectly with controllers. Some complex menu interactions may still require a mouse and keyboard, but daily gameplay is very controller-friendly."
-  }
+  },
 ];
 
 export const FAQ: React.FC = () => {
