@@ -15,19 +15,9 @@ const values = [
   },
   {
     id: "03",
-    title: "Zero toxicity",
-    description: "A strict zero-tolerance policy for harassment. We protect our safe, inclusive environment aggressively."
-  },
-  {
-    id: "04",
-    title: "Optimized performance",
-    description: "Custom asset management ensuring high FPS even in dense areas."
-  },
-  {
-    id: "05",
     title: "Player-run economy",
     description: "No spawned money. Every dollar in circulation is earned, spent, and circulated by players owning businesses and providing services."
-  }
+  },
 ];
 
 export const Values: React.FC = () => {

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import { loadPublishedRules, type PublishedRule } from '@/lib/rules/published';
 import { Button } from './Button';
-import { CoreRuleCard } from './rules/CoreRuleCard';
+import { CoreRuleRow } from './rules/CoreRuleRow';
 import { CoreRuleModal } from './rules/CoreRuleModal';
 
 /**
@@ -79,27 +79,25 @@ export const Rules: React.FC = () => {
             .
           </p>
         ) : (
-          <div
+          /* Two columns read downwards, so the numbers stay in order */
+          <ul
             aria-busy={!published}
-            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10"
+            className="mb-10 grid border-t border-white/10 md:grid-flow-col md:grid-cols-2 md:grid-rows-5 md:gap-x-10"
           >
             {published
               ? coreRules.map((rule) => (
-                  <div key={rule.id}>
-                    <CoreRuleCard
+                  <li key={rule.id} className="border-b border-white/10">
+                    <CoreRuleRow
                       ruleNumber={rule.number}
                       id={rule.id}
                       shortTitle={rule.shortTitle || rule.title}
                       tag={rule.callouts?.find((c) => c.type === 'COOLDOWN')?.title}
-                      summary={rule.summary}
                       onSelect={(id) => setActiveRuleId(id)}
                     />
-                  </div>
+                  </li>
                 ))
-              : CORE_RULE_IDS.map((id) => (
-                  <div key={id} className="h-56 rounded border border-white/10 bg-dark-900/60" />
-                ))}
-          </div>
+              : CORE_RULE_IDS.map((id) => <li key={id} className="h-16 border-b border-white/10" />)}
+          </ul>
         )}
 
         {/* Bottom Legislation Banner */}

@@ -2,15 +2,6 @@
 
 import React from 'react';
 
-const offers = [
-  { title: '18+ semi-serious RP', description: 'Focused on story, character development, and immersive scenes rather than simple shootouts.' },
-  { title: 'Whitelisted community', description: "Keeping quality high and reducing trolls to protect the integrity of everyone's storylines." },
-  { title: 'Diverse staff team', description: 'Active staff made up of legal, criminal, lawyer, and LEO players for balanced city insight.' },
-  { title: 'Ongoing development', description: 'Regular content updates, script enhancements, and bug fixes.' },
-  { title: 'Balanced economy', description: 'Plenty of ways to make money legally and illegally, so every hustle feels rewarding.' },
-  { title: 'Player-run events', description: 'Server-wide holidays and community-driven story arcs, organized by players.' },
-];
-
 const opportunities = [
   {
     title: 'Law and services',
@@ -64,16 +55,6 @@ export const Features: React.FC = () => {
             Police, EMS, civilian careers, crime, and a casino, all running on scripts we wrote ourselves.
           </p>
         </div>
-
-        <SectionLabel label="What we offer" />
-        <dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mb-20">
-          {offers.map((feature) => (
-            <div key={feature.title}>
-              <dt className="font-display font-bold text-white mb-1.5">{feature.title}</dt>
-              <dd className="text-gray-300 text-[15px] leading-relaxed">{feature.description}</dd>
-            </div>
-          ))}
-        </dl>
 
         <SectionLabel label="In-game opportunities" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-10 gap-y-10 mb-20">
