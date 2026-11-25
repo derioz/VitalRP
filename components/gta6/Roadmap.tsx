@@ -1,6 +1,7 @@
 import React from 'react';
 import { roadmap, sectionNo } from '@/lib/gta6/content';
 import { InView } from './InView';
+import { Journal } from './Journal';
 
 export function Roadmap() {
   return (
@@ -47,6 +48,8 @@ export function Roadmap() {
             );
           })}
         </InView>
+
+        <Journal />
       </div>
     </section>
   );

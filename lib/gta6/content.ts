@@ -16,8 +16,6 @@ export const GTA6_SECTIONS = [
   { id: 'life', label: 'Life in Leonida' },
   { id: 'concepts', label: 'Concepts' },
   { id: 'roadmap', label: 'Roadmap' },
-  { id: 'journal', label: 'Journal' },
-  { id: 'community', label: 'Community' },
   { id: 'faq', label: 'FAQ' },
 ] as const;
 
@@ -211,34 +209,9 @@ export const faqs: Faq[] = [
       'Serious, story-first roleplay with less grinding, a strong civilian side, and crime that runs on relationships and consequences. The same values Vital has always had, built for a new setting.',
   },
   {
-    question: "Will Vital follow GTA VI's established lore?",
-    answer:
-      "That is the intention. We want players to feel like they are living in Rockstar's world, not on a heavily modified version of it. We start from what Rockstar has published and build on it, and we do not present anything as official unless Rockstar has confirmed it.",
-  },
-  {
-    question: 'Will Vital use native GTA VI businesses and interiors?',
-    answer:
-      'Where it is technically possible, yes, that is the goal. We would rather use what Rockstar already built than fill the map with invented brands and custom interiors. Which businesses and interiors can actually be used depends on the available multiplayer tools, and we will confirm each one before naming it as part of the project.',
-  },
-  {
-    question: 'Will gangs be based on existing GTA VI organizations?',
-    answer:
-      "We want to prioritize the gangs and criminal organizations Rockstar has established, and respect their identities and territories. Players would develop their own stories inside that framework. How membership, territory and original organizations are handled has not been decided.",
-  },
-  {
-    question: 'Will custom businesses and factions be allowed?',
-    answer:
-      'Custom content should complement the world, not replace it. We are open to original businesses and factions that fit Leonida and serve a real purpose, and native options come first. There is no approval process yet, and we will explain one before anyone needs it.',
-  },
-  {
     question: 'How will business ownership work?',
     answer:
       'It is not designed yet. The direction is to build ownership around the businesses that exist in the game, so players can run existing names rather than waiting for us to build new ones. What that looks like in practice depends on what the tools allow.',
-  },
-  {
-    question: 'Will there be opportunities for civilian roleplay?',
-    answer:
-      'Yes, that is a core part of the vision. A civilian career should be as rewarding to play as a criminal one: entrepreneurs, everyday citizens, public servants and entertainers are all part of what we are planning for. Specific jobs and systems are still concepts.',
   },
   {
     question: 'Will the server be whitelisted?',
@@ -246,14 +219,9 @@ export const faqs: Faq[] = [
       'We have not decided. Access and application details will be announced in the Vital Discord before any testing begins.',
   },
   {
-    question: 'How can I contribute ideas?',
+    question: 'How can I follow development or contribute ideas?',
     answer:
-      'Join the Vital Discord. That is where we collect roleplay concepts, discuss proposals and, later, will ask for testers. There is no separate form on this page.',
-  },
-  {
-    question: 'How can I follow development?',
-    answer:
-      'The Discord is the main place for updates. The Development journal on this page will carry written updates once there is something real to report, and the roadmap will be marked as phases are completed.',
+      'Join the Vital Discord. It is the main place for updates, and it is where we collect roleplay concepts, discuss proposals and, later, will ask for testers. The roadmap will be marked as phases are completed. There is no separate form on this page.',
   },
   {
     question: 'Are all showcased concepts guaranteed?',
@@ -526,100 +494,12 @@ export interface Concept {
 
 export const concepts: Concept[] = [
   {
-    slug: 'native-business-ownership',
-    title: 'Business ownership',
-    summary:
-      'Instead of filling the map with custom interiors and invented brands, build on the businesses Rockstar already put in the world. A player could own a franchise, lease a unit or run a shop without waiting for us to build the building.',
-    native: 'Existing names, storefronts and interiors would come first.',
-    items: [
-      'Franchise ownership',
-      'Commercial leases',
-      'Employee recruitment',
-      'Supplier contracts',
-      'Business licenses',
-      'Advertising',
-      'Partnerships',
-      'Multiple locations',
-    ],
-    note: 'We will only name a specific business once we have confirmed it exists and can be used.',
-  },
-  {
     slug: 'interconnected-economy',
     title: 'Interconnected economy',
     summary:
       'Businesses that need each other would create roleplay without anyone writing it. One plate of fish could involve five players and five conversations, with crafting loops and repeated fetch tasks giving way to people who depend on other people.',
     native: "We would build on the game's own fictional economy.",
     items: [],
-  },
-  {
-    slug: 'civilian-life',
-    title: 'Civilian careers',
-    summary:
-      'A civilian career should be as rewarding to play as a criminal one. Most of these jobs do not need their own script. They need a world that gives them clients, licenses, a place to work and someone to answer to.',
-    native: 'Workplaces would be native locations where possible.',
-    items: [
-      'Attorneys',
-      'Realtors',
-      'Photographers',
-      'Journalists',
-      'Insurance agents',
-      'Private investigators',
-      'Event planners',
-      'Hotel managers',
-      'Tour guides',
-      'Music producers',
-    ],
-  },
-  {
-    slug: 'news-and-entertainment',
-    title: 'News and entertainment',
-    summary:
-      "A player-run newsroom and broadcaster with real stories, real advertisers and an audience that talks back, alongside the music, nightlife and shows that already define the state's culture.",
-    native: 'Native media brands and stations, once confirmed.',
-    items: [
-      'Breaking news',
-      'Investigations',
-      'Live interviews',
-      'Advertising',
-      'Radio',
-      'Sports reporting',
-      'Weather reports',
-      'Live events',
-    ],
-    note: 'We have not confirmed which media organizations exist in the game, so none are named as native yet.',
-  },
-  {
-    slug: 'criminal-underworld',
-    title: 'The underworld',
-    summary:
-      'We want crime that runs on relationships, reputation and consequences: fewer scripted missions and constant gunfights, more territory that is earned and lost through people, and debts that are still there next week.',
-    native: "We would start with Rockstar's organizations and write original stories inside them.",
-    items: [
-      'Territory',
-      'Connections',
-      'Underground economies',
-      'Rivalries',
-      'Alliances',
-      'Organized crime',
-      'Long-term consequences',
-    ],
-  },
-  {
-    slug: 'government-and-emergency-services',
-    title: 'Institutions',
-    summary:
-      'Law enforcement, emergency services, courts and government that players could work inside, appeal to and argue with. The paperwork, hearings and meetings would be part of the roleplay, not a gate in front of it.',
-    native: 'Native agencies, names and uniforms, where we can confirm them.',
-    items: [
-      'Law enforcement',
-      'Emergency medical services',
-      'Courts',
-      'Government agencies',
-      'Business licensing',
-      'Public meetings',
-      'Park and wildlife services',
-    ],
-    note: 'None of these structures are final. We are listing what interests us, not what will exist.',
   },
   {
     slug: 'a-living-world',
@@ -694,11 +574,3 @@ export interface Article {
  * real updates to share. Do not add placeholder entries here.
  */
 export const articles: Article[] = [];
-
-export const plannedTopics = [
-  { category: 'Philosophy', title: "Why we're moving away from grinding" },
-  { category: 'Lore', title: 'How we decide what counts as native' },
-  { category: 'Economy', title: 'Rethinking business ownership' },
-  { category: 'Civilian', title: 'Building a better civilian experience' },
-  { category: 'World', title: 'Exploring the regions of Leonida' },
-];
