@@ -1,138 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  ShieldAlert,
-  Drama,
-  Heart,
-  RefreshCw,
-  Eye,
-  Zap,
-  Crosshair,
-  LogOut,
-  Ban,
-  AlertOctagon,
-  FileText,
-  ExternalLink,
-} from 'lucide-react';
-import { RULES } from '@/data/rules';
+import React, { useEffect, useState } from 'react';
+import { FileText } from 'lucide-react';
+import { loadPublishedRules, type PublishedRule } from '@/lib/rules/published';
 import { Button } from './Button';
 import { CoreRuleCard } from './rules/CoreRuleCard';
 import { CoreRuleModal } from './rules/CoreRuleModal';
 
 /**
- * 10 Core Foundational Rules of Vital RP
- * Highlighted on the landing page for quick reference.
+ * Which rules the homepage highlights. Only the choice lives here: titles,
+ * summaries, penalties and numbers all come from the published rulebook.
  */
-const CORE_RULES = [
-  {
-    id: 'server-age-restriction',
-    ruleNumber: 1,
-    title: 'Server Age Restriction (18+)',
-    shortTitle: '18+ Server',
-    tag: '18+ Strictly',
-    summary: 'Vital RP is strictly an 18+ community with zero exceptions. Mature themes and adult roleplay occur regularly.',
-    icon: ShieldAlert,
-  },
-  {
-    id: 'stay-in-character',
-    ruleNumber: 2,
-    title: 'Stay in Character (No Breaking IC)',
-    shortTitle: 'Stay In Character',
-    tag: 'No Breaking IC',
-    summary: 'Never break character during active scenes. If a rule break occurs, roleplay through it and submit a report afterward.',
-    icon: Drama,
-  },
-  {
-    id: 'fear-rp',
-    ruleNumber: 3,
-    title: 'Value of Life (Fear Roleplay)',
-    shortTitle: 'Value of Life (FearRP)',
-    tag: 'FearRP',
-    summary: 'You must realistically value your life at all times. Comply when facing direct, unavoidable lethal threats like a gun to your head.',
-    icon: Heart,
-  },
-  {
-    id: 'new-life-rule',
-    ruleNumber: 4,
-    title: 'New Life Rule (NLR)',
-    shortTitle: 'New Life Rule (NLR)',
-    tag: '30m NLR',
-    summary: 'When flatbacked and respawned, you forget all memories leading to your death and cannot return to the scene for 30 minutes.',
-    icon: RefreshCw,
-  },
-  {
-    id: 'metagaming',
-    ruleNumber: 5,
-    title: 'Meta Gaming (MG)',
-    shortTitle: 'No Metagaming',
-    tag: 'No OOC Info',
-    summary: 'Using Out-Of-Character information from Discord, streams, or external messages in-character is strictly prohibited.',
-    icon: Eye,
-  },
-  {
-    id: 'powergaming',
-    ruleNumber: 6,
-    title: 'Powergaming (PG)',
-    shortTitle: 'No Powergaming',
-    tag: 'Fair Play',
-    summary: 'Do not force unpreventable outcomes, perform physically impossible feats, or deny other players a fair chance to react.',
-    icon: Zap,
-  },
-  {
-    id: 'rdm-vdm',
-    ruleNumber: 7,
-    title: 'Random & Vehicle Deathmatch (RDM / VDM)',
-    shortTitle: 'No RDM / VDM',
-    tag: 'Valid Initiation',
-    summary: 'Attacking or running over players without valid in-character reasoning and clear prior verbal initiation is strictly banned.',
-    icon: Crosshair,
-  },
-  {
-    id: 'combat-logging',
-    ruleNumber: 8,
-    title: 'Combat Logging',
-    shortTitle: 'No Combat Logging',
-    tag: 'Min 24h Ban',
-    summary: 'Disconnecting, force-quitting, or respawning to escape arrest, death, robbery, or hostile RP carries an immediate 24h ban.',
-    icon: LogOut,
-  },
-  {
-    id: 'exploits-cheating',
-    ruleNumber: 9,
-    title: 'Exploits & Cheating',
-    shortTitle: 'No Exploiting',
-    tag: 'Anti-Cheat',
-    summary: 'Abusing server bugs, crosshair overlays, macros, duplicated items, or third-party software results in an instant permanent ban.',
-    icon: Ban,
-  },
-  {
-    id: 'zero-tolerance-conduct',
-    ruleNumber: 10,
-    title: 'Zero Tolerance Conduct',
-    shortTitle: 'Zero Tolerance',
-    tag: 'Zero Tolerance',
-    summary: 'Racism, hate speech, slurs, discrimination, non-consensual sexual RP, and suicide RP result in immediate permanent removal.',
-    icon: AlertOctagon,
-  },
+const CORE_RULE_IDS = [
+  'server-age-restriction',
+  'stay-in-character',
+  'fear-rp',
+  'new-life-rule',
+  'metagaming',
+  'powergaming',
+  'rdm-vdm',
+  'combat-logging',
+  'exploits-cheating',
+  'zero-tolerance-conduct',
 ];
 
 /**
- * Compact, Pretty Core Rules section for the Vital RP homepage.
- * Renders the 10 foundational rules in a symmetrical 2-row spotlight grid.
- * Links to `/rules` for the complete 40+ rule legislation document.
+ * Core rules on the homepage, linking to /rules for the rest.
  */
 export const Rules: React.FC = () => {
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
+  const [published, setPublished] = useState<PublishedRule[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  // Look up full rule data from source of truth when modal opens
-  const selectedRule = activeRuleId
-    ? RULES.find((r) => r.id === activeRuleId) || null
-    : null;
+  useEffect(() => {
+    let mounted = true;
+    loadPublishedRules()
+      .then((rules) => mounted && setPublished(rules))
+      .catch(() => mounted && setFailed(true));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const selectedCoreRule = activeRuleId
-    ? CORE_RULES.find((r) => r.id === activeRuleId)
-    : null;
+  const coreRules = (published || [])
+    .filter((r) => CORE_RULE_IDS.includes(r.id))
+    .sort((a, b) => a.number - b.number);
+  const selectedRule = coreRules.find((r) => r.id === activeRuleId) || null;
+  // Say so rather than showing an empty grid if the highlighted rules are missing
+  const unavailable = failed || (published !== null && coreRules.length === 0);
 
   return (
     <section id="rules" className="py-20 relative overflow-hidden scroll-mt-20">
@@ -155,25 +70,37 @@ export const Rules: React.FC = () => {
           </div>
         </div>
 
-        {/* 10 Core Rules Spotlight Grid (Symmetrical 2 rows of 5 on desktop) */}
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10"
-        >
-          {CORE_RULES.map((rule) => (
-            <div key={rule.id}>
-              <CoreRuleCard
-                id={rule.id}
-                ruleNumber={rule.ruleNumber}
-                title={rule.title}
-                shortTitle={rule.shortTitle}
-                tag={rule.tag}
-                summary={rule.summary}
-                icon={rule.icon}
-                onSelect={(id) => setActiveRuleId(id)}
-              />
-            </div>
-          ))}
-        </div>
+        {unavailable ? (
+          <p role="status" className="mb-10 border-y border-white/10 py-6 text-gray-200">
+            The current rules could not be loaded here.{' '}
+            <a href="/rules" className="text-vital-400 underline underline-offset-4 hover:text-vital-300">
+              Read them on the rules page
+            </a>
+            .
+          </p>
+        ) : (
+          <div
+            aria-busy={!published}
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10"
+          >
+            {published
+              ? coreRules.map((rule) => (
+                  <div key={rule.id}>
+                    <CoreRuleCard
+                      ruleNumber={rule.number}
+                      id={rule.id}
+                      shortTitle={rule.shortTitle || rule.title}
+                      tag={rule.callouts?.find((c) => c.type === 'COOLDOWN')?.title}
+                      summary={rule.summary}
+                      onSelect={(id) => setActiveRuleId(id)}
+                    />
+                  </div>
+                ))
+              : CORE_RULE_IDS.map((id) => (
+                  <div key={id} className="h-56 rounded border border-white/10 bg-dark-900/60" />
+                ))}
+          </div>
+        )}
 
         {/* Bottom Legislation Banner */}
         <div className="p-6 md:p-8 rounded border border-white/10 bg-dark-900/80">
@@ -183,22 +110,13 @@ export const Rules: React.FC = () => {
                 Need the complete server legislation?
               </h3>
               <p className="text-sm text-gray-300 mt-1 max-w-2xl font-sans leading-relaxed">
-                Robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island kill-on-sight guidelines are in the full document of 40+ rules.
+                Robbery caps, heist cooldowns, gang conflict escalation, police response limits, and Extraction Island guidelines are in the full rulebook{published ? ` of ${published.length} rules` : ''}.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
               <Button href="/rules" icon={<FileText className="w-4 h-4" />}>
                 View all rules
-              </Button>
-              <Button
-                href="https://docs.google.com/document/d/1ZhxNk5zCsZy9eE1Xlo8ALanxtjsFV6TclpAoNHUZHpo/edit?tab=t.0"
-                target="_blank"
-                rel="noreferrer"
-                variant="outline"
-                icon={<ExternalLink className="w-4 h-4" />}
-              >
-                Google Doc
               </Button>
             </div>
           </div>
@@ -208,7 +126,8 @@ export const Rules: React.FC = () => {
       {/* Interactive Quick View Detail Modal */}
       <CoreRuleModal
         rule={selectedRule}
-        ruleNumber={selectedCoreRule?.ruleNumber}
+        ruleNumber={selectedRule?.number}
+        categoryTitle={selectedRule?.categoryTitle}
         onClose={() => setActiveRuleId(null)}
       />
     </section>

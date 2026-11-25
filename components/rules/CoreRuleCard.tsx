@@ -1,16 +1,15 @@
 'use client';
 
 import React from 'react';
-import { LucideIcon, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 export interface CoreRuleCardProps {
   id: string;
   ruleNumber: number;
-  title: string;
   shortTitle: string;
-  tag: string;
+  /** Penalty headline from the published rule, when it has one. */
+  tag?: string;
   summary: string;
-  icon: LucideIcon;
   onSelect: (id: string) => void;
 }
 
@@ -32,7 +31,7 @@ export const CoreRuleCard: React.FC<CoreRuleCardProps> = ({
     >
       <span className="font-tech tabular-nums text-sm text-vital-500 mb-3">{formattedNumber}</span>
       <h3 className="text-lg font-display font-black text-white mb-1 tracking-tight">{shortTitle}</h3>
-      <p className="text-sm font-tech text-gray-300 mb-3">{tag}</p>
+      {tag && <p className="text-sm font-tech text-vital-400 mb-3">{tag}</p>}
       <p className="text-sm font-sans text-gray-300 leading-relaxed mb-4 flex-1">{summary}</p>
       <span className="pt-3 border-t border-white/10 flex items-center justify-between text-sm font-display font-bold text-gray-200 group-hover:text-vital-400 transition-colors">
         Read rule

@@ -46,11 +46,8 @@ export const metadata: Metadata = {
     'player-driven stories',
   ],
   icons: {
-    icon: [
-      { url: 'https://r2.fivemanage.com/image/qlWrCeXTQdqx.png', type: 'image/png' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-    ],
-    apple: 'https://r2.fivemanage.com/image/qlWrCeXTQdqx.png',
+    icon: [{ url: '/home/icon-64.png', type: 'image/png' }],
+    apple: '/home/icon-180.png',
   },
   openGraph: {
     type: 'website',
@@ -61,12 +58,11 @@ export const metadata: Metadata = {
       'Serious roleplay built around characters, stories, and the choices that shape Los Santos. Create a character. Build a story. Leave your mark.',
     images: [
       {
-        url: 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png',
-        secureUrl: 'https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png',
+        url: '/home/og.jpg',
         width: 1200,
         height: 630,
         alt: 'Vital RP - Serious FiveM Roleplay',
-        type: 'image/png',
+        type: 'image/jpeg',
       },
     ],
   },
@@ -75,7 +71,7 @@ export const metadata: Metadata = {
     title: 'We Are Vital RP',
     description:
       'Serious roleplay built around characters, stories, and the choices that shape Los Santos.',
-    images: ['https://r2.fivemanage.com/image/T0Q31BrvyOVQ.png'],
+    images: ['/home/og.jpg'],
   },
 };
 

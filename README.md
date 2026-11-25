@@ -111,9 +111,6 @@ DISCORD_CLIENT_ID=your_discord_client_id
 DISCORD_CLIENT_SECRET=your_discord_client_secret
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 
-# FiveM / CFX Server
-CFX_SERVER_ID=ogpvmv
-
 # FiveManage Media Upload (Server-only)
 FIVEMANAGE_API_KEY=your_fivemanage_api_key
 ```

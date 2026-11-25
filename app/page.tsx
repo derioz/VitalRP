@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { Features } from '@/components/Features';
+import { HowToJoin } from '@/components/HowToJoin';
 import { Values } from '@/components/Values';
 import { Rules } from '@/components/Rules';
 import { FAQ } from '@/components/FAQ';
@@ -33,6 +34,9 @@ export default function HomePage() {
         <div id="home-slot" className="relative w-full">
           <Hero />
         </div>
+
+        {/* How to join */}
+        <HowToJoin />
 
         {/* Features Section */}
         <div id="features-slot" className="relative w-full">

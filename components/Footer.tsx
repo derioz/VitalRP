@@ -51,7 +51,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   const [foundEasterEgg, setFoundEasterEgg] = useState(false);
   const [wiggleKey, setWiggleKey] = useState(0);
-  const { login, user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
   const toggleEasterEgg = () => {
     const next = !foundEasterEgg;
@@ -78,7 +78,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
     { label: 'About', href: '/#values' },
     { label: 'Rules', href: '/rules' },
     { label: 'FAQ', href: '/#faq' },
-    { label: 'Join', href: '/#join' },
+    { label: 'Join', href: '/#how-to-join' },
     { label: 'Merch', href: '/merch' },
     { label: 'Photo Contest', href: 'https://contest.vitalrp.net', isExternal: true },
     { label: 'Forums', href: '#', isComingSoon: true },
@@ -189,14 +189,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               >
                 <Lock size={12} />
               </a>
-            ) : !user ? (
-              <button
-                onClick={() => login('/')}
-                className="text-white/10 hover:text-vital-500 transition-colors duration-500"
-                aria-label="Admin Access"
-              >
-                <Lock size={12} />
-              </button>
             ) : null}
           </div>
 
@@ -227,7 +219,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
               {foundEasterEgg ? (
                 <Ghost className="w-5 h-5 text-vital-500 animate-bounce" />
               ) : (
-                <img src="https://r2.fivemanage.com/image/hVrQuL5nJWbT.png" alt="Crown" className="w-5 h-5 object-contain opacity-70 group-hover/dev:opacity-100 transition-opacity" />
+                <img src="/home/crown-64.webp" alt="" width={20} height={20} loading="lazy" className="w-5 h-5 object-contain opacity-70 group-hover/dev:opacity-100 transition-opacity" />
               )}
             </motion.div>
           </motion.div>

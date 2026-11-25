@@ -6,6 +6,10 @@ import { Plus, Minus } from 'lucide-react';
 
 const faqs = [
   {
+    question: "How do I join?",
+    answer: "Join our Discord and submit an application in the dedicated whitelist channel. Applications are reviewed within 24–48 hours. Once yours is approved, connect to the server at connect.vitalrp.net."
+  },
+  {
     question: "Is Vital RP a whitelist server?",
     answer: "Yes, we are a whitelist community. However, our application process is straightforward. We want to ensure that players understand our rules and are committed to serious roleplay before joining."
   },

@@ -34,7 +34,7 @@ const navLinks = [
   { name: 'Rules', href: '/rules' },
   { name: 'GTA VI', href: '/gta6' },
   { name: 'FAQ', href: '/#faq' },
-  { name: 'Join', href: '/#join' },
+  { name: 'Join', href: '/#how-to-join' },
 ];
 
 /** GTA VI entry point: sunset gradient on the label only, no glow. */
@@ -98,6 +98,9 @@ export const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const onGta = !!pathname && pathname.startsWith('/gta6');
+  const onHome = pathname === '/';
+  // Pages that exist to bring new players in lead with the Discord at every width
+  const joinFirst = onGta || onHome;
 
   const isCurrent = (href: string) => !href.includes('#') && href === pathname;
 
@@ -174,9 +177,20 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </Link>
             )}
 
-            {/* The GTA VI page has one action: join the Discord. Play and Login
-                belong to the FiveM server, so they are left off there. */}
-            {onGta ? (
+            {/* On the homepage and GTA VI page the one button joins the Discord.
+                Connecting and signing in are for people who are already in. */}
+            {onHome && (
+              <a
+                href={PLAY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Already whitelisted? Connect to the server"
+                className="hidden h-9 items-center px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white xl:inline-flex"
+              >
+                Connect
+              </a>
+            )}
+            {joinFirst ? (
               <a
                 href={DISCORD_URL}
                 target="_blank"
@@ -210,6 +224,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
             {user ? (
               <ProfileDropdown />
+            ) : onHome ? (
+              <button
+                onClick={() => login('/')}
+                className="hidden h-9 items-center whitespace-nowrap px-2 text-sm font-display font-medium text-gray-300 transition-colors hover:text-white lg:inline-flex"
+              >
+                Sign in
+              </button>
             ) : onGta ? null : loading ? (
               <div className="h-9 w-9 rounded-full border border-white/10 bg-dark-800" aria-hidden />
             ) : (
@@ -265,7 +286,19 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </ul>
 
               {/* On /gta6 the Join Discord button stays in the bar, so none is repeated here */}
-              {!onGta && (
+              {onHome && (
+                <div className="mt-4 grid border-t border-white/10 pt-4">
+                  <a
+                    href={PLAY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${buttonBase} h-11 border border-white/20 text-white hover:bg-white/10`}
+                  >
+                    Already whitelisted? Connect
+                  </a>
+                </div>
+              )}
+              {!joinFirst && (
                 <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/10 pt-4 sm:grid-cols-1">
                   <a
                     href={PLAY_URL}
@@ -392,10 +425,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       setIsMobileMenuOpen(false);
                       login('/');
                     }}
-                    className={`${buttonBase} h-11 w-full bg-[#5865F2] text-white hover:bg-[#4752c4] sm:hidden`}
+                    className={`${buttonBase} h-11 w-full ${
+                      onHome
+                        ? 'text-gray-200 hover:bg-white/10'
+                        : 'bg-[#5865F2] text-white hover:bg-[#4752c4] sm:hidden'
+                    }`}
                   >
                     <DiscordLogo className="h-4 w-4" />
-                    <span>Login with Discord</span>
+                    <span>{onHome ? 'Member and staff sign in' : 'Login with Discord'}</span>
                   </button>
                 )}
               </div>

@@ -430,22 +430,22 @@ Character killing is when your character dies permanently and is wiped from the 
     category: 'combat-interactions',
     title: 'Combat Logging',
     shortTitle: 'Combat Logging',
-    summary: 'Disconnecting or respawning from an active scene or combat to escape consequences carries a minimum 24-hour suspension.',
+    summary: 'Disconnecting or respawning from an active scene or combat to escape consequences carries a minimum 7-day ban.',
     content: `Players are not to disconnect or respawn from any roleplay or combat scenarios that have in-character consequences. This is completely forbidden as it denies the other player an RP opportunity in-game.
 
 If your game crashes during an active scene or combat scenario:
 1. You must immediately notify the other party or staff via the official Discord #crash-reports or active ticket.
 2. You must reconnect as soon as possible and return to the exact scene to resume the roleplay.
 
-Combat logging carries a minimum mandatory 24-hour suspension from the game server, with repeated offenses resulting in permanent bans.`,
+Combat logging carries a minimum mandatory 7-day ban from the game server, with repeated offenses resulting in permanent bans.`,
     aliases: ['combat logging', 'f8 quit', 'disconnect', 'combat log', 'logging', 'quitting', 'crashing'],
     featured: true,
     coreRuleNumber: 9,
     callouts: [
       {
         type: 'COOLDOWN',
-        title: 'Minimum 24-Hour Suspension',
-        text: 'Disconnecting during a police chase, robbery, or shootout automatically incurs a minimum 24-hour ban.'
+        title: 'Minimum 7 day ban',
+        text: 'Disconnecting during a police chase, robbery, or shootout automatically incurs a minimum 7-day ban.'
       }
     ]
   },

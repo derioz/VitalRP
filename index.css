@@ -1,3 +1,7 @@
+/* First, so Tailwind utilities below override the GTA VI page's base classes.
+   Not imported by the lazy route, which would load it after them. */
+@import './app/gta6/gta6.css';
+
 /* Custom scrollbar for webkit */
 ::-webkit-scrollbar {
   width: 8px;
