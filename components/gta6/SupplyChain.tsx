@@ -11,7 +11,8 @@ export function SupplyChain() {
 
   return (
     <div>
-      <ol className="grid gap-px overflow-hidden rounded-[6px] border border-white/10 bg-white/10 sm:grid-cols-5">
+      {/* Five columns need about 1280px before the longest role names fit */}
+      <ol className="grid gap-px overflow-hidden rounded-[6px] border border-white/10 bg-white/10 xl:grid-cols-5">
         {supplyChain.map((s, i) => {
           const selected = i === active;
           return (
@@ -20,7 +21,7 @@ export function SupplyChain() {
                 type="button"
                 onClick={() => setActive(i)}
                 aria-pressed={selected}
-                className={`flex h-full w-full flex-col items-start gap-6 p-5 text-left transition-colors sm:min-h-[140px] ${
+                className={`flex h-full w-full items-baseline gap-4 py-4 pl-5 pr-12 text-left transition-colors xl:min-h-[140px] xl:flex-col xl:items-start xl:gap-6 xl:p-5 ${
                   selected ? 'bg-[#1a1613]' : 'hover:bg-[#141211]'
                 }`}
               >
@@ -29,7 +30,7 @@ export function SupplyChain() {
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="g6-display g6-sm text-2xl text-white">{s.role}</span>
+                <span className="g6-display g6-sm text-xl text-white xl:text-2xl">{s.role}</span>
               </button>
               {i < supplyChain.length - 1 && (
                 <>
@@ -37,13 +38,13 @@ export function SupplyChain() {
                     size={16}
                     strokeWidth={1.5}
                     aria-hidden
-                    className="absolute right-3 top-5 z-10 hidden text-[#a39b90] sm:block"
+                    className="absolute right-3 top-5 z-10 hidden text-[#a39b90] xl:block"
                   />
                   <ArrowDown
                     size={16}
                     strokeWidth={1.5}
                     aria-hidden
-                    className="absolute right-5 top-5 z-10 text-[#a39b90] sm:hidden"
+                    className="absolute right-5 top-5 z-10 text-[#a39b90] xl:hidden"
                   />
                 </>
               )}
@@ -54,7 +55,7 @@ export function SupplyChain() {
 
       <div className="mt-px grid gap-8 border border-t-0 border-white/10 p-6 sm:grid-cols-2 sm:p-8" aria-live="polite">
         <div>
-          <p className="g6-mono text-sm text-[#a39b90]">What {step.role.toLowerCase()} does</p>
+          <p className="g6-mono text-sm text-[#a39b90]">What the {step.role.toLowerCase()} does</p>
           <p className="mt-3 text-lg leading-relaxed text-[#f4efe8]">{step.does}</p>
         </div>
         <div>

@@ -73,12 +73,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStore }) => {
   };
 
   const links = [
-    { label: 'Home', href: '#home' },
-    { label: 'Features', href: '#features' },
+    { label: 'Home', href: '/#home' },
+    { label: 'Features', href: '/#features' },
     { label: 'About', href: '/#values' },
     { label: 'Rules', href: '/rules' },
     { label: 'FAQ', href: '/#faq' },
-    { label: 'Join', href: '#join' },
+    { label: 'Join', href: '/#join' },
     { label: 'Merch', href: '/merch' },
     { label: 'Photo Contest', href: 'https://contest.vitalrp.net', isExternal: true },
     { label: 'Forums', href: '#', isComingSoon: true },

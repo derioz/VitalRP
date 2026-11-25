@@ -65,11 +65,11 @@ export function Hero() {
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-3">
-          <a href="#vision" className="g6-btn g6-btn-primary">
-            Explore Our Vision
-          </a>
-          <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-quiet">
+          <a href={DISCORD_URL} target="_blank" rel="noreferrer" className="g6-btn g6-btn-primary">
             Join Our Discord
+          </a>
+          <a href="#vision" className="g6-btn g6-btn-quiet">
+            Explore Our Vision
           </a>
         </div>
 
