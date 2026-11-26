@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
+import { Analytics } from '@vercel/analytics/next';
 
 const plex = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -95,6 +96,7 @@ export default function RootLayout({
     >
       <body className="bg-dark-950 text-white font-sans antialiased overflow-x-hidden selection:bg-vital-500 selection:text-white">
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
